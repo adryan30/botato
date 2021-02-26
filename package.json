@@ -1,0 +1,30 @@
+{
+  "name": "scryfall-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc --build tsconfig.json",
+    "start": "pnpm build && node dist/index.js",
+    "start:dev": "nodemon --watch src -e js,ts --exec 'pnpm start'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@typeit/discord": "^4.0.9",
+    "@types/node": "^14.14.31",
+    "axios": "^0.21.1",
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
+    "money": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "nodemon": "^2.0.7",
+    "rimraf": "^3.0.2",
+    "tslib": "^2.1.0",
+    "typescript": "^4.2.2"
+  }
+}
