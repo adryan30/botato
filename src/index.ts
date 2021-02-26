@@ -13,6 +13,11 @@ abstract class AppDiscord {
     );
   }
 
+  @Command("ping")
+  public async ping(message: CommandMessage) {
+    message.channel.send(`🏓 ${Math.round(message.client.ws.ping)}ms`);
+  }
+
   @Command("convert")
   public async convert(message: CommandMessage) {
     const args = message.content.split(" ").slice(1);
