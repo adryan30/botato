@@ -9,7 +9,7 @@ abstract class AppDiscord {
   @Command("help")
   public help(message: CommandMessage) {
     message.channel.send(
-      "```=convert (valor) (origem) (destino) - Converte entre moedas\n=roll (qtd)d(faces) - Roda um dado com os lados solicitados```"
+      "```=convert (valor) (origem) (destino) - Converte entre moedas\n=roll (qtd)d(faces) - Roda um dado com os lados solicitados\n=prefix (prefixo) - Adiciona um prefixo no seu nome```"
     );
   }
 
@@ -28,6 +28,21 @@ abstract class AppDiscord {
     message.channel.send(
       `${args[0]}${args[1]} => ${value.toFixed(2)}${args[2]}`
     );
+  }
+
+  @Command("prefix")
+  public async prefix(message: CommandMessage) {
+    const args = message.content.split(" ").slice(1);
+    const oldNickname = message.member.nickname;
+    await message.member
+      .setNickname(`[${args.join(" ")}] ${oldNickname}`)
+      .catch((err) => console.error(err));
+  }
+
+  @Command("removePrefix")
+  public async removePrefix(message: CommandMessage) {
+    const oldNickname = message.member.nickname;
+    await message.member.setNickname(oldNickname.replace(/\[.*\]\s/, ""));
   }
 
   @Command("roll")
