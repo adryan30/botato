@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 import { Client, Discord, Command, CommandMessage } from "@typeit/discord";
 import axios from "axios";
+import express = require("express");
 
 dotenv.config();
 
@@ -72,5 +73,9 @@ async function start() {
 
   await client.login(process.env.DISCORD_TOKEN);
 }
+
+const app = express();
+app.get("/", (_, res) => res.send("This is a Discord Bot!"));
+app.listen(3000);
 
 start().then(() => console.log("Bot iniciado"));
