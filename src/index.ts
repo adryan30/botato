@@ -52,7 +52,7 @@ abstract class AppDiscord {
     const args = message.content.split(" ")[1].split("d");
     const [qtd, faces] = args.map(Number);
     for (let index = 0; index < qtd; index++) {
-      const roll = Math.floor(Math.random() * faces);
+      const roll = Math.floor(Math.random() * faces) + 1;
       rolls.push(faces == 2 ? (roll == 1 ? "Cara" : "Coroa") : roll);
     }
     const textMsg = faces > 2 ? "Dados rolados" : "Moedas flipadas";
