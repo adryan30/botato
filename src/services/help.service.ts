@@ -5,11 +5,9 @@ export abstract class HelpService {
   @Description("Lista os comandos do bot")
   showHelp(message: CommandMessage) {
     const commands = Client.getCommands();
-    let helpMessage = "```";
-    commands.forEach(({ prefix, commandName, description }) => {
-      helpMessage += `${prefix}${commandName} - ${description}\n`;
-    });
-    helpMessage += "```";
-    return message.channel.send(helpMessage);
+    const helpMessage = commands
+      .map(({ prefix: p, commandName: n, description: d }) => `${p}${n} - ${d}`)
+      .join("\n");
+    return message.channel.send(helpMessage, { code: true });
   }
 }
