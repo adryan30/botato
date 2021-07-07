@@ -1,13 +1,13 @@
 {
-  "name": "scryfall-bot",
+  "name": "botato",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc --build tsconfig.json",
-    "start": "pnpm build && node dist/index.js",
-    "start:dev": "nodemon --watch src -e js,ts --exec 'pnpm start'"
+    "start": "node dist/index.js",
+    "start:dev": "nodemon --watch src -e js,ts --exec 'pnpm build && pnpm start'"
   },
   "keywords": [],
   "author": "",
