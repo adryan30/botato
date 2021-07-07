@@ -1,11 +1,21 @@
 import { CommandMessage, Command, Description, Infos } from "@typeit/discord";
 import { MessageEmbed, MessageReaction, Role, User } from "discord.js";
 
+interface EmbedSettings {
+  message: CommandMessage;
+  role: Role;
+  roleChannel: string;
+  emoji: string;
+  embedColor: string;
+  embedTitle: string;
+  embedDescription: string;
+  embedImage: string;
+}
 export abstract class RoleService {
   findRole(roleName: string, message: CommandMessage) {
     return message.guild.roles.cache.find((r) => r.name === roleName);
   }
-  async checkIsValid(reaction, user) {
+  async checkIsValid(reaction: MessageReaction, user: User) {
     if (reaction.message.partial) await reaction.message.fetch();
     if (reaction.partial) await reaction.fetch();
     if (user.bot) return;
@@ -21,7 +31,7 @@ export abstract class RoleService {
     embedTitle,
     embedDescription,
     embedImage,
-  }) {
+  }: EmbedSettings) {
     const messageEmbed = await message.channel.send({
       embed: new MessageEmbed()
         .setColor(embedColor)
@@ -34,8 +44,8 @@ export abstract class RoleService {
     message.client.on(
       "messageReactionAdd",
       async (reaction: MessageReaction, user: User) => {
+        await this.checkIsValid(reaction, user);
         if (reaction.message.channel.id === roleChannel) {
-          await this.checkIsValid(reaction, user);
           if (reaction.emoji.name === emoji) {
             await reaction.message.guild.members.cache
               .get(user.id)
