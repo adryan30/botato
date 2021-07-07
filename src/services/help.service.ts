@@ -4,7 +4,10 @@ export abstract class HelpService {
   @Command("help")
   @Description("Lista os comandos do bot")
   showHelp(message: CommandMessage) {
-    const commands = Client.getCommands();
+    const commands = Client.getCommands().filter(
+      (command) => !command.infos["hide"]
+    );
+
     const helpMessage = commands
       .map(({ prefix: p, commandName: n, description: d }) => `${p}${n} - ${d}`)
       .join("\n");
