@@ -25,11 +25,11 @@ dependencies:
   express: 4.17.1
   money: 0.2.0
   pnpm: 5.18.9
+  tslib: 2.3.0
 
 devDependencies:
   nodemon: 2.0.9
   rimraf: 3.0.2
-  tslib: 2.3.0
   typescript: 4.3.5
 
 packages:
@@ -1245,7 +1245,7 @@ packages:
 
   /tslib/2.3.0:
     resolution: {integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==}
-    dev: true
+    dev: false
 
   /tweetnacl/1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
