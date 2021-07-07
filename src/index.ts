@@ -21,6 +21,6 @@ async function start() {
 
 const app = express();
 app.get("/", (_, res) => res.send("This is a Discord Bot!"));
-app.listen(3000);
+app.listen(process.env.PORT || 3000);
 
 start().then(() => console.log("Bot iniciado"));
