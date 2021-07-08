@@ -1,10 +1,5 @@
 import { CommandMessage, Command, Description } from "@typeit/discord";
-import {
-  Collection,
-  Message,
-  MessageEmbed,
-  MessageResolvable,
-} from "discord.js";
+import { Collection, Message, MessageEmbed } from "discord.js";
 
 export abstract class AdminService {
   @Command("clear")
@@ -13,7 +8,7 @@ export abstract class AdminService {
     let messageQuantity = 0;
     let fetched: Collection<string, Message>;
     do {
-      fetched = await message.channel.messages.fetch();
+      fetched = await message.channel.messages.fetch({ limit: 100 });
       fetched = fetched.filter((message) => !message.pinned);
       messageQuantity += fetched.size;
       await message.channel.messages.channel.bulkDelete(fetched);
