@@ -1,16 +1,45 @@
-import { CommandMessage, Client, Command, Description } from "@typeit/discord";
+import {
+  CommandMessage,
+  Client,
+  Command,
+  Infos,
+  CommandInfos,
+} from "@typeit/discord";
+import { MessageEmbed } from "discord.js";
 
+const category = ":globe_with_meridians: Geral";
 export abstract class HelpService {
   @Command("help")
-  @Description("Lista os comandos do bot")
+  @Infos({
+    category,
+    description: "Lista os comandos do bot",
+  })
   showHelp(message: CommandMessage) {
-    const commands = Client.getCommands().filter(
-      (command) => !command.infos["hide"]
-    );
-
-    const helpMessage = commands
-      .map(({ prefix: p, commandName: n, description: d }) => `${p}${n} - ${d}`)
+    const commands = Client.getCommands().filter((c) => !c.infos["hide"]);
+    const infos: { [index: string]: Array<CommandInfos> } = {};
+    commands.forEach((command) => {
+      const {
+        infos: { category },
+      } = command;
+      if (!infos[category]) infos[category] = [command];
+      else infos[category] = [...infos[category], command];
+    });
+    const infoMessage = Object.entries(infos)
+      .map(([category, commands]) => {
+        return `${category}
+            ${commands
+              .map(({ prefix: p, commandName: n, description: d }) => {
+                return `${p}${n} - ${d}\n`;
+              })
+              .concat("\n")}`;
+      })
       .join("\n");
-    return message.channel.send(helpMessage, { code: true });
+
+    return message.channel.send({
+      embed: new MessageEmbed()
+        .setColor("#030f17")
+        .setTitle("Comandos Botato")
+        .setDescription(infoMessage.replace(/\,/g, "")),
+    });
   }
 }

@@ -1,9 +1,13 @@
-import { CommandMessage, Command, Description } from "@typeit/discord";
+import { CommandMessage, Command, Infos } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
 
+const category = ":police_officer: Admin";
 export abstract class AdminService {
   @Command("clear")
-  @Description("Limpa as mesagens presentes no canal")
+  @Infos({
+    category,
+    description: "Limpa as mesagens presentes no canal",
+  })
   async clear(message: CommandMessage) {
     let messageQuantity = 0;
     let fetched: Collection<string, Message>;

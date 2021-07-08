@@ -1,8 +1,12 @@
-import { CommandMessage, Command, Description } from "@typeit/discord";
+import { CommandMessage, Command, Infos } from "@typeit/discord";
 
+const category = ":writing_hand: Prefix";
 export abstract class PrefixService {
   @Command("prefix")
-  @Description("Adiciona um prefixo ao nome")
+  @Infos({
+    category,
+    description: "Adiciona um prefixo ao nome",
+  })
   async changePrefix(message: CommandMessage<{ flair: string }>) {
     const [, ...args] = message.commandContent.split(" ");
 
@@ -13,7 +17,10 @@ export abstract class PrefixService {
   }
 
   @Command("rp")
-  @Description("Remove o prefixo do nome")
+  @Infos({
+    category,
+    description: "Remove o prefixo do nome",
+  })
   async removePrefix(message: CommandMessage) {
     const oldNickname = message.member.displayName;
     await message.member.setNickname(oldNickname.replace(/\[.*\]\s/, ""));

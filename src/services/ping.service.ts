@@ -1,8 +1,12 @@
-import { CommandMessage, Command, Description } from "@typeit/discord";
+import { CommandMessage, Command, Infos } from "@typeit/discord";
 
+const category = ":globe_with_meridians: Geral";
 export abstract class PingService {
   @Command("ping")
-  @Description("Checa o ping do bot")
+  @Infos({
+    category,
+    description: "Retorna o ping do bot",
+  })
   showPing(message: CommandMessage) {
     return message.channel.send(`🏓 ${Math.round(message.client.ws.ping)}ms`);
   }
