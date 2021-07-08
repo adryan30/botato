@@ -1,9 +1,16 @@
-import { CommandMessage, Command, Description, Infos } from "@typeit/discord";
-import { MessageEmbed, MessageReaction, Role, User } from "discord.js";
+import { ArgsOf, Infos, On } from "@typeit/discord";
+import {
+  Client,
+  MessageEmbed,
+  MessageReaction,
+  TextChannel,
+  User,
+} from "discord.js";
+import { cleanChannel } from "../utils";
 
 interface EmbedSettings {
-  message: CommandMessage;
-  role: Role;
+  client: Client;
+  roleId: string;
   roleChannel: string;
   emoji: string;
   embedColor: string;
@@ -12,9 +19,15 @@ interface EmbedSettings {
   embedImage: string;
 }
 export abstract class RoleService {
-  findRole(roleName: string, message: CommandMessage) {
-    return message.guild.roles.cache.find((r) => r.name === roleName);
+  guildId = "861118279019397130";
+
+  async findRole(id: string, client: Client) {
+    return client.guilds.cache.get(this.guildId).roles.cache.get(id);
   }
+  async findChannel(id: string, client: Client) {
+    return client.channels.cache.get(id);
+  }
+
   async checkIsValid(reaction: MessageReaction, user: User) {
     if (reaction.message.partial) await reaction.message.fetch();
     if (reaction.partial) await reaction.fetch();
@@ -23,8 +36,8 @@ export abstract class RoleService {
   }
 
   async setupEmbeb({
-    message,
-    role,
+    client,
+    roleId,
     roleChannel,
     emoji,
     embedColor,
@@ -32,7 +45,12 @@ export abstract class RoleService {
     embedDescription,
     embedImage,
   }: EmbedSettings) {
-    const messageEmbed = await message.channel.send({
+    const channel = await this.findChannel(roleChannel, client);
+    const role = await this.findRole(roleId, client);
+    if (!((c): c is TextChannel => c.type === "text")(channel)) return;
+    await cleanChannel(channel);
+
+    const messageEmbed = await channel.send({
       embed: new MessageEmbed()
         .setColor(embedColor)
         .setTitle(embedTitle)
@@ -41,7 +59,7 @@ export abstract class RoleService {
     });
     messageEmbed.react(emoji);
 
-    message.client.on(
+    client.on(
       "messageReactionAdd",
       async (reaction: MessageReaction, user: User) => {
         await this.checkIsValid(reaction, user);
@@ -55,7 +73,7 @@ export abstract class RoleService {
         return;
       }
     );
-    message.client.on(
+    client.on(
       "messageReactionRemove",
       async (reaction: MessageReaction, user: User) => {
         await this.checkIsValid(reaction, user);
@@ -72,13 +90,12 @@ export abstract class RoleService {
     );
   }
 
-  @Command("setupAdventurer")
   @Infos({ hide: true })
-  async setupAdventurer(message: CommandMessage) {
-    message.delete();
+  @On("ready")
+  async setupAdventurer([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
-      message,
-      role: this.findRole("Aventureiro", message),
+      client,
+      roleId: "862010637399752704",
       roleChannel: "862015536766648342",
       emoji: "🎲",
       embedColor: "#148F77",
@@ -87,13 +104,12 @@ export abstract class RoleService {
       embedImage: "https://i.imgur.com/HzQGust.png",
     });
   }
-  @Command("setupAcademic")
   @Infos({ hide: true })
-  async setupAcademic(message: CommandMessage) {
-    message.delete();
+  @On("ready")
+  async setupAcademic([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
-      message,
-      role: this.findRole("Acadêmico", message),
+      client,
+      roleId: "862116339471745024",
       roleChannel: "862387241257926677",
       emoji: "📕",
       embedColor: "#6965cd",
