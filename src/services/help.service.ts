@@ -6,6 +6,7 @@ import {
   CommandInfos,
 } from "@typeit/discord";
 import { MessageEmbed } from "discord.js";
+import { theme } from "../config";
 
 const category = ":globe_with_meridians: Geral";
 export abstract class HelpService {
@@ -37,9 +38,9 @@ export abstract class HelpService {
 
     return message.channel.send({
       embed: new MessageEmbed()
-        .setColor("#030f17")
         .setTitle("Comandos Botato")
-        .setDescription(infoMessage.replace(/\,/g, "")),
+        .setDescription(infoMessage.replace(/\,/g, ""))
+        .setColor(theme.default),
     });
   }
 }

@@ -1,9 +1,8 @@
 import * as dotenv from "dotenv";
+dotenv.config();
 import express = require("express");
 import { Client } from "@typeit/discord";
 import { AppDiscord } from "./bot";
-
-dotenv.config();
 
 async function start() {
   const client = new Client({

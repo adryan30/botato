@@ -1,5 +1,6 @@
 import { CommandMessage, Command, Infos } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
+import { theme } from "../config";
 
 const category = ":police_officer: Admin";
 export abstract class AdminService {
@@ -20,7 +21,8 @@ export abstract class AdminService {
     const embedMessage = await message.channel.send({
       embed: new MessageEmbed()
         .setTitle("Limpeza concluída")
-        .setDescription(`${messageQuantity} mensagens apagadas!`),
+        .setDescription(`${messageQuantity} mensagens apagadas!`)
+        .setColor(theme.default),
     });
     setTimeout(() => embedMessage.delete(), 5000);
   }
