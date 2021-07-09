@@ -75,7 +75,9 @@ export abstract class EconomyService {
       embed: new MessageEmbed()
         .setTitle("Parabéns!")
         .setDescription(
-          `${awardedName} ganhou ${awardValue} ${drolhosEmoji}! Parabéns!`
+          `${awardedName} ${
+            awardValue < 0 ? "perdeu" : "ganhou"
+          } ${awardValue} ${drolhosEmoji}! Parabéns!`
         )
         .setColor(theme.success),
     });
