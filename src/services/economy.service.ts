@@ -49,7 +49,7 @@ export abstract class EconomyService {
     const { userData } = guardDatas;
     return message.reply({
       embed: new MessageEmbed()
-        .setTitle("Carteira")
+        .setTitle(`Carteira de ${message.author.username}`)
         .setDescription(`Seu saldo: ${userData.balance} ${drolhosEmoji}`)
         .setColor(theme.default),
     });
