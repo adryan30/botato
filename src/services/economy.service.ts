@@ -4,12 +4,12 @@ import { db, theme } from "../config";
 import { AdminGuard, EconomyGuard } from "../guards";
 import * as firebase from "firebase-admin";
 
-const category = ":bank: Econômia";
+const category = ":bank: Economia";
 export abstract class EconomyService {
   @Command("register")
   @Infos({
     category,
-    description: "Registra o usuário no sistema de econômia",
+    description: "Registra o usuário no sistema de economia",
   })
   async register(message: CommandMessage, client: Client) {
     const drolhosEmoji = client.emojis.cache.get(theme.emoji);
@@ -58,7 +58,7 @@ export abstract class EconomyService {
   @Command("award")
   @Infos({
     category,
-    description: "Recompensa o usuário mencionado com moedas",
+    description: "Recompensa o usuário mencionado com drolhoscoins",
   })
   @Guard(AdminGuard, EconomyGuard)
   async award(message: CommandMessage, client: Client) {
@@ -76,6 +76,43 @@ export abstract class EconomyService {
         .setTitle("Parabéns!")
         .setDescription(
           `${awardedName} ganhou ${awardValue} ${drolhosEmoji}! Parabéns!`
+        )
+        .setColor(theme.success),
+    });
+  }
+
+  @Command("give")
+  @Infos({
+    category,
+    description: "Transfere drolhoscoins entre usuários",
+  })
+  @Guard(AdminGuard, EconomyGuard)
+  async give(message: CommandMessage, client: Client) {
+    const {
+      author: { id: authorId, username },
+    } = message;
+    const drolhosEmoji = client.emojis.cache.get(theme.emoji);
+    const [, ...args] = message.commandContent.split(" ");
+    const { mentions } = message;
+    const { id, username: awardedName } = mentions.users.array()[0];
+    const awardValue = Number(args[0]);
+    await db
+      .collection("users")
+      .doc(authorId)
+      .update({
+        balance: firebase.firestore.FieldValue.increment(awardValue * -1),
+      });
+    await db
+      .collection("users")
+      .doc(id)
+      .update({
+        balance: firebase.firestore.FieldValue.increment(awardValue),
+      });
+    return message.reply({
+      embed: new MessageEmbed()
+        .setTitle("Transferência bem sucedida.")
+        .setDescription(
+          `${username} transferiu ${awardValue} ${drolhosEmoji} para ${awardedName}.`
         )
         .setColor(theme.success),
     });
