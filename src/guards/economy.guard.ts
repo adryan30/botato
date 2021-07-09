@@ -19,7 +19,7 @@ export const EconomyGuard: GuardFunction<"message"> = async (
         .setDescription(
           `Você ainda não possui uma carteira de pontos, com ela você estará apto a participar de eventos, ganhar pontos e usar seus pontos para comprar recompensas exclusivas no #mercado-negro.\n\nPara cadastrar sua carteira digite '=register'.`
         )
-        .setColor(theme.default),
+        .setColor(theme.error),
     });
   }
   if (message.mentions.users.size) {

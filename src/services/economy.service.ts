@@ -11,7 +11,8 @@ export abstract class EconomyService {
     category,
     description: "Registra o usuário no sistema de econômia",
   })
-  async register(message: CommandMessage) {
+  async register(message: CommandMessage, client: Client) {
+    const drolhosEmoji = client.emojis.cache.get(theme.emoji);
     const {
       author: { id },
     } = message;
@@ -31,7 +32,7 @@ export abstract class EconomyService {
       embed: new MessageEmbed()
         .setTitle("Carteira cadastrada com sucesso!")
         .setDescription(
-          `Você cadastrou sua carteira, a partir de agora use '=balance' para checar o seu saldo de :coin:.`
+          `Você cadastrou sua carteira, a partir de agora use '=balance' para checar o seu saldo de ${drolhosEmoji}.`
         )
         .setColor(theme.success),
     });
@@ -43,12 +44,13 @@ export abstract class EconomyService {
     description: "Mostra seu saldo no servidor",
   })
   @Guard(EconomyGuard)
-  async balance(message: CommandMessage, _: Client, guardDatas: any) {
+  async balance(message: CommandMessage, client: Client, guardDatas: any) {
+    const drolhosEmoji = client.emojis.cache.get(theme.emoji);
     const { userData } = guardDatas;
     return message.reply({
       embed: new MessageEmbed()
         .setTitle("Carteira")
-        .setDescription(`Seu saldo: ${userData.balance} :coin:`)
+        .setDescription(`Seu saldo: ${userData.balance} ${drolhosEmoji}`)
         .setColor(theme.default),
     });
   }
@@ -59,7 +61,8 @@ export abstract class EconomyService {
     description: "Recompensa o usuário mencionado com moedas",
   })
   @Guard(AdminGuard, EconomyGuard)
-  async award(message: CommandMessage) {
+  async award(message: CommandMessage, client: Client) {
+    const drolhosEmoji = client.emojis.cache.get(theme.emoji);
     const [, ...args] = message.commandContent.split(" ");
     const { mentions } = message;
     const { id, username: awardedName } = mentions.users.array()[0];
@@ -71,7 +74,9 @@ export abstract class EconomyService {
     return message.channel.send({
       embed: new MessageEmbed()
         .setTitle("Parabéns!")
-        .setDescription(`${awardedName} ganhou ${awardValue} :coin:! Parabéns!`)
+        .setDescription(
+          `${awardedName} ganhou ${awardValue} ${drolhosEmoji}! Parabéns!`
+        )
         .setColor(theme.success),
     });
   }
