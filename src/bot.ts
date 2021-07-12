@@ -27,7 +27,7 @@ export class AppDiscord {
     console.log("Bot iniciado com sucesso!");
 
     // Limpeza - magias-de-comando
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("0 0 * * *", async () => {
       console.log("Cleaning command channel...");
       const commandChannel = client.channels.cache.get("862008453986648084");
       if (!((c): c is TextChannel => c.type === "text")(commandChannel)) return;
