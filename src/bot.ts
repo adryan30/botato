@@ -22,33 +22,42 @@ export class AppDiscord {
     return command.reply("Comando não encontrado :no_mouth:");
   }
 
+  async clean(client: Client, channelId: string) {
+    const channel = client.channels.cache.get(channelId);
+    if (!((c): c is TextChannel => c.type === "text")(channel)) return;
+    console.log(`Cleaning ${channel.name} channel...`);
+    await cleanChannel(channel);
+    return channel;
+  }
+
   @On("ready")
   async ready([_]: ArgsOf<"message">, client: Client) {
     console.log("Bot iniciado com sucesso!");
 
     // Limpeza - magias-de-comando
     cron.schedule("0 0 * * *", async () => {
-      console.log("Cleaning command channel...");
-      const commandChannel = client.channels.cache.get("862008453986648084");
-      if (!((c): c is TextChannel => c.type === "text")(commandChannel)) return;
-      await cleanChannel(commandChannel);
+      await this.clean(client, "862008453986648084");
+    });
+
+    // Limpeza - bordel
+    cron.schedule("0 4 * * *", async () => {
+      await this.clean(client, "862539017839706132");
     });
 
     // Sistema de pontuações - podium de
     cron.schedule("0 * * * *", async () => {
-      console.log("Refreshing Podium ...");
-      const podiumChannel = client.channels.cache.get("863093014234267708");
-      if (!((c): c is TextChannel => c.type === "text")(podiumChannel)) return;
-      await cleanChannel(podiumChannel);
-
+      const podiumChannel = await this.clean(client, "863093014234267708");
       const leaderboards = (
         await db.collection("users").orderBy("balance", "desc").get()
       ).docs.map((doc) => {
         const userData = client.users.cache.find((user) => user.id === doc.id);
-        const docData = doc.data() as { isAdmin: boolean; balance: number };
+        const { balance, isAdmin } = doc.data() as {
+          isAdmin: boolean;
+          balance: number;
+        };
         return {
-          balance: docData.balance,
-          isAdmin: docData.isAdmin,
+          balance,
+          isAdmin,
           id: doc.id,
           username: userData.username,
         };
