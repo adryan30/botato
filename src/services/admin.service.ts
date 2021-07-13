@@ -1,4 +1,4 @@
-import { CommandMessage, Command, Infos, Client } from "@typeit/discord";
+import { CommandMessage, Command, Infos, Client, Guard } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
 import { db, theme } from "../config";
 import { AdminGuard } from "../guards";
