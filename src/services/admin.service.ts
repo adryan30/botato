@@ -30,7 +30,6 @@ export abstract class AdminService {
     setTimeout(() => embedMessage.delete(), 5000);
   }
 
-  @Command("rank")
   async podium(message: CommandMessage, client: Client) {
     const leaderboards = (
       await db.collection("users").orderBy("balance", "desc").get()
