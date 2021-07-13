@@ -1,11 +1,13 @@
 import { CommandMessage, Command, Infos, Client } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
 import { db, theme } from "../config";
+import { AdminGuard } from "../guards";
 import { format } from "date-fns";
 
 const category = ":police_officer: Admin";
 export abstract class AdminService {
   @Command("clear")
+  @Guard(AdminGuard)
   @Infos({
     category,
     description: "Limpa as mesagens presentes no canal",
