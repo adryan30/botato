@@ -11,7 +11,7 @@ export const AdminGuard: GuardFunction<"message"> = async (
     author: { id },
   } = message;
   const authorData = (await db.collection("users").doc(id).get()).data();
-  if (!authorData.isAdmin) {
+  if (!authorData?.isAdmin) {
     return message.reply({
       embed: new MessageEmbed()
         .setTitle("Permissão Negada")
