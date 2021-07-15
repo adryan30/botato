@@ -35,12 +35,12 @@ export class AppDiscord {
     console.log("Bot iniciado com sucesso!");
 
     // Limpeza - magias-de-comando
-    cron.schedule("0 0 * * *", async () => {
+    cron.schedule("0 3 * * *", async () => {
       await this.clean(client, "862008453986648084");
     });
 
     // Limpeza - categoria bordel
-    cron.schedule("0 4 * * *", async () => {
+    cron.schedule("0 7 * * *", async () => {
       await this.clean(client, "862539017839706132");
       await this.clean(client, "864571802763133008");
     });
