@@ -42,7 +42,6 @@ export class AppDiscord {
     // Limpeza - categoria bordel
     cron.schedule("0 4 * * *", async () => {
       await this.clean(client, "862539017839706132");
-      await this.clean(client, "864572943212347392");
       await this.clean(client, "864571802763133008");
     });
 
