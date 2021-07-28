@@ -1,6 +1,7 @@
 import { GuardFunction } from "@typeit/discord";
 import { MessageEmbed } from "discord.js";
-import { db, theme } from "../config";
+import { theme } from "../config";
+import { PrismaClient } from "@prisma/client";
 
 export const EconomyGuard: GuardFunction<"message"> = async (
   [message],
@@ -8,10 +9,13 @@ export const EconomyGuard: GuardFunction<"message"> = async (
   next,
   guardDatas
 ) => {
+  const prisma = new PrismaClient();
   const {
     author: { id },
+    mentions: { users: mentionedUsers },
   } = message;
-  const userData = (await db.collection("users").doc(id).get()).data();
+  const userData = await prisma.user.findUnique({ where: { id } });
+
   if (!userData) {
     return message.reply({
       embed: new MessageEmbed()
@@ -22,11 +26,12 @@ export const EconomyGuard: GuardFunction<"message"> = async (
         .setColor(theme.error),
     });
   }
-  if (message.mentions.users.size) {
-    const { id: mentionId } = message.mentions.users.array()[0];
-    const mentionUserData = (
-      await db.collection("users").doc(mentionId).get()
-    ).data();
+
+  if (mentionedUsers.size) {
+    const { id: mentionId } = mentionedUsers.array()[0];
+    const mentionUserData = await prisma.user.findUnique({
+      where: { id: mentionId },
+    });
     if (!mentionUserData) {
       return message.reply({
         embed: new MessageEmbed()
@@ -38,6 +43,5 @@ export const EconomyGuard: GuardFunction<"message"> = async (
       });
     }
   }
-  guardDatas.userData = userData;
-  await next();
+  await next().finally(() => prisma.$disconnect());
 };

@@ -10,8 +10,9 @@ import * as Path from "path";
 import * as cron from "node-cron";
 import { cleanChannel } from "./utils";
 import { MessageEmbed, TextChannel } from "discord.js";
-import { db, theme } from "./config";
+import { theme } from "./config";
 import { format } from "date-fns";
+import { PrismaClient } from "@prisma/client";
 
 @Discord("=", {
   import: [Path.join(__dirname, "services", "*.service.js")],
@@ -32,6 +33,8 @@ export class AppDiscord {
 
   @On("ready")
   async ready([_]: ArgsOf<"message">, client: Client) {
+    const prisma = new PrismaClient();
+
     console.log("Bot iniciado com sucesso!");
 
     // Limpeza - magias-de-comando
@@ -46,22 +49,16 @@ export class AppDiscord {
     });
 
     // Sistema de pontuações - podium de
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("* * * * *", async () => {
       const podiumChannel = await this.clean(client, "863093014234267708");
+      const prisma = new PrismaClient();
       const leaderboards = (
-        await db.collection("users").orderBy("balance", "desc").get()
-      ).docs.map((doc) => {
-        const userData = client.users.cache.find((user) => user.id === doc.id);
-        const { balance, isAdmin } = doc.data() as {
-          isAdmin: boolean;
-          balance: number;
-        };
-        return {
-          balance,
-          isAdmin,
-          id: doc.id,
-          username: userData.username,
-        };
+        await prisma.user.findMany({ orderBy: { balance: "desc" } })
+      ).map((userData) => {
+        const { username } = client.users.cache.find(
+          (user) => user.id === userData.id
+        );
+        return { ...userData, username };
       });
       podiumChannel.send({
         embed: new MessageEmbed()

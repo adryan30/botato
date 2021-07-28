@@ -1,8 +1,9 @@
 import { CommandMessage, Command, Infos, Client, Guard } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
-import { db, theme } from "../config";
+import { theme } from "../config";
 import { AdminGuard } from "../guards";
 import { format } from "date-fns";
+import { PrismaClient } from "@prisma/client";
 
 const category = ":police_officer: Admin";
 export abstract class AdminService {
@@ -28,37 +29,5 @@ export abstract class AdminService {
         .setColor(theme.default),
     });
     setTimeout(() => embedMessage.delete(), 5000);
-  }
-
-  async podium(message: CommandMessage, client: Client) {
-    const leaderboards = (
-      await db.collection("users").orderBy("balance", "desc").get()
-    ).docs.map((doc) => {
-      const userData = client.users.cache.find((user) => user.id === doc.id);
-      const docData = doc.data() as { isAdmin: boolean; balance: number };
-      return {
-        balance: docData.balance,
-        isAdmin: docData.isAdmin,
-        id: doc.id,
-        username: userData.username,
-      };
-    });
-    message.channel.send({
-      embed: new MessageEmbed()
-        .setTitle("Ranque")
-        .setColor(theme.default)
-        .setFooter(
-          `Pódio atualizado ás ${format(new Date(), "dd/MM/yyyy HH:mm:ss")}`
-        )
-        .setDescription(
-          `${leaderboards
-            .map((position, index) => {
-              return `${index + 1} - ${position.username} - ${
-                position.balance
-              }`;
-            })
-            .join("\n")}`
-        ),
-    });
   }
 }
