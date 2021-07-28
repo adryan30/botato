@@ -3,7 +3,6 @@ import { MessageEmbed } from "discord.js";
 import { theme } from "../config";
 import { AdminGuard, EconomyGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
-import * as firebase from "firebase-admin";
 
 const category = ":bank: Economia";
 export abstract class EconomyService {
