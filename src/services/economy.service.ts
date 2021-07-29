@@ -101,7 +101,7 @@ export abstract class EconomyService {
   @Command("remove")
   @Infos({
     category,
-    description: "Recompensa o usuário mencionado com drolhoscoins",
+    description: "Retira drolhoscoins do usuário mencionado",
   })
   @Guard(AdminGuard, EconomyGuard)
   async remove(message: CommandMessage, client: Client) {

@@ -2,8 +2,6 @@ import { CommandMessage, Command, Infos, Client, Guard } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
 import { theme } from "../config";
 import { AdminGuard } from "../guards";
-import { format } from "date-fns";
-import { PrismaClient } from "@prisma/client";
 
 const category = ":police_officer: Admin";
 export abstract class AdminService {
@@ -29,5 +27,45 @@ export abstract class AdminService {
         .setColor(theme.default),
     });
     setTimeout(() => embedMessage.delete(), 5000);
+  }
+
+  @Command("random")
+  @Guard(AdminGuard)
+  @Infos({
+    category,
+    description: "Seleciona um usuário aleatório dos roles mencionados",
+  })
+  async random(message: CommandMessage) {
+    const {
+      mentions: { roles },
+    } = message;
+    const mentionedRoles = roles.map((r) => r.id);
+    const users = await message.guild.members.fetch();
+    const mentioned = users
+      .array()
+      .filter((u) => !u.user.bot)
+      .filter((u) => {
+        const roles = u.roles.cache.array().map((r) => r.id);
+        return roles.some((r) => mentionedRoles.includes(r));
+      })
+      .map((u) => u.user.id);
+    const randomUser = mentioned[Math.floor(Math.random() * mentioned.length)];
+    const randomUserData = users.get(randomUser);
+    if (randomUserData) {
+      message.channel.send({
+        embed: new MessageEmbed()
+          .setTitle("Usuário escolhido:")
+          .setColor(theme.default)
+          .setImage(randomUserData.user.avatarURL())
+          .setFooter(randomUserData.user.username),
+      });
+    } else {
+      message.channel.send({
+        embed: new MessageEmbed()
+          .setTitle("Argumentos inválidos...")
+          .setDescription("Nenhum usuário válido nos cargos mencionados.")
+          .setColor(theme.error),
+      });
+    }
   }
 }
