@@ -7,6 +7,7 @@ import {
   User,
 } from "discord.js";
 import { cleanChannel } from "../utils";
+import { theme } from "../config";
 
 interface EmbedSettings {
   client: Client;
@@ -26,13 +27,6 @@ export abstract class RoleService {
   }
   async findChannel(id: string, client: Client) {
     return client.channels.cache.get(id);
-  }
-
-  async checkIsValid(reaction: MessageReaction, user: User) {
-    if (reaction.message.partial) await reaction.message.fetch();
-    if (reaction.partial) await reaction.fetch();
-    if (user.bot) return;
-    if (!reaction.message.guild) return;
   }
 
   async setupEmbeb({
@@ -62,7 +56,10 @@ export abstract class RoleService {
     client.on(
       "messageReactionAdd",
       async (reaction: MessageReaction, user: User) => {
-        await this.checkIsValid(reaction, user);
+        if (reaction.message.partial) await reaction.message.fetch();
+        if (reaction.partial) await reaction.fetch();
+        if (user.bot) return;
+        if (!reaction.message.guild) return;
         if (reaction.message.channel.id === roleChannel) {
           if (reaction.emoji.name === emoji) {
             await reaction.message.guild.members.cache
@@ -76,9 +73,11 @@ export abstract class RoleService {
     client.on(
       "messageReactionRemove",
       async (reaction: MessageReaction, user: User) => {
-        await this.checkIsValid(reaction, user);
+        if (reaction.message.partial) await reaction.message.fetch();
+        if (reaction.partial) await reaction.fetch();
+        if (user.bot) return;
+        if (!reaction.message.guild) return;
         if (reaction.message.channel.id === roleChannel) {
-          await this.checkIsValid(reaction, user);
           if (reaction.emoji.name === emoji) {
             await reaction.message.guild.members.cache
               .get(user.id)
@@ -98,7 +97,7 @@ export abstract class RoleService {
       roleId: "862010637399752704",
       roleChannel: "862015536766648342",
       emoji: "🎲",
-      embedColor: "#148F77",
+      embedColor: theme.default,
       embedTitle: "Escolha seu role!",
       embedDescription: `Ocasionalmente, organizamos campanhas de RPG narradas e jogadas aqui pelo Discord, caso você tenha interesse em participar ou organizar uma campanha, reaja a essa mensagem com um "🎲" e assim saberemos do seu interesse.`,
       embedImage: "https://i.imgur.com/HzQGust.png",
@@ -112,10 +111,24 @@ export abstract class RoleService {
       roleId: "862116339471745024",
       roleChannel: "862387241257926677",
       emoji: "📕",
-      embedColor: "#6965cd",
+      embedColor: theme.default,
       embedTitle: "Escolha seu role!",
       embedDescription: `Se você é aluno do curso de Ciência da Computação da UFAL e/ou deseja ser avisado de "Coisas da UFAL" (aulas, trabalhos, arquivos), reaja com "📕".`,
       embedImage: "https://i.imgur.com/mfNsMid.png",
+    });
+  }
+  @Infos({ hide: true })
+  @On("ready")
+  async setupBorthel([_]: ArgsOf<"message">, client: Client) {
+    this.setupEmbeb({
+      client,
+      roleId: "870320546540290068",
+      roleChannel: "870315829525360650",
+      emoji: "🎰",
+      embedColor: theme.default,
+      embedTitle: "Roletagens",
+      embedDescription: `Use este canal para rolar waifus, husbandos e pokémons. Reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ou ser avisado quando algum leilão oficial estiver acontecendo.`,
+      embedImage: "https://i.imgur.com/SbR74KF.png",
     });
   }
 }

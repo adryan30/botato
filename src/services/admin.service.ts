@@ -30,7 +30,6 @@ export abstract class AdminService {
   }
 
   @Command("random")
-  @Guard(AdminGuard)
   @Infos({
     category,
     description: "Seleciona um usuário aleatório dos roles mencionados",
@@ -56,7 +55,9 @@ export abstract class AdminService {
         embed: new MessageEmbed()
           .setTitle("Usuário escolhido:")
           .setColor(theme.default)
-          .setImage(randomUserData.user.avatarURL())
+          .setImage(
+            randomUserData.user.avatarURL() || "https://i.imgur.com/ZyTkCb1.png"
+          )
           .setFooter(randomUserData.user.username),
       });
     } else {
