@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "prebuild": "rimraf dist && prisma generate",
+    "prebuild": "rimraf dist",
     "build": "tsc --build tsconfig.json",
     "start": "node dist/index.js",
     "start:dev": "nodemon --watch src -e js,ts --exec 'yarn build && yarn start'"
@@ -19,6 +19,7 @@
     "@types/node": "^14.17.4",
     "axios": "^0.21.1",
     "date-fns": "^2.22.1",
+    "date-fns-tz": "^1.1.6",
     "discord.js": "^12.5.3",
     "dotenv": "^8.6.0",
     "express": "^4.17.1",
