@@ -127,7 +127,7 @@ export abstract class RoleService {
       emoji: "🎰",
       embedColor: theme.default,
       embedTitle: "Roletagens",
-      embedDescription: `Use este canal para rolar waifus, husbandos e pokémons. Reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ou ser avisado quando algum leilão oficial estiver acontecendo.`,
+      embedDescription: `Reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ou ser avisado quando algum leilão oficial estiver acontecendo.`,
       embedImage: "https://i.imgur.com/SbR74KF.png",
     });
   }
