@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import { CommandMessage, Command, Infos, Client, Guard } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
 import { theme } from "../config";
@@ -29,12 +30,12 @@ export abstract class AdminService {
     setTimeout(() => embedMessage.delete(), 5000);
   }
 
-  @Command("random")
+  @Command("randomRole")
   @Infos({
     category,
     description: "Seleciona um usuário aleatório dos roles mencionados",
   })
-  async random(message: CommandMessage) {
+  async randomRole(message: CommandMessage) {
     const {
       mentions: { roles },
     } = message;
@@ -68,5 +69,30 @@ export abstract class AdminService {
           .setColor(theme.error),
       });
     }
+  }
+
+  @Command("random")
+  @Infos({
+    category,
+    description: "Seleciona um usuário aleatório com carteira",
+  })
+  async random(message: CommandMessage) {
+    const prisma = new PrismaClient();
+    const users = await (
+      await prisma.user.findMany({ select: { id: true } })
+    ).map((u) => u.id);
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    const randomUserData = (await message.guild.members.fetch()).get(
+      randomUser
+    );
+    message.channel.send({
+      embed: new MessageEmbed()
+        .setTitle("Usuário escolhido:")
+        .setColor(theme.default)
+        .setImage(
+          randomUserData.user.avatarURL() || "https://i.imgur.com/ZyTkCb1.png"
+        )
+        .setFooter(randomUserData.user.username),
+    });
   }
 }

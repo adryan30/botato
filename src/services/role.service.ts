@@ -18,6 +18,7 @@ interface EmbedSettings {
   embedTitle: string;
   embedDescription: string;
   embedImage: string;
+  footer?: string;
 }
 export abstract class RoleService {
   guildId = "861118279019397130";
@@ -38,6 +39,7 @@ export abstract class RoleService {
     embedTitle,
     embedDescription,
     embedImage,
+    footer,
   }: EmbedSettings) {
     const channel = await this.findChannel(roleChannel, client);
     const role = await this.findRole(roleId, client);
@@ -49,7 +51,8 @@ export abstract class RoleService {
         .setColor(embedColor)
         .setTitle(embedTitle)
         .setDescription(embedDescription)
-        .setImage(embedImage),
+        .setImage(embedImage)
+        .setFooter(footer || ""),
     });
     messageEmbed.react(emoji);
 
@@ -125,10 +128,11 @@ export abstract class RoleService {
       roleId: "870320546540290068",
       roleChannel: "870315829525360650",
       emoji: "🎰",
-      embedColor: theme.default,
-      embedTitle: "Roletagens",
-      embedDescription: `Reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ou ser avisado quando algum leilão oficial estiver acontecendo.`,
+      embedColor: "#151429",
+      embedTitle: "Bordel",
+      embedDescription: `Para poder roletar suas waifus, husbandos e pokémons, reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ser avisado quando algum leilão oficial estiver acontecendo e participar de sorteios e eventos relacionados às rolegens.`,
       embedImage: "https://i.imgur.com/SbR74KF.png",
+      footer: "Caso precise de ajuda com o bot use $help.",
     });
   }
 }
