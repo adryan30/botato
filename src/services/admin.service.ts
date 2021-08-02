@@ -30,6 +30,19 @@ export abstract class AdminService {
     setTimeout(() => embedMessage.delete(), 5000);
   }
 
+  @Command("makeAdmin")
+  @Guard(AdminGuard)
+  @Infos({ hide: true })
+  async makeAdmin(message: CommandMessage) {
+    const prisma = new PrismaClient();
+    const mentionsIds = message.mentions.members.array().map((user) => user.id);
+    await prisma.user.updateMany({
+      where: { id: { in: mentionsIds } },
+      data: { isAdmin: true },
+    });
+    await prisma.$disconnect();
+  }
+
   @Command("randomRole")
   @Infos({
     category,
