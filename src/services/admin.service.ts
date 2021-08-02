@@ -12,6 +12,7 @@ export abstract class AdminService {
   @Infos({
     category,
     description: "Limpa as mesagens presentes no canal",
+    syntax: "=clear",
   })
   async clear(message: CommandMessage) {
     let messageQuantity = 0;
@@ -52,6 +53,7 @@ export abstract class AdminService {
   @Infos({
     category,
     description: "Seleciona um usuário aleatório dos roles mencionados",
+    syntax: "=randomRole <roles>",
   })
   async randomRole(message: CommandMessage) {
     const {
@@ -93,6 +95,7 @@ export abstract class AdminService {
   @Infos({
     category,
     description: "Seleciona um usuário aleatório com carteira",
+    syntax: "=random",
   })
   async random(message: CommandMessage) {
     const prisma = new PrismaClient();

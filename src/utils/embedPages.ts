@@ -80,7 +80,7 @@ export class DiscordEmbedPages {
         "Tried to create embed pages with no pages in the pages array."
       );
     if (this.pageFooter)
-      this.pages[0].setFooter(`Página: 1/${this.pages.length}`);
+      this.pages[0].setFooter(`Página: 1/${this.pages.length} - ?: Opcional`);
     this.channel.send({ embed: this.pages[0] }).then((msg) => {
       this.msg = msg;
       msg.react("◀️").catch(() => null);
@@ -147,7 +147,9 @@ export class DiscordEmbedPages {
     const embed = this.pages[this.currentPageNumber];
     if (this.pageFooter)
       embed.setFooter(
-        `Página: ${this.currentPageNumber + 1}/${this.pages.length}`
+        `Página: ${this.currentPageNumber + 1}/${
+          this.pages.length
+        } - ?: Opcional`
       );
     this.msg.edit({ embed: embed }).catch(() => null);
   }
@@ -166,7 +168,9 @@ export class DiscordEmbedPages {
     const embed = this.pages[this.currentPageNumber];
     if (this.pageFooter)
       embed.setFooter(
-        `Página: ${this.currentPageNumber + 1}/${this.pages.length}`
+        `Página: ${this.currentPageNumber + 1}/${
+          this.pages.length
+        } - ?: Opcional`
       );
     this.msg.edit({ embed: embed }).catch(() => null);
   }
@@ -186,7 +190,9 @@ export class DiscordEmbedPages {
     const embed = this.pages[this.currentPageNumber];
     if (this.pageFooter)
       embed.setFooter(
-        `Página: ${this.currentPageNumber + 1}/${this.pages.length}`
+        `Página: ${this.currentPageNumber + 1}/${
+          this.pages.length
+        } - ?: Opcional`
       );
     this.msg.edit({ embed: embed }).catch(() => null);
   }

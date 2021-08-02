@@ -11,6 +11,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Registra o usuário no sistema de economia",
+    syntax: "=register",
   })
   async register(message: CommandMessage, client: Client) {
     const prisma = new PrismaClient();
@@ -46,20 +47,31 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Mostra seu saldo no servidor",
+    syntax: "=balance <membro?>",
   })
   @Guard(EconomyGuard)
   async balance(message: CommandMessage, client: Client, guardDatas: any) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(message);
+    let searchUser;
     const {
-      author: { id },
+      author,
+      mentions: { users },
     } = message;
-    const userData = await prisma.user.findUnique({ where: { id } });
+    if (users.size) {
+      searchUser = users.array()[0];
+    } else {
+      searchUser = author;
+    }
+
+    const userData = await prisma.user.findUnique({
+      where: { id: searchUser.id },
+    });
 
     return message
       .reply({
         embed: new MessageEmbed({
-          title: `Carteira de ${message.author.username}`,
+          title: `Carteira de ${searchUser.username}`,
           fields: [
             {
               name: `Saldo`,
@@ -79,6 +91,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Recompensa o usuário mencionado com drolhoscoins",
+    syntax: "=award <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
   async award(message: CommandMessage, client: Client) {
@@ -112,6 +125,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Recompensa o usuário mencionado com tickets",
+    syntax: "=awardt <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
   async awardt(message: CommandMessage, client: Client) {
@@ -143,6 +157,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Retira drolhoscoins do usuário mencionado",
+    syntax: "=remove <quantidade> <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
   async remove(message: CommandMessage, client: Client) {
@@ -152,8 +167,17 @@ export abstract class EconomyService {
     const { mentions } = message;
     const { id, username: awardedName } = mentions.users.array()[0];
     const awardValue = Number(args[0]);
+    const userData = await prisma.user.findUnique({
+      where: { id },
+      select: { balance: true },
+    });
     if (awardValue <= 0) {
       return message.reply("Digite um valor acima de 0 para remover.");
+    }
+    if (awardValue > userData.balance) {
+      return message.reply(
+        `Esse usuário não possui ${drolhosEmoji} suficientes`
+      );
     }
 
     await prisma.user.update({
@@ -176,6 +200,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Retira tickets do usuário mencionado",
+    syntax: "=removet <quantidade> <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
   async removet(message: CommandMessage, client: Client) {
@@ -185,12 +210,19 @@ export abstract class EconomyService {
     const { mentions } = message;
     const { id, username: awardedName } = mentions.users.array()[0];
     const awardValue = Number(args[0]);
+    const userData = await prisma.user.findUnique({
+      where: { id },
+      select: { tickets: true },
+    });
     if (awardValue <= 0) {
       return message.reply("Digite um valor acima de 0 para remover.");
     }
+    if (awardValue > userData.tickets) {
+      return message.reply("Esse usuário não possui 🎟️ suficientes");
+    }
 
     await prisma.user.update({
-      data: { balance: { decrement: awardValue } },
+      data: { tickets: { decrement: awardValue } },
       where: { id },
     });
     return message.channel
@@ -208,6 +240,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Transfere drolhoscoins entre usuários",
+    syntax: "=give <quantidade> <membro>",
   })
   @Guard(EconomyGuard)
   async give(message: CommandMessage, client: Client) {
@@ -253,6 +286,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Transfere tickets entre usuários",
+    syntax: "=give <quantidade> <membro>",
   })
   @Guard(EconomyGuard)
   async givet(message: CommandMessage, client: Client) {

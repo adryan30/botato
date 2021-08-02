@@ -6,6 +6,7 @@ export abstract class PrefixService {
   @Infos({
     category,
     description: "Adiciona um prefixo ao nome",
+    syntax: "=prefix <prefixo>",
   })
   async changePrefix(message: CommandMessage<{ flair: string }>) {
     const [, ...args] = message.commandContent.split(" ");
@@ -20,6 +21,7 @@ export abstract class PrefixService {
   @Infos({
     category,
     description: "Remove o prefixo do nome",
+    syntax: "=rp",
   })
   async removePrefix(message: CommandMessage) {
     const oldNickname = message.member.displayName;

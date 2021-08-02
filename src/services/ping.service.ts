@@ -6,6 +6,7 @@ export abstract class PingService {
   @Infos({
     category,
     description: "Retorna o ping do bot",
+    syntax: '=ping'
   })
   showPing(message: CommandMessage) {
     return message.channel.send(`🏓 ${Math.round(message.client.ws.ping)}ms`);

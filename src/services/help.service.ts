@@ -16,10 +16,13 @@ export abstract class HelpService {
   @Infos({
     category,
     description: "Lista os comandos do bot",
+    syntax: "=help",
   })
   showHelp(message: CommandMessage) {
-    const commands = Client.getCommands().filter((c) => !c.infos["hide"]);
+    const title = "Comandos Botato";
+    const channel = message.channel;
     const infos: { [index: string]: Array<CommandInfos> } = {};
+    const commands = Client.getCommands().filter((c) => !c.infos["hide"]);
     commands.forEach((command) => {
       const {
         infos: { category },
@@ -27,29 +30,33 @@ export abstract class HelpService {
       if (!infos[category]) infos[category] = [command];
       else infos[category] = [...infos[category], command];
     });
-    const infoMessage = Object.entries(infos)
-      .map(([category, commands]) => {
-        return `${category}
-            ${commands
-              .map(({ prefix: p, commandName: n, description: d }) => {
-                return `${p}${n} - ${d}\n`;
+    const pages = Object.entries(infos).map(([category, commands]) => {
+      return new MessageEmbed({
+        title,
+        color: theme.default,
+        fields: [
+          {
+            name: category,
+            value: `${commands
+              .map(({ description: d, infos: { syntax: s } }) => {
+                return `**${s}** - ${d}`;
               })
-              .concat("\n")}`;
-      })
-      .join("\n");
-
-    return message.channel.send({
-      embed: new MessageEmbed()
-        .setTitle("Comandos Botato")
-        .setDescription(infoMessage.replace(/\,/g, ""))
-        .setColor(theme.default),
+              .join("\n")}`,
+          },
+        ],
+      });
     });
+
+    if (!((c): c is TextChannel => c.type === "text")(channel)) return;
+    const embedPages = new DiscordEmbedPages(pages, channel, {});
+    embedPages.createPages();
   }
 
   @Command("drolhos")
   @Infos({
     category,
     description: "Provê uma explicação sobre as drolhoscoins",
+    syntax: "=drolhos",
   })
   drolhos(message: CommandMessage) {
     const drolhosEmoji = findDrolhosEmoji(message);
