@@ -19,7 +19,11 @@ export abstract class AdminService {
       fetched = await message.channel.messages.fetch({ limit: 100 });
       fetched = fetched.filter((message) => !message.pinned);
       messageQuantity += fetched.size;
-      await message.channel.messages.channel.bulkDelete(fetched);
+      await message.channel.messages.channel.bulkDelete(fetched).catch((_) => {
+        return message.reply(
+          "Não foi possível deletar todas as mensagens, esse chat tem mensagens muito antigas :("
+        );
+      });
     } while (fetched.size > 2);
     const embedMessage = await message.channel.send({
       embed: new MessageEmbed()
