@@ -333,7 +333,7 @@ export abstract class EconomyService {
   @Infos({
     category,
     description: "Transfere tickets entre usuários",
-    syntax: "=give <quantidade> <membro>",
+    syntax: "=givet <quantidade> <membro>",
   })
   @Guard(EconomyGuard)
   async givet(message: CommandMessage, client: Client) {
