@@ -101,8 +101,18 @@ export abstract class EconomyService {
     const { mentions } = message;
     const { id, username: awardedName } = mentions.users.array()[0];
     const awardValue = Number(args[0]);
-    if (awardValue <= 0) {
-      return message.reply("Digite um valor acima de 0 para recompensar.");
+    try {
+      if (awardValue <= 0) {
+        throw "Digite um valor acima de 0 para recompensar.";
+      }
+    } catch (err) {
+      return message.reply({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: err,
+          color: theme.error,
+        }),
+      });
     }
 
     await prisma.user.update({
@@ -134,8 +144,18 @@ export abstract class EconomyService {
     const { mentions } = message;
     const { id, username: awardedName } = mentions.users.array()[0];
     const awardValue = Number(args[0]);
-    if (awardValue <= 0) {
-      return message.reply("Digite um valor acima de 0 para recompensar.");
+    try {
+      if (awardValue <= 0) {
+        throw "Digite um valor acima de 0 para recompensar.";
+      }
+    } catch (err) {
+      return message.reply({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: err,
+          color: theme.error,
+        }),
+      });
     }
 
     await prisma.user.update({
@@ -171,13 +191,21 @@ export abstract class EconomyService {
       where: { id },
       select: { balance: true },
     });
-    if (awardValue <= 0) {
-      return message.reply("Digite um valor acima de 0 para remover.");
-    }
-    if (awardValue > userData.balance) {
-      return message.reply(
-        `Esse usuário não possui ${drolhosEmoji} suficientes`
-      );
+    try {
+      if (awardValue <= 0) {
+        throw "Digite um valor acima de 0 para remover.";
+      }
+      if (awardValue > userData.balance) {
+        throw `Esse usuário não possui ${drolhosEmoji} suficientes`;
+      }
+    } catch (err) {
+      return message.reply({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: err,
+          color: theme.error,
+        }),
+      });
     }
 
     await prisma.user.update({
@@ -214,11 +242,21 @@ export abstract class EconomyService {
       where: { id },
       select: { tickets: true },
     });
-    if (awardValue <= 0) {
-      return message.reply("Digite um valor acima de 0 para remover.");
-    }
-    if (awardValue > userData.tickets) {
-      return message.reply("Esse usuário não possui 🎟️ suficientes");
+    try {
+      if (awardValue <= 0) {
+        throw "Digite um valor acima de 0 para remover.";
+      }
+      if (awardValue > userData.tickets) {
+        throw `Esse usuário não possui 🎟️suficientes`;
+      }
+    } catch (err) {
+      return message.reply({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: err,
+          color: theme.error,
+        }),
+      });
     }
 
     await prisma.user.update({
@@ -256,11 +294,20 @@ export abstract class EconomyService {
     const sourceUser = await prisma.user.findUnique({
       where: { id: authorId },
     });
-    if (sourceUser.balance < tradeValue) {
-      return message.reply(
-        `Você não tem ${drolhosEmoji} suficiente para essa transação.`
-      );
+    try {
+      if (sourceUser.balance < tradeValue) {
+        throw `Você não tem ${drolhosEmoji} suficiente para essa transação.`;
+      }
+    } catch (err) {
+      return message.reply({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: err,
+          color: theme.error,
+        }),
+      });
     }
+
     await prisma.user.update({
       data: { balance: { decrement: tradeValue } },
       where: { id: authorId },
@@ -301,9 +348,21 @@ export abstract class EconomyService {
     const sourceUser = await prisma.user.findUnique({
       where: { id: authorId },
     });
-    if (sourceUser.tickets < tradeValue) {
-      return message.reply("Você não tem 🎟️ suficiente para essa transação.");
+
+    try {
+      if (sourceUser.balance < tradeValue) {
+        throw `Você não tem 🎟️ suficiente para essa transação.`;
+      }
+    } catch (err) {
+      return message.reply({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: err,
+          color: theme.error,
+        }),
+      });
     }
+
     await prisma.user.update({
       data: { tickets: { decrement: tradeValue } },
       where: { id: authorId },
