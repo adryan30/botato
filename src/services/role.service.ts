@@ -11,7 +11,7 @@ import { theme } from "../config";
 
 interface EmbedSettings {
   client: Client;
-  roleId: string;
+  roleName: string;
   roleChannel: string;
   emoji: string;
   embedColor: string;
@@ -21,18 +21,19 @@ interface EmbedSettings {
   footer?: string;
 }
 export abstract class RoleService {
-  guildId = "861118279019397130";
+  guildId = process.env.GUILD_ID;
 
-  async findRole(id: string, client: Client) {
-    return client.guilds.cache.get(this.guildId).roles.cache.get(id);
+  async findRole(roleName: string, client: Client) {
+    const guildRoles = client.guilds.cache.get(this.guildId).roles.cache;
+    return guildRoles.find((c) => c.name == roleName);
   }
-  async findChannel(id: string, client: Client) {
-    return client.channels.cache.get(id);
+  async findChannel(channelName: string, client: Client) {
+    return client.channels.cache.find((c) => c.toJSON()["name"] == channelName);
   }
 
   async setupEmbeb({
     client,
-    roleId,
+    roleName,
     roleChannel,
     emoji,
     embedColor,
@@ -42,7 +43,7 @@ export abstract class RoleService {
     footer,
   }: EmbedSettings) {
     const channel = await this.findChannel(roleChannel, client);
-    const role = await this.findRole(roleId, client);
+    const role = await this.findRole(roleName, client);
     if (!((c): c is TextChannel => c.type === "text")(channel)) return;
     await cleanChannel(channel);
 
@@ -63,7 +64,7 @@ export abstract class RoleService {
         if (reaction.partial) await reaction.fetch();
         if (user.bot) return;
         if (!reaction.message.guild) return;
-        if (reaction.message.channel.id === roleChannel) {
+        if (reaction.message.channel.id === channel.id) {
           if (reaction.emoji.name === emoji) {
             await reaction.message.guild.members.cache
               .get(user.id)
@@ -97,8 +98,8 @@ export abstract class RoleService {
   async setupAdventurer([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
       client,
-      roleId: "862010637399752704",
-      roleChannel: "862015536766648342",
+      roleName: "Aventureiro",
+      roleChannel: "entrada-laboratório",
       emoji: "🎲",
       embedColor: theme.default,
       embedTitle: "Escolha seu role!",
@@ -111,8 +112,8 @@ export abstract class RoleService {
   async setupAcademic([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
       client,
-      roleId: "862116339471745024",
-      roleChannel: "862387241257926677",
+      roleName: "Acadêmico",
+      roleChannel: "entrada-academia",
       emoji: "📕",
       embedColor: theme.default,
       embedTitle: "Escolha seu role!",
@@ -125,8 +126,8 @@ export abstract class RoleService {
   async setupBorthel([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
       client,
-      roleId: "870320546540290068",
-      roleChannel: "870315829525360650",
+      roleName: "Cafetão",
+      roleChannel: "entrada-bordel",
       emoji: "🎰",
       embedColor: "#151429",
       embedTitle: "Bordel",

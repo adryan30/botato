@@ -13,6 +13,7 @@ async function start() {
     ],
     silent: false,
     variablesChar: ":",
+    fetchAllMembers: true,
   });
 
   await client.login(process.env.DISCORD_TOKEN);

@@ -23,8 +23,10 @@ export class AppDiscord {
     return command.reply("Comando não encontrado :no_mouth:");
   }
 
-  async clean(client: Client, channelId: string) {
-    const channel = client.channels.cache.get(channelId);
+  async clean(client: Client, channelName: string) {
+    const channel = client.channels.cache.find(
+      (c) => c.toJSON()["name"] == channelName
+    );
     if (!((c): c is TextChannel => c.type === "text")(channel)) return;
     console.log(`Cleaning ${channel.name} channel...`);
     await cleanChannel(channel);
@@ -39,7 +41,7 @@ export class AppDiscord {
     cron.schedule(
       "0 0 * * *",
       async () => {
-        await this.clean(client, "862008453986648084");
+        await this.clean(client, "magias-de-comando");
       },
       { timezone: "America/Sao_Paulo" }
     );
@@ -48,20 +50,20 @@ export class AppDiscord {
     cron.schedule(
       "0 4 * * *",
       async () => {
-        await this.clean(client, "862539017839706132");
-        await this.clean(client, "864571802763133008");
+        await this.clean(client, "roletagens");
+        await this.clean(client, "outros");
       },
       { timezone: "America/Sao_Paulo" }
     );
 
     // Sistema de pontuações - podium
     cron.schedule("*/5 * * * *", async () => {
-      const podiumChannel = await this.clean(client, "863093014234267708");
+      const podiumChannel = await this.clean(client, "podium");
       const prisma = new PrismaClient();
       const usersData = await prisma.user.findMany({
         orderBy: { balance: "desc" },
       });
-      const { members } = await client.guilds.fetch("861118279019397130");
+      const { members } = await client.guilds.fetch(process.env.GUILD_ID);
       const leaderboards = await Promise.all(
         usersData.map(async (user, i) => {
           const memberData = await members.fetch(user.id);
@@ -78,7 +80,7 @@ export class AppDiscord {
         embed: new MessageEmbed()
           .setTitle("Ranque")
           .setColor(theme.default)
-          .setFooter(`Pódio atualizado ás ${updatedDate}`)
+          .setFooter(`Pódio atualizado às ${updatedDate}`)
           .setDescription(
             `${leaderboards
               .map((position, i) => {
