@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { CommandMessage, Command, Infos, Client, Guard } from "@typeit/discord";
 import { Collection, Message, MessageEmbed } from "discord.js";
 import { differenceInCalendarDays } from "date-fns";
@@ -114,6 +114,50 @@ export abstract class AdminService {
           randomUserData.user.avatarURL() || "https://i.imgur.com/ZyTkCb1.png"
         )
         .setFooter(randomUserData.user.username),
+    });
+  }
+
+  @Command("todo")
+  @Infos({
+    hide: true,
+  })
+  async todo(message: CommandMessage) {
+    const prisma = new PrismaClient();
+    const [, ...args] = message.commandContent.split(" ");
+    const fullMsg = args.join(" ");
+    if (fullMsg) {
+      return await prisma.todo.create({ data: { text: fullMsg } }).then(() => {
+        message.react("✅");
+        prisma.$disconnect();
+      });
+    }
+    const todos = await prisma.todo.findMany();
+    return await message.channel
+      .send({
+        embed: new MessageEmbed({
+          title: "TO-DOs",
+          color: theme.default,
+          description: `${todos
+            .map(({ id, text }) => `${id} - ${text}`)
+            .join("\n")}`,
+        }),
+      })
+      .then(() => {
+        message.react("✅");
+        prisma.$disconnect();
+      });
+  }
+  @Command("rt")
+  @Infos({
+    hide: true,
+  })
+  async rt(message: CommandMessage) {
+    const prisma = new PrismaClient();
+    const [, ...args] = message.commandContent.split(" ");
+    const todoNumber = Number(args[0]);
+    return await prisma.todo.delete({ where: { id: todoNumber } }).then(() => {
+      message.react("✅");
+      prisma.$disconnect();
     });
   }
 }
