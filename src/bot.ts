@@ -35,13 +35,6 @@ export class AppDiscord {
 
   @On("ready")
   async ready([_]: ArgsOf<"message">, client: Client) {
-    const prisma = new PrismaClient();
-    prisma.user
-      .update({
-        where: { id: "465702960408821760" },
-        data: { isAdmin: true },
-      })
-      .then(() => prisma.$disconnect());
     console.log("Bot iniciado com sucesso!");
 
     // Limpeza - magias-de-comando
