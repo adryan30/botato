@@ -438,14 +438,7 @@ destroy@~1.0.4:
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.0.4.tgz#978857442c44749e4206613e37946205826abd80"
   integrity sha1-l4hXRCxEdJ5CBmE+N5RiBYJqvYA=
 
-discord-pages@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/discord-pages/-/discord-pages-1.0.2.tgz#ba74efeb0b2fa589b9b5828fa1e304f8232d5c09"
-  integrity sha512-QsqT1PzS9yZDVl4M/kf223I/xKYE1Lj4GdkRo27xO5Q+WfAn2njqx9ZGIGDAiwweCDsMsMBUFU2LPEH4V+lf6A==
-  dependencies:
-    discord.js "^12.5.0"
-
-discord.js@^12.2.0, discord.js@^12.5.0, discord.js@^12.5.3:
+discord.js@^12.2.0, discord.js@^12.5.3:
   version "12.5.3"
   resolved "https://registry.yarnpkg.com/discord.js/-/discord.js-12.5.3.tgz#56820d473c24320871df9ea0bbc6b462f21cf85c"
   integrity sha512-D3nkOa/pCkNyn6jLZnAiJApw2N9XrIsXUAdThf01i7yrEuqUmDGc7/CexVWwEcgbQR97XQ+mcnqJpmJ/92B4Aw==

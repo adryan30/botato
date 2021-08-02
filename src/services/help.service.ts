@@ -5,8 +5,8 @@ import {
   Infos,
   CommandInfos,
 } from "@typeit/discord";
-import { Message, MessageEmbed } from "discord.js";
-import * as DiscordPages from "discord-pages";
+import { MessageEmbed, TextChannel } from "discord.js";
+import { DiscordEmbedPages } from "../utils";
 import { theme } from "../config";
 import { findDrolhosEmoji } from "../utils";
 
@@ -53,6 +53,7 @@ export abstract class HelpService {
   })
   drolhos(message: CommandMessage) {
     const drolhosEmoji = findDrolhosEmoji(message);
+    const channel = message.channel;
     const title = "Ajuda geral sobre os Drolhos";
 
     const pages: MessageEmbed[] = [
@@ -96,10 +97,8 @@ export abstract class HelpService {
         ],
       }),
     ];
-    const embedPages = new DiscordPages({
-      pages,
-      channel: message.channel,
-    });
+    if (!((c): c is TextChannel => c.type === "text")(channel)) return;
+    const embedPages = new DiscordEmbedPages(pages, channel, {});
     embedPages.createPages();
   }
 }
