@@ -58,10 +58,19 @@ export abstract class EconomyService {
 
     return message
       .reply({
-        embed: new MessageEmbed()
-          .setTitle(`Carteira de ${message.author.username}`)
-          .setDescription(`Seu saldo: ${userData.balance} ${drolhosEmoji}`)
-          .setColor(theme.default),
+        embed: new MessageEmbed({
+          title: `Carteira de ${message.author.username}`,
+          fields: [
+            {
+              name: `Saldo`,
+              value: `Seu saldo: ${userData.balance} ${drolhosEmoji}`,
+            },
+            {
+              name: `Bilhetes`,
+              value: `Seus bilhetes: ${userData.tickets} 🎟️`,
+            },
+          ],
+        }).setColor(theme.default),
       })
       .finally(() => prisma.$disconnect());
   }
@@ -99,6 +108,37 @@ export abstract class EconomyService {
       .finally(() => prisma.$disconnect());
   }
 
+  @Command("awardt")
+  @Infos({
+    category,
+    description: "Recompensa o usuário mencionado com tickets",
+  })
+  @Guard(AdminGuard, EconomyGuard)
+  async awardt(message: CommandMessage, client: Client) {
+    const prisma = new PrismaClient();
+    const [, ...args] = message.commandContent.split(" ");
+    const { mentions } = message;
+    const { id, username: awardedName } = mentions.users.array()[0];
+    const awardValue = Number(args[0]);
+    if (awardValue <= 0) {
+      return message.reply("Digite um valor acima de 0 para recompensar.");
+    }
+
+    await prisma.user.update({
+      data: { tickets: { increment: awardValue } },
+      where: { id },
+    });
+    return message.channel
+      .send({
+        embed: new MessageEmbed({
+          title: "Parabéns!",
+          description: `${awardedName} ganhou ${awardValue} 🎟️!`,
+          color: theme.success,
+        }),
+      })
+      .finally(() => prisma.$disconnect());
+  }
+
   @Command("remove")
   @Infos({
     category,
@@ -128,6 +168,38 @@ export abstract class EconomyService {
             `${awardedName} perdeu ${awardValue} ${drolhosEmoji}!`
           )
           .setColor(theme.success),
+      })
+      .finally(() => prisma.$disconnect());
+  }
+
+  @Command("removet")
+  @Infos({
+    category,
+    description: "Retira tickets do usuário mencionado",
+  })
+  @Guard(AdminGuard, EconomyGuard)
+  async removet(message: CommandMessage, client: Client) {
+    const prisma = new PrismaClient();
+    const drolhosEmoji = findDrolhosEmoji(message);
+    const [, ...args] = message.commandContent.split(" ");
+    const { mentions } = message;
+    const { id, username: awardedName } = mentions.users.array()[0];
+    const awardValue = Number(args[0]);
+    if (awardValue <= 0) {
+      return message.reply("Digite um valor acima de 0 para remover.");
+    }
+
+    await prisma.user.update({
+      data: { balance: { decrement: awardValue } },
+      where: { id },
+    });
+    return message.channel
+      .send({
+        embed: new MessageEmbed({
+          title: "Sucesso!",
+          description: `${awardedName} perdeu ${awardValue} 🎟️!`,
+          color: theme.success,
+        }),
       })
       .finally(() => prisma.$disconnect());
   }
@@ -171,6 +243,48 @@ export abstract class EconomyService {
           .setTitle("Transferência bem sucedida.")
           .setDescription(
             `${username} transferiu ${tradeValue} ${drolhosEmoji} para ${awardedName}.`
+          )
+          .setColor(theme.success),
+      })
+      .finally(() => prisma.$disconnect());
+  }
+
+  @Command("givet")
+  @Infos({
+    category,
+    description: "Transfere tickets entre usuários",
+  })
+  @Guard(EconomyGuard)
+  async givet(message: CommandMessage, client: Client) {
+    const prisma = new PrismaClient();
+    const {
+      author: { id: authorId, username },
+      mentions: { users: mentionedUsers },
+    } = message;
+    const [, ...args] = message.commandContent.split(" ");
+    const { id, username: awardedName } = mentionedUsers.array()[0];
+    const tradeValue = Number(args[0]);
+    const sourceUser = await prisma.user.findUnique({
+      where: { id: authorId },
+    });
+    if (sourceUser.tickets < tradeValue) {
+      return message.reply("Você não tem 🎟️ suficiente para essa transação.");
+    }
+    await prisma.user.update({
+      data: { tickets: { decrement: tradeValue } },
+      where: { id: authorId },
+    });
+
+    await prisma.user.update({
+      data: { tickets: { increment: tradeValue } },
+      where: { id },
+    });
+    return message
+      .reply({
+        embed: new MessageEmbed()
+          .setTitle("Transferência bem sucedida.")
+          .setDescription(
+            `${username} transferiu ${tradeValue} 🎟️ para ${awardedName}.`
           )
           .setColor(theme.success),
       })
