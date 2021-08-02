@@ -55,7 +55,7 @@ export class AppDiscord {
     );
 
     // Sistema de pontuações - podium
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("*/5 * * * *", async () => {
       const podiumChannel = await this.clean(client, "863093014234267708");
       const prisma = new PrismaClient();
       const usersData = await prisma.user.findMany({
