@@ -11,7 +11,7 @@ import * as cron from "node-cron";
 import { cleanChannel } from "./utils";
 import { MessageEmbed, TextChannel } from "discord.js";
 import { theme } from "./config";
-import { format } from "date-fns-tz";
+import { format, subHours } from "date-fns";
 import { PrismaClient } from "@prisma/client";
 
 @Discord("=", {
@@ -73,9 +73,10 @@ export class AppDiscord {
           return { ...user, username };
         })
       );
-      const updatedDate = format(new Date(), "dd/MM/yyyy HH:mm:ss", {
-        timeZone: "-0300",
-      });
+      const updatedDate = format(
+        subHours(new Date(), 3),
+        "dd/MM/yyyy HH:mm:ss"
+      );
       await podiumChannel.send({
         embed: new MessageEmbed()
           .setTitle("Ranque")

@@ -3,6 +3,7 @@ import { MessageEmbed } from "discord.js";
 import { theme } from "../config";
 import { AdminGuard, EconomyGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
+import { findDrolhosEmoji } from "../utils";
 
 const category = ":bank: Economia";
 export abstract class EconomyService {
@@ -13,7 +14,7 @@ export abstract class EconomyService {
   })
   async register(message: CommandMessage, client: Client) {
     const prisma = new PrismaClient();
-    const drolhosEmoji = client.emojis.cache.get(theme.drolhos_emoji);
+    const drolhosEmoji = findDrolhosEmoji(message);
     const {
       author: { id },
     } = message;
@@ -49,7 +50,7 @@ export abstract class EconomyService {
   @Guard(EconomyGuard)
   async balance(message: CommandMessage, client: Client, guardDatas: any) {
     const prisma = new PrismaClient();
-    const drolhosEmoji = client.emojis.cache.get(theme.drolhos_emoji);
+    const drolhosEmoji = findDrolhosEmoji(message);
     const {
       author: { id },
     } = message;
@@ -73,7 +74,7 @@ export abstract class EconomyService {
   @Guard(AdminGuard, EconomyGuard)
   async award(message: CommandMessage, client: Client) {
     const prisma = new PrismaClient();
-    const drolhosEmoji = client.emojis.cache.get(theme.drolhos_emoji);
+    const drolhosEmoji = findDrolhosEmoji(message);
     const [, ...args] = message.commandContent.split(" ");
     const { mentions } = message;
     const { id, username: awardedName } = mentions.users.array()[0];
@@ -106,7 +107,7 @@ export abstract class EconomyService {
   @Guard(AdminGuard, EconomyGuard)
   async remove(message: CommandMessage, client: Client) {
     const prisma = new PrismaClient();
-    const drolhosEmoji = client.emojis.cache.get(theme.drolhos_emoji);
+    const drolhosEmoji = findDrolhosEmoji(message);
     const [, ...args] = message.commandContent.split(" ");
     const { mentions } = message;
     const { id, username: awardedName } = mentions.users.array()[0];
@@ -143,7 +144,7 @@ export abstract class EconomyService {
       author: { id: authorId, username },
       mentions: { users: mentionedUsers },
     } = message;
-    const drolhosEmoji = client.emojis.cache.get(theme.drolhos_emoji);
+    const drolhosEmoji = findDrolhosEmoji(message);
     const [, ...args] = message.commandContent.split(" ");
     const { id, username: awardedName } = mentionedUsers.array()[0];
     const tradeValue = Number(args[0]);
