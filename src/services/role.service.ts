@@ -81,7 +81,7 @@ export abstract class RoleService {
         if (reaction.partial) await reaction.fetch();
         if (user.bot) return;
         if (!reaction.message.guild) return;
-        if (reaction.message.channel.id === roleChannel) {
+        if (reaction.message.channel.id === channel.id) {
           if (reaction.emoji.name === emoji) {
             await reaction.message.guild.members.cache
               .get(user.id)
