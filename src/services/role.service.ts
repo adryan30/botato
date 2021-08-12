@@ -131,7 +131,7 @@ export abstract class RoleService {
       emoji: "🎰",
       embedColor: "#151429",
       embedTitle: "Bordel",
-      embedDescription: `Para poder roletar suas waifus, husbandos e pokémons, reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ser avisado quando algum leilão oficial estiver acontecendo e participar de sorteios e eventos relacionados às rolegens.`,
+      embedDescription: `Para poder roletar suas waifus, husbandos e pokémons, reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ser avisado quando algum leilão oficial estiver acontecendo e participar de sorteios e eventos relacionados às rolagens.`,
       embedImage: "https://i.imgur.com/SbR74KF.png",
       footer: "Caso precise de ajuda com o bot use $help.",
     });
