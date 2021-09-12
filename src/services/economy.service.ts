@@ -1,8 +1,8 @@
 import { CommandMessage, Command, Infos, Guard, Client } from "@typeit/discord";
-import { MessageEmbed } from "discord.js";
+import { MessageEmbed, User } from "discord.js";
 import { theme } from "../config";
 import { AdminGuard, EconomyGuard } from "../guards";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { findDrolhosEmoji } from "../utils";
 
 const category = ":bank: Economia";
@@ -50,10 +50,10 @@ export abstract class EconomyService {
     syntax: "=balance <membro?>",
   })
   @Guard(EconomyGuard)
-  async balance(message: CommandMessage, client: Client, guardDatas: any) {
+  async balance(message: CommandMessage, _client: Client, _guardDatas: any) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(message);
-    let searchUser;
+    let searchUser: User;
     const {
       author,
       mentions: { users },
@@ -94,7 +94,7 @@ export abstract class EconomyService {
     syntax: "=award <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
-  async award(message: CommandMessage, client: Client) {
+  async award(message: CommandMessage, _client: Client) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(message);
     const [, ...args] = message.commandContent.split(" ");
@@ -138,7 +138,7 @@ export abstract class EconomyService {
     syntax: "=awardt <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
-  async awardt(message: CommandMessage, client: Client) {
+  async awardt(message: CommandMessage, _: Client) {
     const prisma = new PrismaClient();
     const [, ...args] = message.commandContent.split(" ");
     const { mentions } = message;
@@ -180,7 +180,7 @@ export abstract class EconomyService {
     syntax: "=remove <quantidade> <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
-  async remove(message: CommandMessage, client: Client) {
+  async remove(message: CommandMessage, _: Client) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(message);
     const [, ...args] = message.commandContent.split(" ");
@@ -231,7 +231,7 @@ export abstract class EconomyService {
     syntax: "=removet <quantidade> <membro>",
   })
   @Guard(AdminGuard, EconomyGuard)
-  async removet(message: CommandMessage, client: Client) {
+  async removet(message: CommandMessage, _: Client) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(message);
     const [, ...args] = message.commandContent.split(" ");
@@ -281,7 +281,7 @@ export abstract class EconomyService {
     syntax: "=give <quantidade> <membro>",
   })
   @Guard(EconomyGuard)
-  async give(message: CommandMessage, client: Client) {
+  async give(message: CommandMessage, _: Client) {
     const prisma = new PrismaClient();
     const {
       author: { id: authorId, username },
@@ -336,7 +336,7 @@ export abstract class EconomyService {
     syntax: "=givet <quantidade> <membro>",
   })
   @Guard(EconomyGuard)
-  async givet(message: CommandMessage, client: Client) {
+  async givet(message: CommandMessage, _: Client) {
     const prisma = new PrismaClient();
     const {
       author: { id: authorId, username },
@@ -380,6 +380,31 @@ export abstract class EconomyService {
             `${username} transferiu ${tradeValue} 🎟️ para ${awardedName}.`
           )
           .setColor(theme.success),
+      })
+      .finally(() => prisma.$disconnect());
+  }
+
+  @Command("totalDrolhos")
+  @Infos({
+    category,
+    description: "Lista a quantia total de Drolhoscoins no servidor",
+    syntax: "=totalDrolhos",
+  })
+  async totalDrolhos(message: CommandMessage, _: Client) {
+    const prisma = new PrismaClient();
+    const drolhosEmoji = findDrolhosEmoji(message);
+    const allUsers = await prisma.user.findMany({ select: { balance: true } });
+    const allDrolhos = allUsers.reduce((prev, curr) => {
+      return prev + curr.balance;
+    }, 0);
+    return message
+      .reply({
+        embed: new MessageEmbed()
+          .setTitle("Saldo do servidor")
+          .setDescription(
+            `Atualmente, todas as carteiras no servidor possuem ${allDrolhos} ${drolhosEmoji} no total.`
+          )
+          .setColor(theme.default),
       })
       .finally(() => prisma.$disconnect());
   }

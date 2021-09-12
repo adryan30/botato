@@ -62,6 +62,7 @@ export class AppDiscord {
       const prisma = new PrismaClient();
       const usersData = await prisma.user.findMany({
         orderBy: { balance: "desc" },
+        select: { balance: true, id: true },
       });
       const { members } = await client.guilds.fetch(process.env.GUILD_ID);
       const leaderboards = await Promise.all(
