@@ -1,0 +1,17 @@
+version: "3.1"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: botato
+      POSTGRES_PASSWORD: botato
+      POSTGRES_DB: botato
+    ports:
+      - 5432:5432
+  bot:
+    dockerfile: Dockerfile.prod
+    restart: always
+    ports:
+      - 3000:3000
