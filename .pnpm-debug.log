@@ -1,0 +1,22 @@
+{
+  "0 debug pnpm:scope": {
+    "selected": 1
+  },
+  "1 error pnpm": {
+    "code": "ELIFECYCLE",
+    "errno": "ENOENT",
+    "syscall": "spawn",
+    "file": "sh",
+    "pkgid": "botato@1.0.0",
+    "stage": "start:dev",
+    "script": "prisma migrate dev && nodemon --watch src -e js,ts --exec 'yarn build && yarn start'",
+    "pkgname": "botato",
+    "err": {
+      "name": "pnpm",
+      "message": "botato@1.0.0 start:dev: `prisma migrate dev && nodemon --watch src -e js,ts --exec 'yarn build && yarn start'`\nspawn ENOENT",
+      "code": "ELIFECYCLE",
+      "stack": "pnpm: botato@1.0.0 start:dev: `prisma migrate dev && nodemon --watch src -e js,ts --exec 'yarn build && yarn start'`\nspawn ENOENT\n    at ChildProcess.<anonymous> (/usr/local/lib/node_modules/pnpm/dist/pnpm.cjs:92871:22)\n    at ChildProcess.emit (events.js:314:20)\n    at maybeClose (internal/child_process.js:1022:16)\n    at Process.ChildProcess._handle.onexit (internal/child_process.js:287:5)"
+    }
+  },
+  "2 warn pnpm:global": " Local package.json exists, but node_modules missing, did you mean to install?"
+}
