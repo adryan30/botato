@@ -1,5 +1,5 @@
 import { Command, Infos, CommandMessage } from "@typeit/discord";
-import ytdl from "ytdl-core-discord";
+import ytdl from "ytdl-core";
 import { theme } from "../config";
 
 const category = ":musical_note: Música";
@@ -26,7 +26,7 @@ export abstract class MusicService {
     };
     const connection = await voiceChannel.join();
     const dispatcher = connection
-      .play(await ytdl(song.url), { type: "opus" })
+      .play(ytdl(song.url))
       .on("finish", () => {
         console.log("Song Finished");
         voiceChannel.leave();
