@@ -19,14 +19,14 @@ export abstract class MusicService {
         "You need to be in a voice channel to play music!"
       );
     }
-    const songInfo = await ytdl.getInfo(songUrl);
-    const song = {
-      title: songInfo.videoDetails.title,
-      url: songInfo.videoDetails.video_url,
-    };
+    // const songInfo = await ytdl.getInfo(songUrl);
+    // const song = {
+    //   title: songInfo.videoDetails.title,
+    //   url: songInfo.videoDetails.video_url,
+    // };
     const connection = await voiceChannel.join();
     const dispatcher = connection
-      .play(ytdl(song.url))
+      .play(ytdl(songUrl))
       .on("finish", () => {
         console.log("Song Finished");
         voiceChannel.leave();
