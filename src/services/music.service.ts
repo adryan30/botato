@@ -18,6 +18,7 @@ export abstract class MusicService {
   })
   async play(message: CommandMessage) {
     const [, ...args] = message.commandContent.split(" ");
+    console.log({ cookie: process.env.YT_COOKIE, 'x-youtube-identity-token': process.env.YT_ID })
     const songUrl = args[0];
     const voiceChannel = message.member.voice.channel;
     if (!voiceChannel) {
