@@ -2,12 +2,6 @@ import { Command, Infos, CommandMessage } from "@typeit/discord";
 import ytdl from "ytdl-core";
 import { theme } from "../config";
 
-const requestOptions = {
-  headers: {
-    cookie: process.env.YT_COOKIE,
-    'x-youtube-identity-token': process.env.YT_ID,
-  },
-}
 const category = ":musical_note: Música";
 export abstract class MusicService {
   @Command("play")
@@ -18,7 +12,6 @@ export abstract class MusicService {
   })
   async play(message: CommandMessage) {
     const [, ...args] = message.commandContent.split(" ");
-    console.log({ cookie: process.env.YT_COOKIE, 'x-youtube-identity-token': process.env.YT_ID })
     const songUrl = args[0];
     const voiceChannel = message.member.voice.channel;
     if (!voiceChannel) {
@@ -33,7 +26,7 @@ export abstract class MusicService {
     // };
     const connection = await voiceChannel.join();
     const dispatcher = connection
-      .play(ytdl(songUrl, { requestOptions }))
+      .play(ytdl(songUrl))
       .on("finish", () => {
         console.log("Song Finished");
         voiceChannel.leave();
