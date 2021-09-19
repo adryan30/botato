@@ -189,7 +189,11 @@ export abstract class MusicService {
   @Rules(Rule("q"))
   async queue(message: CommandMessage) {
     const serverQueue = this.queueMap.get(message.guild.id);
-    if (!serverQueue || !serverQueue.songs.length) {
+    if (
+      !serverQueue ||
+      !serverQueue.songs.length ||
+      !(serverQueue.songs.length - 1)
+    ) {
       await message.channel.send({
         embed: new MessageEmbed({
           title: "Erro!",
