@@ -1,4 +1,11 @@
-import { Command, Infos, CommandMessage, Guard } from "@typeit/discord";
+import {
+  Command,
+  Infos,
+  CommandMessage,
+  Guard,
+  Rules,
+  Rule,
+} from "@typeit/discord";
 import {
   Client,
   Guild,
@@ -25,6 +32,7 @@ export abstract class MusicService {
     description: "Toca músicas no canal que você estiver.",
     syntax: "=play <youtube>",
   })
+  @Rules(Rule("p"))
   async music(
     message: CommandMessage,
     _client: Client,
@@ -125,6 +133,7 @@ export abstract class MusicService {
 
   @Command("leave")
   @Guard(MusicGuard)
+  @Rules(Rule("l"))
   @Infos({
     category,
     description: "Faz o bot sair do canal que estiver.",
@@ -149,6 +158,7 @@ export abstract class MusicService {
 
   @Command("skip")
   @Guard(MusicGuard)
+  @Rules(Rule("fs"))
   @Infos({
     category,
     description: "Pula a música atual do bot.",
@@ -176,6 +186,7 @@ export abstract class MusicService {
     description: "Mostra a fila atual do bot",
     syntax: "=queue",
   })
+  @Rules(Rule("q"))
   async queue(message: CommandMessage) {
     const serverQueue = this.queueMap.get(message.guild.id);
     if (!serverQueue || !serverQueue.songs.length) {
