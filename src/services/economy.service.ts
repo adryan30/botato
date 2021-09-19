@@ -128,7 +128,10 @@ export abstract class EconomyService {
           )
           .setColor(theme.success),
       })
-      .finally(() => prisma.$disconnect());
+      .finally(() => {
+        message.delete();
+        prisma.$disconnect();
+      });
   }
 
   @Command("awardt")
@@ -170,7 +173,10 @@ export abstract class EconomyService {
           color: theme.success,
         }),
       })
-      .finally(() => prisma.$disconnect());
+      .finally(() => {
+        message.delete();
+        prisma.$disconnect();
+      });
   }
 
   @Command("remove")
