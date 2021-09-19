@@ -79,7 +79,7 @@ export abstract class MusicService {
             { name: "Duração", value: `\`${duration}\`` },
             {
               name: "Posição na fila",
-              value: `\`${serverQueue.songs.length}\``,
+              value: `\`${serverQueue.songs.length - 1}\``,
             },
           ],
         }),
@@ -96,7 +96,10 @@ export abstract class MusicService {
       }, 5 * 60 * 1000);
       return;
     }
-    if (serverQueue.timeout) clearTimeout(serverQueue.timeout);
+    if (serverQueue.timeout) {
+      clearTimeout(serverQueue.timeout);
+      serverQueue.timeout = null;
+    }
 
     const dispatcher = serverQueue.connection
       .play(await ytdl(song.link), { type: "opus" })
@@ -175,8 +178,18 @@ export abstract class MusicService {
   })
   async queue(message: CommandMessage) {
     const serverQueue = this.queueMap.get(message.guild.id);
+    if (!serverQueue || !serverQueue.songs.length) {
+      await message.channel.send({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: "Não há fila para mostrar...",
+          color: theme.error,
+        }),
+      });
+      return;
+    }
     const { songs } = serverQueue;
-    const songsString = songs.map((song, index) => {
+    const songsString = songs.slice(1).map((song, index) => {
       return `\`${index + 1}.\`  [${song.title}](${song.link}) | \`${
         song.duration
       } Pedido por ${song.requested_by}\``;
