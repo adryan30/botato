@@ -18,8 +18,7 @@ jobs:
         script: |
           cd /root/botato
           git fetch && git pull
-          source /root/.bashrc
-          npm install
-          npx prisma migrate deploy
-          npm run build
-          pm2 restart Botato
+          /root/.nvm/versions/node/v12.22.6/bin/npm install
+          /root/.nvm/versions/node/v12.22.6/bin/npx prisma migrate deploy
+          /root/.nvm/versions/node/v12.22.6/bin/npm run build
+          /root/.nvm/versions/node/v12.22.6/bin/pm2 restart Botato
