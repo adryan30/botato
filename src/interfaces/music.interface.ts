@@ -13,4 +13,5 @@ export interface Queue {
   songs: BotSongInfo[];
   volume: number;
   playing: boolean;
+  timeout?: NodeJS.Timeout;
 }

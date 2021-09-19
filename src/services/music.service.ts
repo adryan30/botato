@@ -15,7 +15,7 @@ import { addSeconds, format } from "date-fns";
 
 const category = ":musical_note: Música";
 export abstract class MusicService {
-  queue = new Map<String, Queue>();
+  queueMap = new Map<String, Queue>();
   searchOpts = { maxResults: 1, key: process.env.YOUTUBE_TOKEN };
 
   @Command("play")
@@ -41,7 +41,7 @@ export abstract class MusicService {
     const requested_by = message.author.username;
     const songPayload = { ...song, duration, requested_by };
 
-    const serverQueue = this.queue.get(message.guild.id);
+    const serverQueue = this.queueMap.get(message.guild.id);
     if (!serverQueue) {
       const queueContract = this.createContract(message, voiceChannel);
       queueContract.songs.push(songPayload);
@@ -52,7 +52,7 @@ export abstract class MusicService {
         this.play(message.guild, queueContract.songs[0]);
       } catch (err) {
         console.log(err);
-        this.queue.delete(message.guild.id);
+        this.queueMap.delete(message.guild.id);
         return message.channel.send({
           embed: new MessageEmbed({
             title: "Erro!",
@@ -88,12 +88,15 @@ export abstract class MusicService {
   }
 
   async play(guild: Guild, song: BotSongInfo) {
-    const serverQueue = this.queue.get(guild.id);
+    const serverQueue = this.queueMap.get(guild.id);
     if (!song) {
-      serverQueue.voiceChannel.leave();
-      this.queue.delete(guild.id);
+      serverQueue.timeout = setTimeout(() => {
+        serverQueue.voiceChannel.leave();
+        this.queueMap.delete(guild.id);
+      }, 5 * 60 * 1000);
       return;
     }
+    if (serverQueue.timeout) clearTimeout(serverQueue.timeout);
 
     const dispatcher = serverQueue.connection
       .play(await ytdl(song.link), { type: "opus" })
@@ -125,7 +128,7 @@ export abstract class MusicService {
     syntax: "=leave",
   })
   async leave(message: CommandMessage) {
-    const serverQueue = this.queue.get(message.guild.id);
+    const serverQueue = this.queueMap.get(message.guild.id);
 
     if (!serverQueue) {
       return message.channel.send({
@@ -149,7 +152,7 @@ export abstract class MusicService {
     syntax: "=skip",
   })
   async skip(message: CommandMessage) {
-    const serverQueue = this.queue.get(message.guild.id);
+    const serverQueue = this.queueMap.get(message.guild.id);
     if (!serverQueue) {
       return message.channel.send({
         embed: new MessageEmbed({
@@ -161,6 +164,35 @@ export abstract class MusicService {
     }
     serverQueue.connection.dispatcher.end();
     message.channel.send(":fast_forward: **_Pulei_** :thumbsup:");
+  }
+
+  @Command("queue")
+  @Guard(MusicGuard)
+  @Infos({
+    category,
+    description: "Mostra a fila atual do bot",
+    syntax: "=queue",
+  })
+  async queue(message: CommandMessage) {
+    const serverQueue = this.queueMap.get(message.guild.id);
+    const { songs } = serverQueue;
+    const songsString = songs.map((song, index) => {
+      return `\`${index + 1}.\`  [${song.title}](${song.link}) | \`${
+        song.duration
+      } Pedido por ${song.requested_by}\``;
+    });
+
+    return message.channel.send({
+      embed: new MessageEmbed({
+        title: "Fila",
+        fields: [
+          {
+            name: ":arrow_down: Próximas :arrow_down: ",
+            value: songsString.join("\n"),
+          },
+        ],
+      }),
+    });
   }
 
   async searchSong(
@@ -186,8 +218,9 @@ export abstract class MusicService {
       songs: [],
       volume: 5,
       playing: true,
+      timeout: null,
     };
-    this.queue.set(message.guild.id, queueContract);
+    this.queueMap.set(message.guild.id, queueContract);
     return queueContract;
   }
 }
