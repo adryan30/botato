@@ -90,11 +90,9 @@ export abstract class MusicService {
   async play(guild: Guild, song: BotSongInfo) {
     const serverQueue = this.queue.get(guild.id);
     if (!song) {
-      setTimeout(() => {
-        serverQueue.voiceChannel.leave();
-        this.queue.delete(guild.id);
-        return;
-      }, 600);
+      serverQueue.voiceChannel.leave();
+      this.queue.delete(guild.id);
+      return;
     }
 
     const dispatcher = serverQueue.connection
