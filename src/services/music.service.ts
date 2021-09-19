@@ -32,7 +32,7 @@ export abstract class MusicService {
     description: "Toca músicas no canal que você estiver.",
     syntax: "=play <youtube>",
   })
-  @Rules(Rule("p"))
+  @Rules(Rule("p").haveSpaceAfter())
   async music(
     message: CommandMessage,
     _client: Client,
@@ -133,7 +133,7 @@ export abstract class MusicService {
 
   @Command("leave")
   @Guard(MusicGuard)
-  @Rules(Rule("l"))
+  @Rules(Rule("l").haveSpaceAfter())
   @Infos({
     category,
     description: "Faz o bot sair do canal que estiver.",
@@ -158,7 +158,7 @@ export abstract class MusicService {
 
   @Command("skip")
   @Guard(MusicGuard)
-  @Rules(Rule("fs"))
+  @Rules(Rule("fs").haveSpaceAfter())
   @Infos({
     category,
     description: "Pula a música atual do bot.",
@@ -186,7 +186,7 @@ export abstract class MusicService {
     description: "Mostra a fila atual do bot",
     syntax: "=queue",
   })
-  @Rules(Rule("q"))
+  @Rules(Rule("q").haveSpaceAfter())
   async queue(message: CommandMessage) {
     const serverQueue = this.queueMap.get(message.guild.id);
     if (
