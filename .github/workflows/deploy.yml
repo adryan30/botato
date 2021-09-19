@@ -18,7 +18,7 @@ jobs:
         script: |
           cd /root/botato
           git fetch && git pull
-          nvm use 12
+          source /root/.bashrc
           npm install
           npx prisma migrate deploy
           npm run build
