@@ -9,10 +9,16 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-    - name: Execute 
+    - name: Execute ssh commands 
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
         key: ${{secrets.SSH_KEY}}
         username: ${{ secrets.SSH_USERNAME }}
-        script: whoami
+        script: |
+          cd /root/botato
+          git fetch && git pull
+          npm install
+          npx prisma migrate deploy
+          npm run build
+          pm2 restart Botato
