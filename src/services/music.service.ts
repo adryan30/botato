@@ -98,16 +98,14 @@ export abstract class MusicService {
   async play(guild: Guild, song: BotSongInfo) {
     const serverQueue = this.queueMap.get(guild.id);
     if (!song) {
-      serverQueue.timeout = setTimeout(() => {
-        serverQueue.voiceChannel.leave();
-        this.queueMap.delete(guild.id);
-      }, 5 * 60 * 1000);
+      serverQueue.voiceChannel.leave();
+      this.queueMap.delete(guild.id);
       return;
     }
-    if (serverQueue.timeout) {
+    /*if (serverQueue.timeout) {
       clearTimeout(serverQueue.timeout);
       serverQueue.timeout = null;
-    }
+    }*/
 
     const dispatcher = serverQueue.connection
       .play(await ytdl(song.link), { type: "opus" })
