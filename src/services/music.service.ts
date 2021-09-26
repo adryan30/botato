@@ -1,25 +1,8 @@
-import {
-  Command,
-  Infos,
-  CommandMessage,
-  Guard,
-  Rules,
-  Rule,
-} from "@typeit/discord";
-import {
-  Client,
-  Guild,
-  MessageEmbed,
-  TextChannel,
-  VoiceChannel,
-} from "discord.js";
+import { Command, CommandMessage, Guard } from "@typeit/discord";
+import { MessageEmbed } from "discord.js";
 import { theme } from "../config";
 import { MusicGuard, MusicPermissionGuard } from "../guards/music.guard";
-import { BotSongInfo, YtSearch } from "../interfaces/music.interface";
-import { addSeconds, compareAsc, format } from "date-fns";
-import { manager, queues } from "../index";
-import { URLSearchParams } from "url";
-import axios from "axios";
+import { queues } from "../index";
 import Queue from "../structures/queue";
 import msToHMS from "../utils/msToHMS";
 
@@ -46,8 +29,8 @@ export abstract class MusicService {
       );
     }
 
-    const [song] = await queues[message.guild.id].search(args.join(" "));
-    if (!song) {
+    const searchInfo = await queues[message.guild.id].search(args.join(" "));
+    if (!searchInfo.tracks.length) {
       return message.channel.send({
         embed: new MessageEmbed({
           title: "Erro!",
@@ -57,11 +40,31 @@ export abstract class MusicService {
       });
     }
 
-    const isAdded = await queues[message.guild.id].play(song);
-    if (isAdded) {
-      message.channel.send({
+    const [isAdded, type] = await queues[message.guild.id].play(searchInfo);
+    if (type === "PLAYLIST_LOADED") {
+      await message.channel.send({
         embed: new MessageEmbed({
-          title: `:musical_note: Tocando Agora: [${song.info.title}](${song.info.uri}).`,
+          title: `:musical_note: Playlist adicionada:  ${searchInfo.playlistInfo.name}.`,
+          fields: [
+            {
+              inline: true,
+              name: "Duração",
+              value: msToHMS(
+                searchInfo.tracks
+                  .map((track) => track.info.length)
+                  .reduce((acc, curr) => acc + curr)
+              ),
+            },
+          ],
+          color: theme.default,
+        }),
+      });
+    }
+    if (isAdded) {
+      const song = searchInfo.tracks[0];
+      return message.channel.send({
+        embed: new MessageEmbed({
+          title: `:musical_note: Adicionado a fila: [${song.info.title}](${song.info.uri}).`,
           fields: [
             { inline: true, name: "Autor", value: song.info.author },
             {
@@ -159,7 +162,7 @@ export abstract class MusicService {
     }
 
     const allSongs = await queues[message.guild.id].search(args.join(" "));
-    const songs = allSongs.slice(0, 5);
+    const songs = allSongs.tracks.slice(0, 5);
 
     const options = songs.map(
       (song, index) =>
@@ -192,7 +195,10 @@ export abstract class MusicService {
     }
     const song = songs[parseInt(chosenSong) - 1];
 
-    const isAdded = await queues[message.guild.id].play(song);
+    const isAdded = await queues[message.guild.id].play(
+      allSongs,
+      parseInt(chosenSong) - 1
+    );
     if (isAdded) {
       message.channel.send({
         embed: new MessageEmbed({
@@ -214,7 +220,6 @@ export abstract class MusicService {
   @Command("skip")
   @Guard(MusicGuard)
   async skip(message: CommandMessage) {
-    const [, ...args] = message.commandContent.split(" ");
     if (!queues[message.guild.id]) {
       queues[message.guild.id] = new Queue(
         message.guild.id,
@@ -224,5 +229,18 @@ export abstract class MusicService {
     }
 
     queues[message.guild.id]._playNext();
+  }
+
+  @Command("leave")
+  @Guard(MusicGuard)
+  async leave(message: CommandMessage) {
+    if (!queues[message.guild.id]) {
+      queues[message.guild.id] = new Queue(
+        message.guild.id,
+        message.member.voice.channel.id,
+        message.channel
+      );
+    }
+    await queues[message.guild.id].leave();
   }
 }

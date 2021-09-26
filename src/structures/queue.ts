@@ -4,6 +4,7 @@ import { MessageEmbed, TextChannel } from "discord.js";
 import msToHMS from "../utils/msToHMS";
 import { theme } from "../config";
 import { Player } from "lavacord";
+import { SearchInfo } from "../interfaces/music.interface";
 
 const urlRegex = new RegExp(
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g
@@ -28,7 +29,7 @@ export default class Queue {
     this.currentlyPlaying = null;
   }
 
-  async search(searchTerm: string) {
+  async search(searchTerm: string): Promise<SearchInfo> {
     const node = manager.idealNodes[0];
 
     const params = new URLSearchParams();
@@ -44,17 +45,31 @@ export default class Queue {
       }
     );
 
-    return data.data.tracks ?? [];
+    return data.data ?? [];
   }
 
-  async play(track) {
-    this.queue.push(track);
+  async play(searchInfo: SearchInfo, index?: number) {
+    switch (searchInfo.loadType) {
+      case "PLAYLIST_LOADED":
+        this.queue.push(...searchInfo.tracks);
+        break;
+      case "SEARCH_RESULT":
+        if (index) {
+          this.queue.push(searchInfo.tracks[index]);
+          break;
+        }
+        this.queue.push(searchInfo.tracks[0]);
+        break;
+      default:
+        this.queue.push(searchInfo.tracks[0]);
+        break;
+    }
 
     if (!this.currentlyPlaying) {
       this._playNext();
-      return false;
+      return [false, searchInfo.loadType];
     } else {
-      return true;
+      return [true, searchInfo.loadType];
     }
   }
 
@@ -65,7 +80,13 @@ export default class Queue {
       this.player = null;
       this.currentlyPlaying = null;
       await manager.leave(this.guildId);
-      this.textChannel.send("Toquei tudo da fila...");
+      this.textChannel.send({
+        embed: new MessageEmbed({
+          title: "Fim da fila",
+          description: "A fila acabou... :/",
+          color: theme.default,
+        }),
+      });
       return;
     }
 
@@ -97,5 +118,10 @@ export default class Queue {
     }
 
     await this.player.play(nextSong.track);
+  }
+
+  async leave() {
+    this.queue = [];
+    this._playNext();
   }
 }
