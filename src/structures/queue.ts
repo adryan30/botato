@@ -60,7 +60,7 @@ export default class Queue {
 
   async _playNext() {
     const nextSong = this.queue.shift();
-    this.currentlyPlaying = true;
+    this.currentlyPlaying = nextSong;
     if (!nextSong) {
       this.player = null;
       this.currentlyPlaying = null;

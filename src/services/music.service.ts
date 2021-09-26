@@ -61,7 +61,7 @@ export abstract class MusicService {
     if (isAdded) {
       message.channel.send({
         embed: new MessageEmbed({
-          title: `:musical_note: Tocando Agora: [${song.info.title}](${song.info.url}).`,
+          title: `:musical_note: Tocando Agora: [${song.info.title}](${song.info.uri}).`,
           fields: [
             { inline: true, name: "Autor", value: song.info.author },
             {
@@ -123,7 +123,7 @@ export abstract class MusicService {
 
     return message.channel.send({
       embed: new MessageEmbed({
-        title: `:musical_note: Tocando Agora: [${song.info.title}](${song.info.url}).`,
+        title: `:musical_note: Tocando Agora: [${song.info.title}](${song.info.uri}).`,
         fields: [
           { inline: true, name: "Autor", value: song.info.author },
           {
