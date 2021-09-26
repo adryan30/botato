@@ -7,7 +7,7 @@ import { SearchInfo, Track } from "../interfaces/music.interface";
 import { msToHMS, shuffleArray } from "../utils";
 
 const urlRegex = new RegExp(
-  /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g
+  /^https?:\/\/((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i
 );
 
 export default class Queue {
@@ -124,8 +124,8 @@ export default class Queue {
   }
 
   async leave() {
-    this.queue = [];
-    this._playNext();
+    manager.leave(this.guildId);
+    this.player.destroy();
   }
 
   async pause() {

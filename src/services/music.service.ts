@@ -23,7 +23,11 @@ export abstract class MusicService {
         }),
       });
     }
-    if (!queues[message.guild.id]) {
+    const queue = queues[message.guild.id];
+    if (queue && queue.channelId !== message.member.voice.channel.id) {
+      queue.leave();
+    }
+    if (!queue) {
       queues[message.guild.id] = new Queue(
         message.guild.id,
         message.member.voice.channel.id,
@@ -262,6 +266,8 @@ export abstract class MusicService {
       });
     }
     await queues[message.guild.id].leave();
+    queues[message.guild.id] = undefined;
+    message.react("✅");
   }
 
   @Command("pause")
