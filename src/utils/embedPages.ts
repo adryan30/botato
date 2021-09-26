@@ -4,6 +4,7 @@ interface ConstructorParams {
   duration?: number;
   restricted?: Array<Snowflake> | Snowflake | Function;
   pageFooter?: boolean;
+  isHelp?: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ export class DiscordEmbedPages {
   restricted: Array<Snowflake> | Snowflake | Function;
   pageFooter: boolean;
   msg: Message;
+  isHelp: boolean;
   private currentPageNumber: number;
 
   /**
@@ -32,7 +34,12 @@ export class DiscordEmbedPages {
   constructor(
     pages: MessageEmbed[],
     channel: TextChannel,
-    { duration = 60000, restricted, pageFooter = true }: ConstructorParams
+    {
+      duration = 60000,
+      restricted,
+      pageFooter = true,
+      isHelp = true,
+    }: ConstructorParams
   ) {
     /**
      * List of pages for the embed pages.
@@ -69,6 +76,8 @@ export class DiscordEmbedPages {
      * @type {Number}
      */
     this.currentPageNumber = 0;
+
+    this.isHelp = isHelp;
   }
 
   /**
@@ -80,7 +89,9 @@ export class DiscordEmbedPages {
         "Tried to create embed pages with no pages in the pages array."
       );
     if (this.pageFooter)
-      this.pages[0].setFooter(`Página: 1/${this.pages.length} - ?: Opcional`);
+      this.pages[0].setFooter(
+        `Página: 1/${this.pages.length}${this.isHelp ? " - ?: Opcional" : ""}`
+      );
     this.channel.send({ embed: this.pages[0] }).then((msg) => {
       this.msg = msg;
       msg.react("◀️").catch(() => null);
@@ -147,9 +158,9 @@ export class DiscordEmbedPages {
     const embed = this.pages[this.currentPageNumber];
     if (this.pageFooter)
       embed.setFooter(
-        `Página: ${this.currentPageNumber + 1}/${
-          this.pages.length
-        } - ?: Opcional`
+        `Página: ${this.currentPageNumber + 1}/${this.pages.length}${
+          this.isHelp ? " - ?: Opcional" : ""
+        }`
       );
     this.msg.edit({ embed: embed }).catch(() => null);
   }
@@ -168,9 +179,9 @@ export class DiscordEmbedPages {
     const embed = this.pages[this.currentPageNumber];
     if (this.pageFooter)
       embed.setFooter(
-        `Página: ${this.currentPageNumber + 1}/${
-          this.pages.length
-        } - ?: Opcional`
+        `Página: ${this.currentPageNumber + 1}/${this.pages.length}${
+          this.isHelp ? " - ?: Opcional" : ""
+        }`
       );
     this.msg.edit({ embed: embed }).catch(() => null);
   }
@@ -190,9 +201,9 @@ export class DiscordEmbedPages {
     const embed = this.pages[this.currentPageNumber];
     if (this.pageFooter)
       embed.setFooter(
-        `Página: ${this.currentPageNumber + 1}/${
-          this.pages.length
-        } - ?: Opcional`
+        `Página: ${this.currentPageNumber + 1}/${this.pages.length}${
+          this.isHelp ? " - ?: Opcional" : ""
+        }`
       );
     this.msg.edit({ embed: embed }).catch(() => null);
   }

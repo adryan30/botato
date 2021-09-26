@@ -1,10 +1,12 @@
 import { Command, CommandMessage, Guard } from "@typeit/discord";
-import { MessageEmbed } from "discord.js";
+import { ms } from "date-fns/locale";
+import { MessageEmbed, TextChannel } from "discord.js";
 import { theme } from "../config";
 import { MusicGuard, MusicPermissionGuard } from "../guards/music.guard";
 import { queues } from "../index";
+import { Track } from "../interfaces/music.interface";
 import Queue from "../structures/queue";
-import msToHMS from "../utils/msToHMS";
+import { DiscordEmbedPages, msToHMS, spliceIntoChunks } from "../utils";
 
 const category = ":musical_note: Música";
 export abstract class MusicService {
@@ -12,7 +14,7 @@ export abstract class MusicService {
   @Guard(MusicGuard)
   async play(message: CommandMessage) {
     const [, ...args] = message.commandContent.split(" ");
-    if (!args) {
+    if (!args.length) {
       return message.channel.send({
         embed: new MessageEmbed({
           title: "Uso do comando Play",
@@ -82,7 +84,8 @@ export abstract class MusicService {
   @Command("queue")
   @Guard(MusicGuard)
   async queue(message: CommandMessage) {
-    if (!queues[message.guild.id] || !queues[message.guild.id].queue.length) {
+    const channel = message.channel;
+    if (!queues[message.guild.id]) {
       return message.channel.send({
         embed: new MessageEmbed({
           title: "Erro!",
@@ -94,19 +97,34 @@ export abstract class MusicService {
 
     const next = queues[message.guild.id].queue;
 
-    const text = next.map(
-      (song, index) =>
-        `${++index}) ${song.info.title} - ${song.info.author} - ${msToHMS(
-          song.info.length
-        )}`
-    );
+    if (next.length) {
+      const chunks: Track[][] = spliceIntoChunks(next, 10);
+      const pages = chunks.map((chunk, page) => {
+        return new MessageEmbed({
+          title: "📜 Fila",
+          color: theme.default,
+          fields: chunk.map(({ info: { title, author, length } }, index) => {
+            return {
+              name: `${++index + page * 10}) ${title} - ${author}`,
+              value: `Duração: \`${msToHMS(length)}\``,
+            };
+          }),
+        });
+      });
 
-    return message.channel.send({
-      embed: new MessageEmbed({
-        title: "📜 Lista",
-        description: `\`\`\`\n${text.join("\n") ?? "Nada na fila...\n"}\`\`\``,
-      }),
-    });
+      if (!((c): c is TextChannel => c.type === "text")(channel)) return;
+      const embedPages = new DiscordEmbedPages(pages, channel, {
+        isHelp: false,
+      });
+      embedPages.createPages();
+    } else {
+      return message.channel.send({
+        embed: new MessageEmbed({
+          title: "📜 Fila",
+          description: "Nada na fila...\n",
+        }),
+      });
+    }
   }
 
   @Command("np")
@@ -144,11 +162,11 @@ export abstract class MusicService {
   @Guard(MusicGuard)
   async search(message: CommandMessage) {
     const [, ...args] = message.commandContent.split(" ");
-    if (!args) {
+    if (!args.length) {
       return message.channel.send({
         embed: new MessageEmbed({
-          title: "Uso do comando Play",
-          description: "=play <ULR/Nome da música>",
+          title: "Uso do comando Search",
+          description: "=search <termo de busca>",
           color: theme.default,
         }),
       });
@@ -235,12 +253,33 @@ export abstract class MusicService {
   @Guard(MusicGuard)
   async leave(message: CommandMessage) {
     if (!queues[message.guild.id]) {
-      queues[message.guild.id] = new Queue(
-        message.guild.id,
-        message.member.voice.channel.id,
-        message.channel
-      );
+      return message.channel.send({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: "Não existe uma fila para esse servidor...",
+          color: theme.error,
+        }),
+      });
     }
     await queues[message.guild.id].leave();
+  }
+
+  @Command("pause")
+  @Guard(MusicGuard)
+  async pause(message: CommandMessage) {
+    const queue = queues[message.guild.id];
+    if (!queue) {
+      return message.channel.send({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: "Não existe uma fila para esse servidor...",
+          color: theme.error,
+        }),
+      });
+    }
+    await queue.pause();
+    return message.channel.send(
+      `${!queue.player.paused ? "Pausado ⏸" : "Despausado ▶️"}`
+    );
   }
 }

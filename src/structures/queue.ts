@@ -1,10 +1,10 @@
 import { manager } from "..";
 import axios from "axios";
 import { MessageEmbed, TextChannel } from "discord.js";
-import msToHMS from "../utils/msToHMS";
 import { theme } from "../config";
 import { Player } from "lavacord";
-import { SearchInfo } from "../interfaces/music.interface";
+import { SearchInfo, Track } from "../interfaces/music.interface";
+import { msToHMS, shuffleArray } from "../utils";
 
 const urlRegex = new RegExp(
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g
@@ -15,7 +15,7 @@ export default class Queue {
   channelId: string;
   textChannel: TextChannel;
 
-  queue: Array<any>;
+  queue: Array<Track>;
   player: Player;
   currentlyPlaying: any;
 
@@ -92,7 +92,7 @@ export default class Queue {
 
     this.textChannel.send({
       embed: new MessageEmbed({
-        title: `:musical_note: Tocando Agora: ${nextSong.info.title}`,
+        title: `🎵 Tocando Agora: ${nextSong.info.title}`,
         fields: [
           { inline: true, name: "Autor", value: nextSong.info.author },
           {
@@ -106,11 +106,14 @@ export default class Queue {
     });
 
     if (!this.player) {
-      this.player = await manager.join({
-        guild: this.guildId,
-        channel: this.channelId,
-        node: manager.idealNodes[0].id,
-      });
+      this.player = await manager.join(
+        {
+          guild: this.guildId,
+          channel: this.channelId,
+          node: manager.idealNodes[0].id,
+        },
+        { selfdeaf: true }
+      );
       this.player.on("end", (data) => {
         if (data.reason === "REPLACED" || data.reason === "STOPPED") return;
         this._playNext();
@@ -123,5 +126,9 @@ export default class Queue {
   async leave() {
     this.queue = [];
     this._playNext();
+  }
+
+  async pause() {
+    this.player.pause(!this.player.paused);
   }
 }
