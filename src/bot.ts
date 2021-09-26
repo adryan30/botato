@@ -13,6 +13,7 @@ import { MessageEmbed, TextChannel } from "discord.js";
 import { theme } from "./config";
 import { format, subHours } from "date-fns";
 import { PrismaClient } from "@prisma/client";
+import { manager } from ".";
 
 @Discord("=", {
   import: [Path.join(__dirname, "services", "*.service.js")],
@@ -36,6 +37,20 @@ export class AppDiscord {
   @On("ready")
   async ready([_]: ArgsOf<"message">, client: Client) {
     console.log("Bot iniciado com sucesso!");
+
+    manager
+      .connect()
+      .then((success) => {
+        console.log(
+          `Connected to ${
+            success.filter((ws) => ws != null).length
+          } lavalink nodes.`
+        );
+      })
+      .catch((err) => {
+        console.error(`Error connecting to lavalink`, err);
+        process.exit(1);
+      });
 
     // Limpeza - magias-de-comando
     cron.schedule(
