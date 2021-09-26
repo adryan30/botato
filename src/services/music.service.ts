@@ -13,238 +13,216 @@ import {
   TextChannel,
   VoiceChannel,
 } from "discord.js";
-import ytdl from "ytdl-core-discord";
-import ytsearch = require("youtube-search");
 import { theme } from "../config";
 import { MusicGuard, MusicPermissionGuard } from "../guards/music.guard";
-import { BotSongInfo, Queue } from "../interfaces/music.interface";
-import { addSeconds, format } from "date-fns";
+import { BotSongInfo, YtSearch } from "../interfaces/music.interface";
+import { addSeconds, compareAsc, format } from "date-fns";
+import { manager, queues } from "../index";
+import { URLSearchParams } from "url";
+import axios from "axios";
+import Queue from "../structures/queue";
+import msToHMS from "../utils/msToHMS";
 
 const category = ":musical_note: Música";
 export abstract class MusicService {
-  queueMap = new Map<String, Queue>();
-  searchOpts = { maxResults: 1, key: process.env.YOUTUBE_TOKEN };
-
   @Command("play")
-  @Guard(MusicGuard, MusicPermissionGuard)
-  @Infos({
-    category,
-    description: "Toca músicas no canal que você estiver.",
-    syntax: "=play <youtube>",
-  })
-  @Rules(Rule("p").haveSpaceAfter())
-  async music(
-    message: CommandMessage,
-    _client: Client,
-    guardDatas: { voiceChannel: VoiceChannel }
-  ) {
-    const voiceChannel = guardDatas.voiceChannel;
+  @Guard(MusicGuard)
+  async play(message: CommandMessage) {
     const [, ...args] = message.commandContent.split(" ");
-    const [song] = await this.searchSong(message, args.join(" "));
-    const { videoDetails } = await ytdl.getInfo(song.link);
-    const duration = format(
-      addSeconds(new Date(0), Number(videoDetails.lengthSeconds)),
-      "mm:ss"
-    );
-    const requested_by = message.author.username;
-    const songPayload = { ...song, duration, requested_by };
-
-    const serverQueue = this.queueMap.get(message.guild.id);
-    if (!serverQueue) {
-      const queueContract = this.createContract(message, voiceChannel);
-      queueContract.songs.push(songPayload);
-
-      try {
-        const connection = await queueContract.voiceChannel.join();
-        queueContract.connection = connection;
-        this.play(message.guild, queueContract.songs[0]);
-      } catch (err) {
-        console.log(err);
-        this.queueMap.delete(message.guild.id);
-        return message.channel.send({
-          embed: new MessageEmbed({
-            title: "Erro!",
-            description:
-              "Ocorreu um erro ao tentar tocar a música, tente novamente.",
-            color: theme.error,
-          }),
-        });
-      }
-    } else {
-      serverQueue.songs.push(songPayload);
-
+    if (!args) {
       return message.channel.send({
         embed: new MessageEmbed({
-          author: {
-            name: "Adicionou a fila",
-            iconURL: message.author.avatarURL(),
-          },
+          title: "Uso do comando Play",
+          description: "=play <ULR/Nome da música>",
           color: theme.default,
-          description: `[${song.title}](${song.link})`,
-          thumbnail: { url: song.thumbnails.high.url },
+        }),
+      });
+    }
+    if (!queues[message.guild.id]) {
+      queues[message.guild.id] = new Queue(
+        message.guild.id,
+        message.member.voice.channel.id,
+        message.channel
+      );
+    }
+
+    const [song] = await queues[message.guild.id].search(args.join(" "));
+    if (!song) {
+      return message.channel.send({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: "Não consegui encontrar essa música :/",
+          color: theme.error,
+        }),
+      });
+    }
+
+    const isAdded = await queues[message.guild.id].play(song);
+    if (isAdded) {
+      message.channel.send({
+        embed: new MessageEmbed({
+          title: `:musical_note: Tocando Agora: [${song.info.title}](${song.info.url}).`,
           fields: [
-            { name: "Canal", value: `\`${videoDetails.author.name}\`` },
-            { name: "Duração", value: `\`${duration}\`` },
+            { inline: true, name: "Autor", value: song.info.author },
             {
-              name: "Posição na fila",
-              value: `\`${serverQueue.songs.length - 1}\``,
+              inline: true,
+              name: "Duração",
+              value: msToHMS(song.info.length),
             },
           ],
+          color: theme.default,
         }),
       });
     }
-  }
-
-  async play(guild: Guild, song: BotSongInfo) {
-    const serverQueue = this.queueMap.get(guild.id);
-    if (!song) {
-      serverQueue.voiceChannel.leave();
-      this.queueMap.delete(guild.id);
-      return;
-    }
-    /*if (serverQueue.timeout) {
-      clearTimeout(serverQueue.timeout);
-      serverQueue.timeout = null;
-    }*/
-
-    const dispatcher = serverQueue.connection
-      .play(await ytdl(song.link), { type: "opus" })
-      .on("finish", () => {
-        serverQueue.songs.shift();
-        this.play(guild, serverQueue.songs[0]);
-      })
-      .on("error", (error) => console.error(error));
-    dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
-    serverQueue.textChannel.send({
-      embed: new MessageEmbed({
-        title: "Tocando agora :musical_note:",
-        description: `[${song.title}](${song.link})`,
-        thumbnail: { url: song.thumbnails.high.url },
-        color: theme.default,
-        fields: [
-          { name: "Duração", value: `\`${song.duration}\`` },
-          { name: "Pedido por", value: `\`${song.requested_by}\`` },
-        ],
-      }),
-    });
-  }
-
-  @Command("leave")
-  @Guard(MusicGuard)
-  @Infos({
-    category,
-    description: "Faz o bot sair do canal que estiver.",
-    syntax: "=leave",
-  })
-  async leave(message: CommandMessage) {
-    const serverQueue = this.queueMap.get(message.guild.id);
-
-    if (!serverQueue) {
-      return message.channel.send({
-        embed: new MessageEmbed({
-          title: "Erro!",
-          description: "Não há nenhuma fila para parar!",
-          color: theme.error,
-        }),
-      });
-    }
-
-    serverQueue.songs = [];
-    serverQueue.connection.dispatcher.end();
-  }
-
-  @Command("skip")
-  @Guard(MusicGuard)
-  @Infos({
-    category,
-    description: "Pula a música atual do bot.",
-    syntax: "=skip",
-  })
-  async skip(message: CommandMessage) {
-    const serverQueue = this.queueMap.get(message.guild.id);
-    if (!serverQueue) {
-      return message.channel.send({
-        embed: new MessageEmbed({
-          title: "Erro!",
-          description: "Não há músicas para pular.",
-          color: theme.error,
-        }),
-      });
-    }
-    serverQueue.connection.dispatcher.end();
-    message.channel.send(":fast_forward: **_Pulei_** :thumbsup:");
   }
 
   @Command("queue")
   @Guard(MusicGuard)
-  @Infos({
-    category,
-    description: "Mostra a fila atual do bot",
-    syntax: "=queue",
-  })
-  @Rules(Rule("q").end())
   async queue(message: CommandMessage) {
-    const serverQueue = this.queueMap.get(message.guild.id);
-    if (
-      !serverQueue ||
-      !serverQueue.songs.length ||
-      !(serverQueue.songs.length - 1)
-    ) {
-      await message.channel.send({
+    if (!queues[message.guild.id] || !queues[message.guild.id].queue.length) {
+      return message.channel.send({
         embed: new MessageEmbed({
           title: "Erro!",
-          description: "Não há fila para mostrar...",
+          description: "Não existe uma fila para esse servidor...",
           color: theme.error,
         }),
       });
-      return;
     }
-    const { songs } = serverQueue;
-    const songsString = songs.slice(1).map((song, index) => {
-      return `\`${index + 1}.\`  [${song.title}](${song.link}) | \`${
-        song.duration
-      } Pedido por ${song.requested_by}\``;
-    });
+
+    const next = queues[message.guild.id].queue;
+
+    const text = next.map(
+      (song, index) =>
+        `${++index}) ${song.info.title} - ${song.info.author} - ${msToHMS(
+          song.info.length
+        )}`
+    );
 
     return message.channel.send({
       embed: new MessageEmbed({
-        title: "Fila",
-        fields: [
-          {
-            name: ":arrow_down: Próximas :arrow_down: ",
-            value: songsString.join("\n"),
-          },
-        ],
+        title: "📜 Lista",
+        description: `\`\`\`\n${text.join("\n") ?? "Nada na fila...\n"}\`\`\``,
       }),
     });
   }
 
-  async searchSong(
-    message: CommandMessage,
-    query: string
-  ): Promise<ytsearch.YouTubeSearchResults[]> {
-    await message.channel.send(`**Procurando** :mag_right: \`${query}\``);
-    return new Promise((res, rej) => {
-      ytsearch(`${query} audio`, this.searchOpts, (err, results) => {
-        if (err) return rej(err);
-        res(results);
+  @Command("np")
+  @Guard(MusicGuard)
+  async np(message: CommandMessage) {
+    if (!queues[message.guild.id]) {
+      return message.channel.send({
+        embed: new MessageEmbed({
+          title: "Erro!",
+          description: "Não existe uma fila para esse servidor...",
+          color: theme.error,
+        }),
       });
+    }
+
+    const song = queues[message.guild.id].currentlyPlaying;
+
+    return message.channel.send({
+      embed: new MessageEmbed({
+        title: `:musical_note: Tocando Agora: [${song.info.title}](${song.info.url}).`,
+        fields: [
+          { inline: true, name: "Autor", value: song.info.author },
+          {
+            inline: true,
+            name: "Duração",
+            value: msToHMS(song.info.length),
+          },
+        ],
+        color: theme.default,
+      }),
     });
   }
 
-  createContract(message: CommandMessage, voiceChannel: VoiceChannel) {
-    const textChannel = message.channel;
-    if (!((c): c is TextChannel => c.type === "text")(textChannel)) return;
-    const queueContract: Queue = {
-      textChannel,
-      voiceChannel,
-      connection: null,
-      songs: [],
-      volume: 5,
-      playing: true,
-      timeout: null,
-    };
-    this.queueMap.set(message.guild.id, queueContract);
-    return queueContract;
+  @Command("search")
+  @Guard(MusicGuard)
+  async search(message: CommandMessage) {
+    const [, ...args] = message.commandContent.split(" ");
+    if (!args) {
+      return message.channel.send({
+        embed: new MessageEmbed({
+          title: "Uso do comando Play",
+          description: "=play <ULR/Nome da música>",
+          color: theme.default,
+        }),
+      });
+    }
+    if (!queues[message.guild.id]) {
+      queues[message.guild.id] = new Queue(
+        message.guild.id,
+        message.member.voice.channel.id,
+        message.channel
+      );
+    }
+
+    const allSongs = await queues[message.guild.id].search(args.join(" "));
+    const songs = allSongs.slice(0, 5);
+
+    const options = songs.map(
+      (song, index) =>
+        `${++index}) [${song.info.title}](${song.info.uri}) - ${
+          song.info.author
+        } - ${msToHMS(song.info.length)}`
+    );
+
+    const msg = await message.channel.send({
+      embed: new MessageEmbed({
+        title: "🔎 Resultados de Busca",
+        description: `${options.join("\n")}`,
+        color: theme.default,
+      }),
+    });
+
+    const chosenSong = (
+      await msg.channel.awaitMessages(
+        (msg) => {
+          return (
+            msg.author === message.author &&
+            ["1", "2", "3", "4", "5", "cancelar"].includes(msg.content)
+          );
+        },
+        { max: 1 }
+      )
+    ).first().content;
+    if (chosenSong == "cancel") {
+      return message.channel.send("Busca cancelada...");
+    }
+    const song = songs[parseInt(chosenSong) - 1];
+
+    const isAdded = await queues[message.guild.id].play(song);
+    if (isAdded) {
+      message.channel.send({
+        embed: new MessageEmbed({
+          title: `:musical_note: Adicionado a fila: ${song.info.title}.`,
+          fields: [
+            { inline: true, name: "Autor", value: song.info.author },
+            {
+              inline: true,
+              name: "Duração",
+              value: msToHMS(song.info.length),
+            },
+          ],
+          color: theme.default,
+        }),
+      });
+    }
+  }
+
+  @Command("skip")
+  @Guard(MusicGuard)
+  async skip(message: CommandMessage) {
+    const [, ...args] = message.commandContent.split(" ");
+    if (!queues[message.guild.id]) {
+      queues[message.guild.id] = new Queue(
+        message.guild.id,
+        message.member.voice.channel.id,
+        message.channel
+      );
+    }
+
+    queues[message.guild.id]._playNext();
   }
 }
