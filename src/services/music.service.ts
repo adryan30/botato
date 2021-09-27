@@ -1,8 +1,7 @@
 import { Command, CommandMessage, Guard } from "@typeit/discord";
-import { ms } from "date-fns/locale";
 import { MessageEmbed, TextChannel } from "discord.js";
 import { theme } from "../config";
-import { MusicGuard, MusicPermissionGuard } from "../guards/music.guard";
+import { MusicGuard } from "../guards/music.guard";
 import { queues } from "../index";
 import { Track } from "../interfaces/music.interface";
 import Queue from "../structures/queue";
@@ -70,8 +69,13 @@ export abstract class MusicService {
       const song = searchInfo.tracks[0];
       return message.channel.send({
         embed: new MessageEmbed({
-          title: `:musical_note: Adicionado a fila: [${song.info.title}](${song.info.uri}).`,
+          title: `🎵 Adicionado a fila:`,
           fields: [
+            {
+              inline: true,
+              name: "Música",
+              value: `[${song.info.title}](${song.info.uri})`,
+            },
             { inline: true, name: "Autor", value: song.info.author },
             {
               inline: true,
@@ -224,8 +228,13 @@ export abstract class MusicService {
     if (isAdded) {
       message.channel.send({
         embed: new MessageEmbed({
-          title: `:musical_note: Adicionado a fila: ${song.info.title}.`,
+          title: `🎵 Adicionado a fila:`,
           fields: [
+            {
+              inline: true,
+              name: "Música",
+              value: `[${song.info.title}](${song.info.uri})`,
+            },
             { inline: true, name: "Autor", value: song.info.author },
             {
               inline: true,

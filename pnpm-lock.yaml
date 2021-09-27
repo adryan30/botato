@@ -17,6 +17,7 @@ specifiers:
   ffmpeg: ^0.0.4
   fluent-ffmpeg: ^2.1.2
   lavacord: ^1.1.9
+  lavasfy: ^2.3.0
   money: ^0.2.0
   node-cron: ^3.0.0
   nodemon: ^2.0.9
@@ -46,6 +47,7 @@ dependencies:
   ffmpeg: 0.0.4
   fluent-ffmpeg: 2.1.2
   lavacord: 1.1.9
+  lavasfy: 2.3.0
   money: 0.2.0
   node-cron: 3.0.0
   pnpm: 5.18.11
@@ -802,6 +804,15 @@ packages:
         optional: true
     dev: false
 
+  /form-data/4.0.0:
+    resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}
+    engines: {node: '>= 6'}
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      mime-types: 2.1.32
+    dev: false
+
   /forwarded/0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
@@ -1108,6 +1119,12 @@ packages:
       - utf-8-validate
     dev: false
 
+  /lavasfy/2.3.0:
+    resolution: {integrity: sha512-3nFlxifCcFBl+qHSiux/ywUly4gVEweBbMbWHXci2QyzTIEtn0mBKFnrjKTCMy/kGaZQrHBUho3bCg7/kNX9Cg==}
+    dependencies:
+      node-superfetch: 0.2.3
+    dev: false
+
   /lowercase-keys/1.0.1:
     resolution: {integrity: sha512-G2Lj61tXDnVFFOi8VZds+SoQjtQC3dgokKdDG2mTm1tx4m50NUHBOZSBwQQHyy0V12A0JTG4icfZQH+xPyh8VA==}
     engines: {node: '>=0.10.0'}
@@ -1263,6 +1280,14 @@ packages:
   /node-fetch/2.6.2:
     resolution: {integrity: sha512-aLoxToI6RfZ+0NOjmWAgn9+LEd30YCkJKFSyWacNZdEKTit/ZMcKjGkTRo8uWEsnIb/hfKecNPEbln02PdWbcA==}
     engines: {node: 4.x || >=6.0.0}
+    dev: false
+
+  /node-superfetch/0.2.3:
+    resolution: {integrity: sha512-xOqifvw/3N+tIeeC80/TNJXkoxDZm8JWc7/0VBkJ86ttQTlJvoicuVaeJlKKHYRlmC2O6ygNIhNPwLYX4bxqdA==}
+    engines: {node: '>=8'}
+    dependencies:
+      form-data: 4.0.0
+      node-fetch: 2.6.2
     dev: false
 
   /nodemon/2.0.12:

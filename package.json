@@ -28,6 +28,7 @@
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.2",
     "lavacord": "^1.1.9",
+    "lavasfy": "^2.3.0",
     "money": "^0.2.0",
     "node-cron": "^3.0.0",
     "pnpm": "^5.18.9",

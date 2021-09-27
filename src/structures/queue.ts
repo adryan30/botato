@@ -1,10 +1,11 @@
-import { manager } from "..";
 import axios from "axios";
 import { MessageEmbed, TextChannel } from "discord.js";
-import { theme } from "../config";
 import { Player } from "lavacord";
+import { UnresolvedTrack } from "lavasfy";
+import { manager, lavasfy } from "..";
+import { theme } from "../config";
 import { SearchInfo, Track } from "../interfaces/music.interface";
-import { msToHMS, shuffleArray } from "../utils";
+import { msToHMS } from "../utils";
 
 const urlRegex = new RegExp(
   /^https?:\/\/((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i
@@ -31,21 +32,30 @@ export default class Queue {
 
   async search(searchTerm: string): Promise<SearchInfo> {
     const node = manager.idealNodes[0];
+    const isUrl = urlRegex.test(searchTerm);
+    const isSpotify = lavasfy.spotifyPattern.test(searchTerm);
 
-    const params = new URLSearchParams();
-    params.append(
-      "identifier",
-      urlRegex.test(searchTerm) ? searchTerm : `ytsearch:${searchTerm}`
-    );
+    if (!isSpotify) {
+      const params = new URLSearchParams();
+      params.append(
+        "identifier",
+        isUrl ? searchTerm : `ytsearch:${searchTerm}`
+      );
 
-    const data = await axios(
-      `http://${node.host}:${node.port}/loadtracks?${params}`,
-      {
-        headers: { Authorization: node.password },
-      }
-    );
+      const data = await axios(
+        `http://${node.host}:${node.port}/loadtracks?${params}`,
+        {
+          headers: { Authorization: node.password },
+        }
+      );
 
-    return data.data ?? [];
+      return data.data ?? [];
+    } else {
+      await lavasfy.requestToken();
+      const node = lavasfy.getNode("1");
+      const data = await node.load(searchTerm);
+      return { ...data, tracks: data.tracks as Track[] };
+    }
   }
 
   async play(searchInfo: SearchInfo, index?: number) {
