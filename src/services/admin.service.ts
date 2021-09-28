@@ -43,7 +43,7 @@ export abstract class AdminService {
     setTimeout(() => embedMessage.delete(), 5000);
   }
 
-  @Slash("makeAdmin", { description: "Transforma usuários comuns em admins" })
+  @Slash("makeadmin", { description: "Transforma usuários comuns em admins" })
   @Guard(AdminGuard)
   async makeAdmin(
     @SlashOption("usuário", {
@@ -61,7 +61,7 @@ export abstract class AdminService {
     interaction.reply(`Usuário ${user.username} agora é um administrador!`);
   }
 
-  @Slash("randomRole", {
+  @Slash("randomrole", {
     description: "Seleciona um usuário aleatório do role mencionado",
   })
   async randomRole(

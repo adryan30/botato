@@ -441,7 +441,7 @@ export abstract class EconomyService {
       .finally(() => prisma.$disconnect());
   }
 
-  @Slash("totalDrolhos", {
+  @Slash("totaldrolhos", {
     description: "Lista a quantia total de Drolhoscoins no servidor",
   })
   async totalDrolhos(interaction: CommandInteraction) {
