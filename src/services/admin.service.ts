@@ -1,103 +1,119 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import { CommandMessage, Command, Infos, Client, Guard } from "@typeit/discord";
-import { Collection, Message, MessageEmbed } from "discord.js";
+import { Slash, Guard, SlashOption, Discord } from "discordx";
+import {
+  Collection,
+  Message,
+  MessageEmbed,
+  CommandInteraction,
+  User,
+  Role,
+} from "discord.js";
 import { differenceInCalendarDays } from "date-fns";
 import { theme } from "../config";
 import { AdminGuard } from "../guards";
+import { PrismaClient } from "@prisma/client";
 
 const category = ":police_officer: Admin";
+@Discord()
 export abstract class AdminService {
-  @Command("clear")
+  @Slash("clear", { description: "Limpa as mesagens presentes no canal" })
   @Guard(AdminGuard)
-  @Infos({
-    category,
-    description: "Limpa as mesagens presentes no canal",
-    syntax: "=clear",
-  })
-  async clear(message: CommandMessage) {
+  async clear(interaction: CommandInteraction) {
     let messageQuantity = 0;
     let fetched: Collection<string, Message>;
     do {
-      fetched = await message.channel.messages.fetch({ limit: 100 });
+      fetched = await interaction.channel.messages.fetch({ limit: 100 });
       fetched = fetched.filter(
         (message) =>
           !message.pinned &&
           differenceInCalendarDays(message.createdAt, new Date()) < 13
       );
       messageQuantity += fetched.size;
-      await message.channel.messages.channel.bulkDelete(fetched);
+      if (interaction.channel.type === "GUILD_TEXT") {
+        await interaction.channel.bulkDelete(fetched);
+      }
     } while (fetched.size > 2);
-    const embedMessage = await message.channel.send({
-      embed: new MessageEmbed()
-        .setTitle("Limpeza concluída")
-        .setDescription(`${messageQuantity} mensagens apagadas!`)
-        .setColor(theme.default),
+    const embedMessage = await interaction.channel.send({
+      embeds: [
+        new MessageEmbed()
+          .setTitle("Limpeza concluída")
+          .setDescription(`${messageQuantity} mensagens apagadas!`)
+          .setColor(theme.default),
+      ],
     });
     setTimeout(() => embedMessage.delete(), 5000);
   }
 
-  @Command("makeAdmin")
+  @Slash("makeAdmin", { description: "Transforma usuários comuns em admins" })
   @Guard(AdminGuard)
-  @Infos({ hide: true })
-  async makeAdmin(message: CommandMessage) {
+  async makeAdmin(
+    @SlashOption("usuário", {
+      description: "Usuário a ser transformado",
+      required: true,
+      type: "USER",
+    })
+    user: User,
+    interaction: CommandInteraction
+  ) {
     const prisma = new PrismaClient();
-    const mentionsIds = message.mentions.members.array().map((user) => user.id);
-    await prisma.user.updateMany({
-      where: { id: { in: mentionsIds } },
-      data: { isAdmin: true },
-    });
+    const id = user.id;
+    await prisma.user.update({ where: { id }, data: { isAdmin: true } });
     await prisma.$disconnect();
+    interaction.reply(`Usuário ${user.username} agora é um administrador!`);
   }
 
-  @Command("randomRole")
-  @Infos({
-    category,
-    description: "Seleciona um usuário aleatório dos roles mencionados",
-    syntax: "=randomRole <roles>",
+  @Slash("randomRole", {
+    description: "Seleciona um usuário aleatório do role mencionado",
   })
-  async randomRole(message: CommandMessage) {
-    const {
-      mentions: { roles },
-    } = message;
-    const mentionedRoles = roles.map((r) => r.id);
-    const users = await message.guild.members.fetch();
-    const mentioned = users
-      .array()
+  async randomRole(
+    @SlashOption("role", {
+      description: "Role a ser buscado",
+      required: true,
+      type: "ROLE",
+    })
+    role: Role,
+    interaction: CommandInteraction
+  ) {
+    const users = interaction.guild.members.cache;
+    const validUsers = users
       .filter((u) => !u.user.bot)
       .filter((u) => {
-        const roles = u.roles.cache.array().map((r) => r.id);
-        return roles.some((r) => mentionedRoles.includes(r));
+        const roles = u.roles.cache.map((r) => r.id);
+        return roles.includes(role.id);
       })
       .map((u) => u.user.id);
-    const randomUser = mentioned[Math.floor(Math.random() * mentioned.length)];
+
+    const randomUser =
+      validUsers[Math.floor(Math.random() * validUsers.length)];
     const randomUserData = users.get(randomUser);
     if (randomUserData) {
-      message.channel.send({
-        embed: new MessageEmbed()
-          .setTitle("Usuário escolhido:")
-          .setColor(theme.default)
-          .setImage(
-            randomUserData.user.avatarURL() || "https://i.imgur.com/ZyTkCb1.png"
-          )
-          .setFooter(randomUserData.user.username),
+      interaction.channel.send({
+        embeds: [
+          new MessageEmbed()
+            .setTitle("Usuário escolhido:")
+            .setColor(theme.default)
+            .setImage(
+              randomUserData.user.avatarURL() ||
+                "https://i.imgur.com/ZyTkCb1.png"
+            )
+            .setFooter(randomUserData.user.username),
+        ],
       });
     } else {
-      message.channel.send({
-        embed: new MessageEmbed()
-          .setTitle("Argumentos inválidos...")
-          .setDescription("Nenhum usuário válido nos cargos mencionados.")
-          .setColor(theme.error),
+      interaction.channel.send({
+        embeds: [
+          new MessageEmbed()
+            .setTitle("Argumentos inválidos...")
+            .setDescription("Nenhum usuário válido nos cargos mencionados.")
+            .setColor(theme.error),
+        ],
       });
     }
   }
 
-  @Command("random")
-  @Infos({
-    category,
+  @Slash("random", {
     description: "Seleciona um usuário aleatório com carteira",
-    syntax: "=random",
   })
-  async random(message: CommandMessage) {
+  async random(message: CommandInteraction) {
     const prisma = new PrismaClient();
     const users = await (
       await prisma.user.findMany({ select: { id: true } })
@@ -107,57 +123,15 @@ export abstract class AdminService {
       randomUser
     );
     message.channel.send({
-      embed: new MessageEmbed()
-        .setTitle("Usuário escolhido:")
-        .setColor(theme.default)
-        .setImage(
-          randomUserData.user.avatarURL() || "https://i.imgur.com/ZyTkCb1.png"
-        )
-        .setFooter(randomUserData.user.username),
-    });
-  }
-
-  @Command("todo")
-  @Infos({
-    hide: true,
-  })
-  async todo(message: CommandMessage) {
-    const prisma = new PrismaClient();
-    const [, ...args] = message.commandContent.split(" ");
-    const fullMsg = args.join(" ");
-    if (fullMsg) {
-      return await prisma.todo.create({ data: { text: fullMsg } }).then(() => {
-        message.react("✅");
-        prisma.$disconnect();
-      });
-    }
-    const todos = await prisma.todo.findMany();
-    return await message.channel
-      .send({
-        embed: new MessageEmbed({
-          title: "TO-DOs",
-          color: theme.default,
-          description: `${todos
-            .map(({ id, text }) => `${id} - ${text}`)
-            .join("\n")}`,
-        }),
-      })
-      .then(() => {
-        message.react("✅");
-        prisma.$disconnect();
-      });
-  }
-  @Command("rt")
-  @Infos({
-    hide: true,
-  })
-  async rt(message: CommandMessage) {
-    const prisma = new PrismaClient();
-    const [, ...args] = message.commandContent.split(" ");
-    const todoNumber = Number(args[0]);
-    return await prisma.todo.delete({ where: { id: todoNumber } }).then(() => {
-      message.react("✅");
-      prisma.$disconnect();
+      embeds: [
+        new MessageEmbed()
+          .setTitle("Usuário escolhido:")
+          .setColor(theme.default)
+          .setImage(
+            randomUserData.user.avatarURL() || "https://i.imgur.com/ZyTkCb1.png"
+          )
+          .setFooter(randomUserData.user.username),
+      ],
     });
   }
 }

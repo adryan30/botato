@@ -1,11 +1,11 @@
-import { GuardFunction } from "@typeit/discord";
+import { ArgsOf, GuardFunction } from "discordx";
 import { MessageEmbed } from "discord.js";
 import { theme } from "../config";
 import { PrismaClient } from "@prisma/client";
 
-export const AdminGuard: GuardFunction<"message"> = async (
+export const AdminGuard: GuardFunction<ArgsOf<"messageCreate">> = async (
   [message],
-  client,
+  _client,
   next
 ) => {
   const prisma = new PrismaClient();
@@ -15,10 +15,12 @@ export const AdminGuard: GuardFunction<"message"> = async (
   const authorData = await prisma.user.findUnique({ where: { id } });
   if (!authorData?.isAdmin) {
     return message.reply({
-      embed: new MessageEmbed()
-        .setTitle("Permissão Negada")
-        .setDescription("Você não possui autorização para usar esse comando.")
-        .setColor(theme.error),
+      embeds: [
+        new MessageEmbed()
+          .setTitle("Permissão Negada")
+          .setDescription("Você não possui autorização para usar esse comando.")
+          .setColor(theme.error),
+      ],
     });
   }
   await next().finally(() => prisma.$disconnect());

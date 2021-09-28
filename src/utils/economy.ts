@@ -1,7 +1,5 @@
-import { Message } from "discord.js";
+import { CommandInteraction } from "discord.js";
 
-export function findDrolhosEmoji(message: Message) {
-  return message.client.emojis.cache
-    .array()
-    .find((e) => e.name == "drolhoscoin");
+export function findDrolhosEmoji(interaction: CommandInteraction) {
+  return interaction.client.emojis.cache.find((e) => e.name == "drolhoscoin");
 }

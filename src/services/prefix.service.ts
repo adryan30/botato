@@ -1,30 +1,34 @@
-import { CommandMessage, Command, Infos } from "@typeit/discord";
+import { Discord, Slash, SlashOption } from "discordx";
+import { CommandInteraction } from "discord.js";
 
 const category = ":writing_hand: Prefix";
+@Discord()
 export abstract class PrefixService {
-  @Command("prefix")
-  @Infos({
-    category,
+  @Slash("prefix", {
     description: "Adiciona um prefixo ao nome",
-    syntax: "=prefix <prefixo>",
   })
-  async changePrefix(message: CommandMessage<{ flair: string }>) {
-    const [, ...args] = message.commandContent.split(" ");
+  async changePrefix(
+    @SlashOption("prefixo", {
+      description: "Prefixo a ser adicionado",
+      required: true,
+    })
+    prefix: string,
+    interaction: CommandInteraction
+  ) {
+    const member = interaction.guild.members.cache.get(interaction.user.id);
+    const oldNickname = member.displayName;
 
-    const oldNickname = message.member.displayName;
-    await message.member
-      .setNickname(`[${args.join(" ")}] ${oldNickname}`)
+    await member
+      .setNickname(`[${prefix}] ${oldNickname}`)
       .catch((err) => console.error(err));
   }
 
-  @Command("rp")
-  @Infos({
-    category,
+  @Slash("rp", {
     description: "Remove o prefixo do nome",
-    syntax: "=rp",
   })
-  async removePrefix(message: CommandMessage) {
-    const oldNickname = message.member.displayName;
-    await message.member.setNickname(oldNickname.replace(/\[.*\]\s/, ""));
+  async removePrefix(interaction: CommandInteraction) {
+    const member = interaction.guild.members.cache.get(interaction.user.id);
+    const oldNickname = member.displayName;
+    await member.setNickname(oldNickname.replace(/\[.*\]\s/, ""));
   }
 }

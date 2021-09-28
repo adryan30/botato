@@ -1,6 +1,7 @@
-import { ArgsOf, Infos, On } from "@typeit/discord";
+import { ArgsOf, Discord, On } from "discordx";
 import {
   Client,
+  ColorResolvable,
   MessageEmbed,
   MessageReaction,
   TextChannel,
@@ -14,12 +15,13 @@ interface EmbedSettings {
   roleName: string;
   roleChannel: string;
   emoji: string;
-  embedColor: string;
+  embedColor: ColorResolvable;
   embedTitle: string;
   embedDescription: string;
   embedImage: string;
   footer?: string;
 }
+@Discord()
 export abstract class RoleService {
   guildId = process.env.GUILD_ID;
 
@@ -44,56 +46,57 @@ export abstract class RoleService {
   }: EmbedSettings) {
     const channel = await this.findChannel(roleChannel, client);
     const role = await this.findRole(roleName, client);
-    if (!((c): c is TextChannel => c.type === "text")(channel)) return;
-    await cleanChannel(channel);
+    if (channel.isText() && channel.type === "GUILD_TEXT") {
+      await cleanChannel(channel);
+      const messageEmbed = await channel.send({
+        embeds: [
+          new MessageEmbed()
+            .setColor(embedColor)
+            .setTitle(embedTitle)
+            .setDescription(embedDescription)
+            .setImage(embedImage)
+            .setFooter(footer || ""),
+        ],
+      });
+      messageEmbed.react(emoji);
 
-    const messageEmbed = await channel.send({
-      embed: new MessageEmbed()
-        .setColor(embedColor)
-        .setTitle(embedTitle)
-        .setDescription(embedDescription)
-        .setImage(embedImage)
-        .setFooter(footer || ""),
-    });
-    messageEmbed.react(emoji);
-
-    client.on(
-      "messageReactionAdd",
-      async (reaction: MessageReaction, user: User) => {
-        if (reaction.message.partial) await reaction.message.fetch();
-        if (reaction.partial) await reaction.fetch();
-        if (user.bot) return;
-        if (!reaction.message.guild) return;
-        if (reaction.message.channel.id === channel.id) {
-          if (reaction.emoji.name === emoji) {
-            await reaction.message.guild.members.cache
-              .get(user.id)
-              .roles.add(role);
+      client.on(
+        "messageReactionAdd",
+        async (reaction: MessageReaction, user: User) => {
+          if (reaction.message.partial) await reaction.message.fetch();
+          if (reaction.partial) await reaction.fetch();
+          if (user.bot) return;
+          if (!reaction.message.guild) return;
+          if (reaction.message.channel.id === channel.id) {
+            if (reaction.emoji.name === emoji) {
+              await reaction.message.guild.members.cache
+                .get(user.id)
+                .roles.add(role);
+            }
           }
+          return;
         }
-        return;
-      }
-    );
-    client.on(
-      "messageReactionRemove",
-      async (reaction: MessageReaction, user: User) => {
-        if (reaction.message.partial) await reaction.message.fetch();
-        if (reaction.partial) await reaction.fetch();
-        if (user.bot) return;
-        if (!reaction.message.guild) return;
-        if (reaction.message.channel.id === channel.id) {
-          if (reaction.emoji.name === emoji) {
-            await reaction.message.guild.members.cache
-              .get(user.id)
-              .roles.remove(role);
+      );
+      client.on(
+        "messageReactionRemove",
+        async (reaction: MessageReaction, user: User) => {
+          if (reaction.message.partial) await reaction.message.fetch();
+          if (reaction.partial) await reaction.fetch();
+          if (user.bot) return;
+          if (!reaction.message.guild) return;
+          if (reaction.message.channel.id === channel.id) {
+            if (reaction.emoji.name === emoji) {
+              await reaction.message.guild.members.cache
+                .get(user.id)
+                .roles.remove(role);
+            }
           }
+          return;
         }
-        return;
-      }
-    );
+      );
+    }
   }
 
-  @Infos({ hide: true })
   @On("ready")
   async setupAdventurer([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
@@ -107,7 +110,6 @@ export abstract class RoleService {
       embedImage: "https://i.imgur.com/HzQGust.png",
     });
   }
-  @Infos({ hide: true })
   @On("ready")
   async setupAcademic([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
@@ -121,9 +123,8 @@ export abstract class RoleService {
       embedImage: "https://i.imgur.com/mfNsMid.png",
     });
   }
-  @Infos({ hide: true })
   @On("ready")
-  async setupBorthel([_]: ArgsOf<"message">, client: Client) {
+  async setupBrothel([_]: ArgsOf<"message">, client: Client) {
     this.setupEmbeb({
       client,
       roleName: "Cafetão",
