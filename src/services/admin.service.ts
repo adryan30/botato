@@ -1,11 +1,11 @@
-import { Slash, Guard, SlashOption, Discord } from "discordx";
+import { Slash, Guard, SlashOption, Discord, Client } from "discordx";
 import {
   Collection,
   Message,
   MessageEmbed,
   CommandInteraction,
-  User,
   Role,
+  GuildMember,
 } from "discord.js";
 import { differenceInCalendarDays } from "date-fns";
 import { theme } from "../config";
@@ -51,14 +51,14 @@ export abstract class AdminService {
       required: true,
       type: "USER",
     })
-    user: User,
+    user: GuildMember,
     interaction: CommandInteraction
   ) {
     const prisma = new PrismaClient();
     const id = user.id;
     await prisma.user.update({ where: { id }, data: { isAdmin: true } });
     await prisma.$disconnect();
-    interaction.reply(`Usuário ${user.username} agora é um administrador!`);
+    interaction.reply(`Usuário ${user.displayName} agora é um administrador!`);
   }
 
   @Slash("randomrole", {

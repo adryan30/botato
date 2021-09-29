@@ -1,5 +1,6 @@
 import { Discord, Slash, SlashOption } from "discordx";
 import { CommandInteraction } from "discord.js";
+import { getUser } from "../utils";
 
 const category = ":writing_hand: Prefix";
 @Discord()
@@ -15,7 +16,7 @@ export abstract class PrefixService {
     prefix: string,
     interaction: CommandInteraction
   ) {
-    const member = interaction.guild.members.cache.get(interaction.user.id);
+    const member = getUser(interaction, interaction.user.id);
     const oldNickname = member.displayName;
 
     await member
@@ -27,7 +28,7 @@ export abstract class PrefixService {
     description: "Remove o prefixo do nome",
   })
   async removePrefix(interaction: CommandInteraction) {
-    const member = interaction.guild.members.cache.get(interaction.user.id);
+    const member = getUser(interaction, interaction.user.id);
     const oldNickname = member.displayName;
     await member.setNickname(oldNickname.replace(/\[.*\]\s/, ""));
   }

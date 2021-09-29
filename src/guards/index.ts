@@ -1,3 +1,3 @@
-export { AdminGuard } from "./admin.guard";
-export { EconomyGuard } from "./economy.guard";
-export { MusicGuard, MusicPermissionGuard } from "./music.guard";
+export * from "./admin.guard";
+export * from "./economy.guard";
+export * from "./music.guard";

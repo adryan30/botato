@@ -1,16 +1,9 @@
-import {
-  Slash,
-  Guard,
-  Client,
-  SlashOption,
-  Discord,
-  SlashGroup,
-} from "discordx";
+import { Slash, Guard, Client, SlashOption, Discord } from "discordx";
 import { MessageEmbed, User, CommandInteraction } from "discord.js";
 import { theme } from "../config";
 import { AdminGuard, EconomyGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
-import { findDrolhosEmoji } from "../utils";
+import { findDrolhosEmoji, getUser, userExists } from "../utils";
 
 const category = ":bank: Economia";
 @Discord()
@@ -55,7 +48,7 @@ export abstract class EconomyService {
   })
   @Guard(EconomyGuard)
   async balance(
-    @SlashOption("usuário", {
+    @SlashOption("user", {
       description: "Usuário a ser buscado",
       required: false,
       type: "USER",
@@ -65,17 +58,17 @@ export abstract class EconomyService {
   ) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
-    const searchUser: User = user ?? interaction.user;
-
+    const userToSearch: User = user ?? interaction.user;
+    const searchUser = getUser(interaction, userToSearch.id);
     const userData = await prisma.user.findUnique({
-      where: { id: searchUser.id },
+      where: { id: userToSearch.id },
     });
 
     return interaction
       .reply({
         embeds: [
           new MessageEmbed({
-            title: `Carteira de ${searchUser.username}`,
+            title: `Carteira de ${searchUser.displayName}`,
             color: theme.default,
             fields: [
               {
@@ -98,33 +91,24 @@ export abstract class EconomyService {
   })
   @Guard(AdminGuard, EconomyGuard)
   async award(
-    @SlashOption("usuário", {
+    @SlashOption("user", {
       description: "Usuário a ser recompensado",
       required: true,
       type: "USER",
     })
     user: User,
-    @SlashOption("valor", {
+    @SlashOption("value", {
       description: "Valor da recompensa",
       required: true,
+      type: "INTEGER",
     })
     awardValue: number,
     interaction: CommandInteraction
   ) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
-    const { id, username: awardedName } = user;
-    if (awardValue <= 0) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: "Digite um valor acima de 0 para recompensar.",
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+    const { id } = user;
+    const { displayName } = getUser(interaction, id);
 
     await prisma.user.update({
       data: { balance: { increment: awardValue } },
@@ -135,7 +119,7 @@ export abstract class EconomyService {
         embeds: [
           new MessageEmbed({
             title: "🎉 Parabéns!",
-            description: `${awardedName} ganhou ${awardValue} ${drolhosEmoji}!`,
+            description: `${displayName} ganhou ${awardValue} ${drolhosEmoji}!`,
             color: theme.success,
           }),
         ],
@@ -146,36 +130,27 @@ export abstract class EconomyService {
   }
 
   @Slash("awardt", {
-    description: "Recompensa o usuário mencionado com tickets",
+    description: "Recompensa o usuário mencionado com bilhetes",
   })
   @Guard(AdminGuard, EconomyGuard)
   async awardt(
-    @SlashOption("usuário", {
+    @SlashOption("user", {
       description: "Usuário a ser recompensado",
       required: true,
       type: "USER",
     })
     user: User,
-    @SlashOption("valor", {
+    @SlashOption("value", {
       description: "Valor da recompensa",
       required: true,
+      type: "INTEGER",
     })
     awardValue: number,
     interaction: CommandInteraction
   ) {
     const prisma = new PrismaClient();
-    const { id, username: awardedName } = user;
-    if (awardValue <= 0) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: "Digite um valor acima de 0 para recompensar.",
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+    const { id } = user;
+    const { displayName } = getUser(interaction, id);
 
     await prisma.user.update({
       data: { tickets: { increment: awardValue } },
@@ -187,7 +162,7 @@ export abstract class EconomyService {
         embeds: [
           new MessageEmbed({
             title: "🎉 Parabéns!",
-            description: `${awardedName} ganhou ${awardValue} 🎟️!`,
+            description: `${displayName} ganhou ${awardValue} 🎟️!`,
             color: theme.success,
           }),
         ],
@@ -202,44 +177,24 @@ export abstract class EconomyService {
   })
   @Guard(AdminGuard, EconomyGuard)
   async remove(
-    @SlashOption("usuário", {
+    @SlashOption("user", {
       description: "Usuário a ser recompensado",
       required: true,
       type: "USER",
     })
     user: User,
-    @SlashOption("valor", {
+    @SlashOption("value", {
       description: "Valor da recompensa",
       required: true,
+      type: "INTEGER",
     })
     removeValue: number,
     interaction: CommandInteraction
   ) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
-    const { id, username: removedName } = user;
-    const userData = await prisma.user.findUnique({
-      where: { id },
-      select: { balance: true },
-    });
-    try {
-      if (removeValue <= 0) {
-        throw "Digite um valor acima de 0 para remover.";
-      }
-      if (removeValue > userData.balance) {
-        throw `Esse usuário não possui ${drolhosEmoji} suficientes`;
-      }
-    } catch (err) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: err,
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+    const { id } = user;
+    const removedName = getUser(interaction, id);
 
     await prisma.user.update({
       data: { balance: { decrement: removeValue } },
@@ -266,43 +221,23 @@ export abstract class EconomyService {
   })
   @Guard(AdminGuard, EconomyGuard)
   async removet(
-    @SlashOption("usuário", {
+    @SlashOption("user", {
       description: "Usuário a ser recompensado",
       required: true,
       type: "USER",
     })
     user: User,
-    @SlashOption("valor", {
+    @SlashOption("value", {
       description: "Valor da recompensa",
       required: true,
+      type: "INTEGER",
     })
     removeValue: number,
     interaction: CommandInteraction
   ) {
     const prisma = new PrismaClient();
-    const { id, username: removedName } = user;
-    const userData = await prisma.user.findUnique({
-      where: { id },
-      select: { tickets: true },
-    });
-    try {
-      if (removeValue <= 0) {
-        throw "Digite um valor acima de 0 para remover.";
-      }
-      if (removeValue > userData.tickets) {
-        throw `Esse usuário não possui 🎟️ suficientes`;
-      }
-    } catch (err) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: err,
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+    const { id } = user;
+    const removedName = getUser(interaction, id);
 
     await prisma.user.update({
       data: { tickets: { decrement: removeValue } },
@@ -334,31 +269,20 @@ export abstract class EconomyService {
       type: "USER",
     })
     user: User,
-    @SlashOption("valor", {
+    @SlashOption("value", {
       description: "Valor da transferência",
       required: true,
+      type: "INTEGER",
     })
     tradeValue: number,
     interaction: CommandInteraction
   ) {
     const prisma = new PrismaClient();
-    const { id: authorId, username } = interaction.user;
     const drolhosEmoji = findDrolhosEmoji(interaction);
-    const { id, username: awardedName } = user;
-    const sourceUser = await prisma.user.findUnique({
-      where: { id: authorId },
-    });
-    if (sourceUser.balance < tradeValue) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: `Você não tem ${drolhosEmoji} suficiente para essa transação.`,
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+    const { id: authorId } = interaction.user;
+    const authorUser = getUser(interaction, authorId);
+    const { id: receiverId } = user;
+    const receiverUser = getUser(interaction, receiverId);
 
     await prisma.user.update({
       data: { balance: { decrement: tradeValue } },
@@ -367,14 +291,14 @@ export abstract class EconomyService {
 
     await prisma.user.update({
       data: { balance: { increment: tradeValue } },
-      where: { id },
+      where: { id: receiverId },
     });
     return interaction
       .reply({
         embeds: [
           new MessageEmbed({
             title: "Transferência bem sucedida.",
-            description: `${username} transferiu ${tradeValue} ${drolhosEmoji} para ${awardedName}.`,
+            description: `${authorUser.displayName} transferiu ${tradeValue} ${drolhosEmoji} para ${receiverUser.displayName}.`,
             color: theme.success,
           }),
         ],
@@ -393,31 +317,19 @@ export abstract class EconomyService {
       type: "USER",
     })
     user: User,
-    @SlashOption("valor", {
+    @SlashOption("value", {
       description: "Valor da transferência",
       required: true,
+      type: "INTEGER",
     })
     tradeValue: number,
     interaction: CommandInteraction
   ) {
     const prisma = new PrismaClient();
-    const { id: authorId, username } = interaction.user;
-    const drolhosEmoji = findDrolhosEmoji(interaction);
-    const { id, username: awardedName } = user;
-    const sourceUser = await prisma.user.findUnique({
-      where: { id: authorId },
-    });
-    if (sourceUser.tickets < tradeValue) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: `Você não tem 🎟️ suficiente para essa transação.`,
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+    const { id: authorId } = interaction.user;
+    const authorUser = getUser(interaction, authorId);
+    const { id: receiverId } = user;
+    const receiverUser = getUser(interaction, receiverId);
 
     await prisma.user.update({
       data: { tickets: { decrement: tradeValue } },
@@ -426,14 +338,15 @@ export abstract class EconomyService {
 
     await prisma.user.update({
       data: { tickets: { increment: tradeValue } },
-      where: { id },
+      where: { id: receiverId },
     });
+
     return interaction
       .reply({
         embeds: [
           new MessageEmbed({
             title: "Transferência bem sucedida.",
-            description: `${username} transferiu ${tradeValue} 🎟️ para ${awardedName}.`,
+            description: `${authorUser.displayName} transferiu ${tradeValue} 🎟️ para ${receiverUser.displayName}.`,
             color: theme.success,
           }),
         ],
@@ -442,7 +355,7 @@ export abstract class EconomyService {
   }
 
   @Slash("totaldrolhos", {
-    description: "Lista a quantia total de Drolhoscoins no servidor",
+    description: "Lista a quantia total de drolhos no servidor",
   })
   async totalDrolhos(interaction: CommandInteraction) {
     const prisma = new PrismaClient();
@@ -457,6 +370,33 @@ export abstract class EconomyService {
           {
             title: "Saldo do servidor",
             description: `Atualmente, todas as carteiras no servidor possuem ${allDrolhos} ${drolhosEmoji} no total.`,
+            color: theme.default,
+          },
+        ],
+      })
+      .finally(() => prisma.$disconnect());
+  }
+  @Slash("totalcareca", {
+    description: "Lista a quantia total de drolhos para o Bruno Careca",
+  })
+  async totalCareca(interaction: CommandInteraction) {
+    const prisma = new PrismaClient();
+    const drolhosEmoji = findDrolhosEmoji(interaction);
+    const allUsers = await prisma.user.findMany({
+      select: { balance: true },
+      where: { id: { not: "259449047373447169" } },
+    });
+    const allDrolhos = allUsers.reduce((prev, curr) => {
+      return prev + curr.balance;
+    }, 0);
+    return interaction
+      .reply({
+        embeds: [
+          {
+            title: "Saldo do servidor",
+            description: `Atualmente, todas as carteiras no servidor possuem ${allDrolhos} ${drolhosEmoji}, faltam ${
+              150 - allDrolhos
+            } ${drolhosEmoji} para o Bruno Careca.`,
             color: theme.default,
           },
         ],
