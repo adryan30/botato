@@ -62,7 +62,7 @@ export abstract class MusicService {
           break;
       }
     }
-    player.queue.add(tracks);
+    player.queue.add(tracks, { requester: interaction.user.id });
 
     if (tracks.length) {
       const track = tracks[0];
@@ -96,7 +96,7 @@ export abstract class MusicService {
         interaction.member.user.id
       );
       const voiceChannel = member.voice.channel;
-      player.connect(voiceChannel);
+      player.connect(voiceChannel, { deafened: true });
     }
     if (!player.playing) {
       player.queue.start();
@@ -119,7 +119,7 @@ export abstract class MusicService {
       });
     }
     if (player.queue.tracks.length) {
-      const tracks = player.queue.tracks;
+      const tracks = Array.from(player.queue.tracks);
       const pages = spliceIntoChunks(tracks, 10).map((chunk, page) => {
         return new MessageEmbed({
           title: "📜 Fila",
@@ -139,6 +139,7 @@ export abstract class MusicService {
         nextLabel: "Próximo",
         previousLabel: "Anterior",
       });
+      console.log(player.queue.tracks.length);
       return interaction.reply({ content: "Fila a seguir:" });
     }
   }
@@ -185,7 +186,46 @@ export abstract class MusicService {
       });
     }
     await player.disconnect();
-    await player.destroy();
+    await player.node.destroyPlayer(interaction.guildId);
     interaction.reply("✅");
+  }
+
+  @Slash("pause", { description: "Pausa a música atual" })
+  async pause(interaction: CommandInteraction) {
+    const music = bot.music;
+    const player = music.players.get(interaction.guildId);
+    if (!player) {
+      return interaction.reply({
+        embeds: [
+          new MessageEmbed({
+            title: "Erro!",
+            description: "Não existe uma fila para esse servidor...",
+            color: theme.error,
+          }),
+        ],
+      });
+    }
+    const isPlaying = player.playing;
+    await player.pause(isPlaying);
+    interaction.reply(isPlaying ? "Pausei ⏸" : "Despausei ▶️");
+  }
+
+  @Slash("shuffle", { description: "Aleatoria a fila de música" })
+  async shuffle(interaction: CommandInteraction) {
+    const music = bot.music;
+    const player = music.players.get(interaction.guildId);
+    if (!player) {
+      return interaction.reply({
+        embeds: [
+          new MessageEmbed({
+            title: "Erro!",
+            description: "Não existe uma fila para esse servidor...",
+            color: theme.error,
+          }),
+        ],
+      });
+    }
+    player.queue.shuffle();
+    interaction.reply("Aleatorizado 👍");
   }
 }
