@@ -113,7 +113,7 @@ export abstract class EconomyService {
       return interaction.reply({
         embeds: [
           AuthorHasNoWalletEmbed.setDescription(
-            "O usuário clicado não uma carteira... Tente usar /register."
+            "O usuário clicado não tem uma carteira... Tente usar /register."
           ),
         ],
       });

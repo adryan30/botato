@@ -70,29 +70,31 @@ export abstract class MusicService {
 
     if (tracks.length) {
       const track = tracks[0];
-      interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: `🎵 ${
-              player.playing ? "Adicionado a fila" : "Tocando Agora"
-            }:`,
-            fields: [
-              {
-                inline: true,
-                name: "Música",
-                value: `[${track.info.title}](${track.info.uri})`,
-              },
-              { inline: true, name: "Autor", value: track.info.author },
-              {
-                inline: true,
-                name: "Duração",
-                value: msToHMS(track.info.length),
-              },
-            ],
-            color: theme.default,
-          }),
-        ],
-      });
+      if (!player.playing) {
+        interaction.reply("✅");
+      } else {
+        interaction.reply({
+          embeds: [
+            new MessageEmbed({
+              title: `🎵 Adicionado a fila:`,
+              fields: [
+                {
+                  inline: true,
+                  name: "Música",
+                  value: `[${track.info.title}](${track.info.uri})`,
+                },
+                { inline: true, name: "Autor", value: track.info.author },
+                {
+                  inline: true,
+                  name: "Duração",
+                  value: msToHMS(track.info.length),
+                },
+              ],
+              color: theme.default,
+            }),
+          ],
+        });
+      }
     }
 
     if (!player.connected) {

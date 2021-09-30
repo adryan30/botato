@@ -49,6 +49,7 @@ class Bot {
     });
 
     this.music.on("trackStart", (queue, song) => {
+      console.log(song);
       const {
         player: { guildId },
       } = queue;
@@ -59,8 +60,13 @@ class Bot {
         textChannel.send({
           embeds: [
             new MessageEmbed({
-              title: `:musical_note: Tocando Agora: [${song.title}](${song.uri}).`,
+              title: "🎵 Tocando Agora:",
               fields: [
+                {
+                  inline: true,
+                  name: "Música",
+                  value: `[${song.title}](${song.uri})`,
+                },
                 { inline: true, name: "Autor", value: song.author },
                 {
                   inline: true,
