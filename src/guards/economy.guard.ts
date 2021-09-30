@@ -87,8 +87,8 @@ export const EconomyGuard: GuardFunction<
           .finally(() => prisma.$disconnect());
       }
     }
-
-    if (valueInformed <= 0) {
+    console.log(valueInformed);
+    if (valueInformed && valueInformed <= 0) {
       return interaction
         .reply({
           embeds: [ValueCantBeNegativeEmbed],

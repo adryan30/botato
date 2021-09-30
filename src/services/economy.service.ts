@@ -1,7 +1,19 @@
-import { Slash, Guard, Client, SlashOption, Discord } from "discordx";
-import { MessageEmbed, User, CommandInteraction } from "discord.js";
+import {
+  Slash,
+  Guard,
+  Client,
+  SlashOption,
+  Discord,
+  ContextMenu,
+} from "discordx";
+import {
+  MessageEmbed,
+  User,
+  CommandInteraction,
+  ContextMenuInteraction,
+} from "discord.js";
 import { theme } from "../config";
-import { AdminGuard, EconomyGuard } from "../guards";
+import { AdminGuard, AuthorHasNoWalletEmbed, EconomyGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
 import { findDrolhosEmoji, getUser, userExists } from "../utils";
 
@@ -63,6 +75,49 @@ export abstract class EconomyService {
     const userData = await prisma.user.findUnique({
       where: { id: userToSearch.id },
     });
+
+    return interaction
+      .reply({
+        embeds: [
+          new MessageEmbed({
+            title: `Carteira de ${searchUser.displayName}`,
+            color: theme.default,
+            fields: [
+              {
+                name: `Saldo`,
+                value: `Seu saldo: ${userData.balance} ${drolhosEmoji}`,
+              },
+              {
+                name: `Bilhetes`,
+                value: `Seus bilhetes: ${userData.tickets} 🎟️`,
+              },
+            ],
+          }),
+        ],
+      })
+      .finally(() => prisma.$disconnect());
+  }
+
+  @ContextMenu("USER", "Saldo")
+  async balanceMenu(interaction: ContextMenuInteraction) {
+    const prisma = new PrismaClient();
+    const drolhosEmoji = findDrolhosEmoji(interaction);
+
+    const searchUser = interaction.guild.members.cache.get(
+      interaction.targetId
+    );
+    const userData = await prisma.user.findUnique({
+      where: { id: searchUser.id },
+    });
+    if (!userData) {
+      return interaction.reply({
+        embeds: [
+          AuthorHasNoWalletEmbed.setDescription(
+            "O usuário clicado não uma carteira... Tente usar /register."
+          ),
+        ],
+      });
+    }
 
     return interaction
       .reply({

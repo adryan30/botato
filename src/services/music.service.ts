@@ -139,7 +139,6 @@ export abstract class MusicService {
         nextLabel: "Próximo",
         previousLabel: "Anterior",
       });
-      console.log(player.queue.tracks.length);
       return interaction.reply({ content: "Fila a seguir:" });
     }
   }
