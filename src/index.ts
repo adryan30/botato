@@ -7,6 +7,7 @@ import * as queue from "@lavaclient/queue";
 import { Node } from "lavaclient";
 import { load } from "@lavaclient/spotify";
 import { theme } from "./config";
+import { msToHMS } from "./utils";
 
 queue.load();
 class Bot {
@@ -47,24 +48,37 @@ class Bot {
       console.log(`[music] now connected to lavalink`);
     });
 
-    this.music.on("queueFinish", (queue) => {
+    this.music.on("trackStart", (queue, song) => {
       const {
-        player: { guildId, channelId },
+        player: { guildId },
       } = queue;
-      const channel = this.client.guilds.cache
+      const textChannel = this.client.guilds.cache
         .get(guildId)
-        .channels.cache.get(channelId);
-      if (channel instanceof TextChannel) {
-        channel.send({
+        .channels.cache.find((ch) => ch.name === "magias-de-comando");
+      if (textChannel instanceof TextChannel) {
+        textChannel.send({
           embeds: [
             new MessageEmbed({
-              title: "Fim da fila",
-              description: "A fila acabou... :/",
+              title: `:musical_note: Tocando Agora: [${song.title}](${song.uri}).`,
+              fields: [
+                { inline: true, name: "Autor", value: song.author },
+                {
+                  inline: true,
+                  name: "Duração",
+                  value: msToHMS(song.length),
+                },
+              ],
               color: theme.default,
             }),
           ],
         });
       }
+    });
+
+    this.music.on("queueFinish", async (queue) => {
+      const player = queue.player;
+      await player.disconnect();
+      await player.node.destroyPlayer(player.guildId);
     });
 
     this.client.ws.on("VOICE_SERVER_UPDATE", (data) =>

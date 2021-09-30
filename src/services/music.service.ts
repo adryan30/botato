@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
-import { Discord, Slash, SlashChoice, SlashOption } from "discordx";
-import { SpotifyItemType, SpotifyTrack } from "@lavaclient/spotify";
+import { Discord, Slash, SlashOption } from "discordx";
+import { SpotifyItemType } from "@lavaclient/spotify";
 import { Track } from "@lavaclient/types";
 import { sendPaginatedEmbeds } from "@discordx/utilities";
 import { bot } from "../";
@@ -20,6 +20,8 @@ export abstract class MusicService {
   async play(
     @SlashOption("song", { required: true, description: "Música a ser tocada" })
     query: string,
+    @SlashOption("next", { description: "Adicionar no início da fila?" })
+    next: boolean = false,
     interaction: CommandInteraction
   ) {
     const { music } = bot;
@@ -63,7 +65,8 @@ export abstract class MusicService {
           break;
       }
     }
-    player.queue.add(tracks, { requester: interaction.user.id });
+
+    player.queue.add(tracks, { requester: interaction.user.id, next });
 
     if (tracks.length) {
       const track = tracks[0];
