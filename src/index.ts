@@ -1,21 +1,20 @@
-require("dotenv").config();
-import express = require("express");
+import "dotenv/config";
 import "reflect-metadata";
+import express = require("express");
 import { Client } from "discordx";
-import { Intents } from "discord.js";
+import { Intents, MessageEmbed, TextChannel } from "discord.js";
+import * as queue from "@lavaclient/queue";
+import { Node } from "lavaclient";
+import { load } from "@lavaclient/spotify";
+import { theme } from "./config";
+
+queue.load();
 class Bot {
   client: Client;
-  nodes: any[];
+  music: Node;
 
   constructor() {
-    this.nodes = [
-      {
-        id: "1",
-        host: process.env.LAVALINK_HOST,
-        port: process.env.LAVALINK_PORT,
-        password: process.env.LAVALINK_PASSWORD,
-      },
-    ];
+    this.start();
   }
 
   start() {
@@ -34,8 +33,50 @@ class Bot {
       ],
     });
 
+    this.music = new Node({
+      sendGatewayPayload: (id, payload) =>
+        this.client.guilds.cache.get(id)?.shard?.send(payload),
+      connection: {
+        host: process.env.LAVALINK_HOST!,
+        password: process.env.LAVALINK_PASSWORD!,
+        port: Number(process.env.LAVALINK_PORT),
+      },
+    });
+
+    this.music.on("connect", () => {
+      console.log(`[music] now connected to lavalink`);
+    });
+
+    this.music.on("queueFinish", (queue) => {
+      const {
+        player: { guildId, channelId },
+      } = queue;
+      const channel = this.client.guilds.cache
+        .get(guildId)
+        .channels.cache.get(channelId);
+      if (channel instanceof TextChannel) {
+        channel.send({
+          embeds: [
+            new MessageEmbed({
+              title: "Fim da fila",
+              description: "A fila acabou... :/",
+              color: theme.default,
+            }),
+          ],
+        });
+      }
+    });
+
+    this.client.ws.on("VOICE_SERVER_UPDATE", (data) =>
+      this.music.handleVoiceUpdate(data)
+    );
+    this.client.ws.on("VOICE_STATE_UPDATE", (data) =>
+      this.music.handleVoiceUpdate(data)
+    );
+
     this.client.once("ready", async () => {
       await this.client.initApplicationCommands();
+      this.music.connect(this.client.user!.id);
     });
 
     this.client.on("interactionCreate", (interaction) => {
@@ -53,7 +94,14 @@ const app = express();
 app.get("/", (_, res) => res.send("This is a Discord Bot!"));
 app.listen(process.env.PORT || 3000);
 
+load({
+  client: {
+    id: process.env.SPOTIFY_CLIENT_ID!,
+    secret: process.env.SPOTIFY_CLIENT_SECRET!,
+  },
+  autoResolveYoutubeTracks: false,
+});
+
 const bot = new Bot();
-bot.start();
 
 export { bot };
