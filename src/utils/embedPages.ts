@@ -92,7 +92,7 @@ export class DiscordEmbedPages {
       this.pages[0].setFooter(
         `Página: 1/${this.pages.length}${this.isHelp ? " - ?: Opcional" : ""}`
       );
-    this.channel.send({ embed: this.pages[0] }).then((msg) => {
+    this.channel.send({ embeds: [this.pages[0]] }).then((msg) => {
       this.msg = msg;
       msg.react("◀️").catch(() => null);
       msg.react("▶️").catch(() => null);
@@ -115,7 +115,8 @@ export class DiscordEmbedPages {
           return true;
         }
       };
-      const collector = msg.createReactionCollector(filter, {
+      const collector = msg.createReactionCollector({
+        filter,
         time: this.duration,
         dispose: true,
       });
@@ -162,7 +163,7 @@ export class DiscordEmbedPages {
           this.isHelp ? " - ?: Opcional" : ""
         }`
       );
-    this.msg.edit({ embed: embed }).catch(() => null);
+    this.msg.edit({ embeds: [embed] }).catch(() => null);
   }
 
   /**
@@ -183,7 +184,7 @@ export class DiscordEmbedPages {
           this.isHelp ? " - ?: Opcional" : ""
         }`
       );
-    this.msg.edit({ embed: embed }).catch(() => null);
+    this.msg.edit({ embeds: [embed] }).catch(() => null);
   }
 
   /**
@@ -205,7 +206,7 @@ export class DiscordEmbedPages {
           this.isHelp ? " - ?: Opcional" : ""
         }`
       );
-    this.msg.edit({ embed: embed }).catch(() => null);
+    this.msg.edit({ embeds: [embed] }).catch(() => null);
   }
 
   /**

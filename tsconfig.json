@@ -1,19 +1,18 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2017",
+    "target": "ES2021",
     "noImplicitAny": false,
     "sourceMap": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "importHelpers": true,
-    "forceConsistentCasingInFileNames": true,
-    "lib": ["es2017", "esnext.asynciterable", "DOM"],
-    "types": ["node"],
-    "moduleResolution": "node",
+    "strict": false,
     "outDir": "./dist",
-    "esModuleInterop": true
+    "emitDecoratorMetadata": true, // required
+    "experimentalDecorators": true, // required
+    "declaration": false,
+    "importHelpers": true, // required
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2021", "esnext.asynciterable"],
+    "moduleResolution": "node"
   },
-  "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }

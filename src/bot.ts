@@ -1,57 +1,36 @@
-import {
-  ArgsOf,
-  Client,
-  CommandMessage,
-  CommandNotFound,
-  Discord,
-  On,
-} from "@typeit/discord";
-import * as Path from "path";
+import { ArgsOf, Client, Discord, On } from "discordx";
 import * as cron from "node-cron";
 import { cleanChannel } from "./utils";
-import { MessageEmbed, TextChannel } from "discord.js";
+import { Collection, Message, MessageEmbed } from "discord.js";
 import { theme } from "./config";
 import { format, subHours } from "date-fns";
 import { PrismaClient } from "@prisma/client";
-import { manager } from ".";
 
-@Discord("=", {
-  import: [Path.join(__dirname, "services", "*.service.js")],
-})
+@Discord()
 export class AppDiscord {
-  @CommandNotFound()
-  notFound(command: CommandMessage) {
-    return command.reply("Comando não encontrado :no_mouth:");
-  }
-
   async clean(client: Client, channelName: string) {
     const channel = client.channels.cache.find(
       (c) => c.toJSON()["name"] == channelName
     );
-    if (!((c): c is TextChannel => c.type === "text")(channel)) return;
-    console.log(`Cleaning ${channel.name} channel...`);
-    await cleanChannel(channel);
-    return channel;
+    console.log(`Cleaning ${channelName} channel...`);
+
+    if (channel.isText() && channel.type === "GUILD_TEXT") {
+      let messageQuantity = 0;
+      let fetched: Collection<string, Message>;
+      do {
+        fetched = await channel.messages.fetch({ limit: 100 });
+        fetched = fetched.filter((message) => !message.pinned);
+        messageQuantity += fetched.size;
+        await channel.bulkDelete(fetched);
+      } while (fetched.size > 2);
+
+      await cleanChannel(channel);
+      return channel;
+    }
   }
 
   @On("ready")
   async ready([_]: ArgsOf<"message">, client: Client) {
-    console.log("Bot iniciado com sucesso!");
-
-    manager
-      .connect()
-      .then((success) => {
-        console.log(
-          `Connected to ${
-            success.filter((ws) => ws != null).length
-          } lavalink nodes.`
-        );
-      })
-      .catch((err) => {
-        console.error(`Error connecting to lavalink`, err);
-        process.exit(1);
-      });
-
     // Limpeza - magias-de-comando
     cron.schedule(
       "0 0 * * *",
@@ -94,20 +73,19 @@ export class AppDiscord {
         "dd/MM/yyyy HH:mm:ss"
       );
       await podiumChannel.send({
-        embed: new MessageEmbed()
-          .setTitle("Ranque")
-          .setColor(theme.default)
-          .setFooter(`Pódio atualizado às ${updatedDate}`)
-          .setDescription(
-            `${leaderboards
-              .map((position, i) => {
-                const { username, balance } = position;
-                return `${i + 1} - ${username} - ${balance}`;
-              })
-              .join("\n")}`
-          ),
+        embeds: [
+          new MessageEmbed({
+            title: "🏆 Ranque",
+            color: theme.default,
+            footer: { text: `Pódio atualizado às ${updatedDate}` },
+            description: `${leaderboards
+              .map((p, i) => `${i + 1} - ${p.username} - ${p.balance}`)
+              .join("\n")}`,
+          }),
+        ],
       });
       await prisma.$disconnect();
     });
+    console.log("Bot iniciado com sucesso!");
   }
 }

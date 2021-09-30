@@ -1,14 +1,13 @@
-import { CommandMessage, Command, Infos } from "@typeit/discord";
+import { Discord, Slash } from "discordx";
+import { CommandInteraction } from "discord.js";
 
 const category = ":globe_with_meridians: Geral";
+@Discord()
 export abstract class PingService {
-  @Command("ping")
-  @Infos({
-    category,
+  @Slash("ping", {
     description: "Retorna o ping do bot",
-    syntax: '=ping'
   })
-  showPing(message: CommandMessage) {
-    return message.channel.send(`🏓 ${Math.round(message.client.ws.ping)}ms`);
+  showPing(interaction: CommandInteraction) {
+    return interaction.reply(`🏓 ${Math.round(interaction.client.ws.ping)}ms`);
   }
 }

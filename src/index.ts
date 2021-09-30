@@ -1,48 +1,107 @@
-import * as dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config";
+import "reflect-metadata";
 import express = require("express");
-import { Client } from "@typeit/discord";
-import { AppDiscord } from "./bot";
-import { Manager } from "@lavacord/discord.js";
-import Queue from "./structures/queue";
-import { LavasfyClient } from "lavasfy";
+import { Client } from "discordx";
+import { Intents, MessageEmbed, TextChannel } from "discord.js";
+import * as queue from "@lavaclient/queue";
+import { Node } from "lavaclient";
+import { load } from "@lavaclient/spotify";
+import { theme } from "./config";
 
-const client = new Client({
-  classes: [AppDiscord, `${__dirname}/*Discord.ts`, `${__dirname}/*Discord.js`],
-  silent: false,
-  variablesChar: "=",
-  fetchAllMembers: true,
-});
-const nodes = [
-  {
-    id: "1",
-    host: process.env.LAVALINK_HOST,
-    port: process.env.LAVALINK_PORT,
-    password: process.env.LAVALINK_PASSWORD,
-  },
-];
-let manager: Manager;
-let lavasfy: LavasfyClient;
-const queues: { [id: string]: Queue } = {};
+queue.load();
+class Bot {
+  client: Client;
+  music: Node;
 
-async function start() {
-  await client.login(process.env.DISCORD_TOKEN);
-  manager = new Manager(client, nodes, { user: client.user.id });
-  lavasfy = new LavasfyClient(
-    {
-      clientID: process.env.SPOTIFY_CLIENT_ID,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-      autoResolve: true,
-      audioOnlyResults: true,
-    },
-    nodes
-  );
+  constructor() {
+    this.start();
+  }
+
+  start() {
+    this.client = new Client({
+      classes: [`${__dirname}/services/*.{js,ts}`, `${__dirname}/bot.{js,ts}`],
+      silent: false,
+      commandUnauthorizedHandler: "Não Autorizado",
+      botGuilds: [process.env.GUILD_ID],
+      intents: [
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_MEMBERS,
+        Intents.FLAGS.GUILD_VOICE_STATES,
+        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+        Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
+      ],
+    });
+
+    this.music = new Node({
+      sendGatewayPayload: (id, payload) =>
+        this.client.guilds.cache.get(id)?.shard?.send(payload),
+      connection: {
+        host: process.env.LAVALINK_HOST!,
+        password: process.env.LAVALINK_PASSWORD!,
+        port: Number(process.env.LAVALINK_PORT),
+      },
+    });
+
+    this.music.on("connect", () => {
+      console.log(`[music] now connected to lavalink`);
+    });
+
+    this.music.on("queueFinish", (queue) => {
+      const {
+        player: { guildId, channelId },
+      } = queue;
+      const channel = this.client.guilds.cache
+        .get(guildId)
+        .channels.cache.get(channelId);
+      if (channel instanceof TextChannel) {
+        channel.send({
+          embeds: [
+            new MessageEmbed({
+              title: "Fim da fila",
+              description: "A fila acabou... :/",
+              color: theme.default,
+            }),
+          ],
+        });
+      }
+    });
+
+    this.client.ws.on("VOICE_SERVER_UPDATE", (data) =>
+      this.music.handleVoiceUpdate(data)
+    );
+    this.client.ws.on("VOICE_STATE_UPDATE", (data) =>
+      this.music.handleVoiceUpdate(data)
+    );
+
+    this.client.once("ready", async () => {
+      await this.client.initApplicationCommands();
+      this.music.connect(this.client.user!.id);
+    });
+
+    this.client.on("interactionCreate", (interaction) => {
+      this.client.executeInteraction(interaction);
+    });
+    this.client.on("error", (err) => {
+      console.error(err);
+    });
+
+    this.client.login(process.env.DISCORD_TOKEN);
+  }
 }
 
 const app = express();
 app.get("/", (_, res) => res.send("This is a Discord Bot!"));
 app.listen(process.env.PORT || 3000);
 
-start();
+load({
+  client: {
+    id: process.env.SPOTIFY_CLIENT_ID!,
+    secret: process.env.SPOTIFY_CLIENT_SECRET!,
+  },
+  autoResolveYoutubeTracks: false,
+});
 
-export { manager, lavasfy, queues };
+const bot = new Bot();
+
+export { bot };
