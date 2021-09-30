@@ -57,6 +57,7 @@ export abstract class MusicService {
         case "PLAYLIST_LOADED":
           tracks = search.tracks;
           break;
+        case "TRACK_LOADED":
         case "SEARCH_RESULT":
           tracks = [search.tracks[0]];
           break;
