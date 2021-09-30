@@ -48,7 +48,6 @@ export abstract class MusicService {
         default:
           return interaction.reply({
             content: "Sorry, couldn't find anything :/",
-            ephemeral: true,
           });
       }
     } else {
@@ -159,6 +158,34 @@ export abstract class MusicService {
         ],
       });
     }
-    player.queue.next().then(() => interaction.reply("Pulei 👍"));
+    player.queue.next().then((skipped) => {
+      if (skipped) {
+        interaction.reply("Pulei 👍");
+      } else {
+        player.disconnect();
+        player.destroy();
+        interaction.reply("A fila acabou... 😩");
+      }
+    });
+  }
+
+  @Slash("leave", { description: "Para a música e desconecta o bot" })
+  async leave(interaction: CommandInteraction) {
+    const music = bot.music;
+    const player = music.players.get(interaction.guildId);
+    if (!player) {
+      return interaction.reply({
+        embeds: [
+          new MessageEmbed({
+            title: "Erro!",
+            description: "Não existe uma fila para esse servidor...",
+            color: theme.error,
+          }),
+        ],
+      });
+    }
+    await player.disconnect();
+    await player.destroy();
+    interaction.reply("✅");
   }
 }
