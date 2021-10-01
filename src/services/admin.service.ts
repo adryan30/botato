@@ -1,4 +1,4 @@
-import { Slash, Guard, SlashOption, Discord, Client } from "discordx";
+import { Slash, Guard, SlashOption, Discord } from "discordx";
 import {
   Collection,
   Message,
@@ -12,7 +12,6 @@ import { theme } from "../config";
 import { AdminGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
 
-const category = ":police_officer: Admin";
 @Discord()
 export abstract class AdminService {
   @Slash("clear", { description: "Limpa as mesagens presentes no canal" })
@@ -58,7 +57,7 @@ export abstract class AdminService {
     const id = user.id;
     await prisma.user.update({ where: { id }, data: { isAdmin: true } });
     await prisma.$disconnect();
-    interaction.reply(`Usuário ${user.displayName} agora é um administrador!`);
+    await interaction.reply(`Usuário ${user.displayName} agora é um administrador!`);
   }
 
   @Slash("randomrole", {

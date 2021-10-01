@@ -15,15 +15,14 @@ import {
 import { theme } from "../config";
 import { AdminGuard, AuthorHasNoWalletEmbed, EconomyGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
-import { findDrolhosEmoji, getUser, userExists } from "../utils";
+import { findDrolhosEmoji, getUser } from "../utils";
 
-const category = ":bank: Economia";
 @Discord()
 export abstract class EconomyService {
   @Slash("register", {
     description: "Registra o usuário no sistema de economia",
   })
-  async register(interaction: CommandInteraction, client: Client) {
+  async register(interaction: CommandInteraction, _client: Client) {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
     const id = interaction.user.id;

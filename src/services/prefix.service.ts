@@ -2,7 +2,6 @@ import { Discord, Slash, SlashOption } from "discordx";
 import { CommandInteraction } from "discord.js";
 import { getUser } from "../utils";
 
-const category = ":writing_hand: Prefix";
 @Discord()
 export abstract class PrefixService {
   @Slash("prefix", {
@@ -30,6 +29,6 @@ export abstract class PrefixService {
   async removePrefix(interaction: CommandInteraction) {
     const member = getUser(interaction, interaction.user.id);
     const oldNickname = member.displayName;
-    await member.setNickname(oldNickname.replace(/\[.*\]\s/, ""));
+    await member.setNickname(oldNickname.replace(/\[.*]\s/, ""));
   }
 }

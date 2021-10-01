@@ -3,11 +3,8 @@ import {
   ButtonInteraction,
   CommandInteraction,
   ContextMenuInteraction,
-  Message,
   MessageEmbed,
-  MessageReaction,
   SelectMenuInteraction,
-  VoiceState,
 } from "discord.js";
 import { theme } from "../config";
 import { PrismaClient } from "@prisma/client";

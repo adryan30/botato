@@ -84,7 +84,7 @@ class Bot {
     this.music.on("queueFinish", async (queue) => {
       const player = queue.player;
       await player.disconnect();
-      await player.node.destroyPlayer(player.guildId);
+      player.node.destroyPlayer(player.guildId);
     });
 
     this.client.ws.on("VOICE_SERVER_UPDATE", (data) =>

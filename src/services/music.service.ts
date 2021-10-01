@@ -11,7 +11,6 @@ const urlRegex = new RegExp(
   /^https?:\/\/((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i
 );
 
-const category = ":musical_note: Música";
 @Discord()
 export abstract class MusicService {
   @Slash("play", {
@@ -71,9 +70,9 @@ export abstract class MusicService {
     if (tracks.length) {
       const track = tracks[0];
       if (!player.playing) {
-        interaction.reply("✅");
+        await interaction.reply("✅");
       } else {
-        interaction.reply({
+        await interaction.reply({
           embeds: [
             new MessageEmbed({
               title: `🎵 Adicionado a fila:`,
@@ -83,7 +82,7 @@ export abstract class MusicService {
                   name: "Música",
                   value: `[${track.info.title}](${track.info.uri})`,
                 },
-                { inline: true, name: "Autor", value: track.info.author },
+                {inline: true, name: "Autor", value: track.info.author},
                 {
                   inline: true,
                   name: "Duração",
@@ -105,7 +104,7 @@ export abstract class MusicService {
       player.connect(voiceChannel, { deafened: true });
     }
     if (!player.playing) {
-      player.queue.start();
+      await player.queue.start();
     }
   }
 
@@ -191,8 +190,8 @@ export abstract class MusicService {
       });
     }
     await player.disconnect();
-    await player.node.destroyPlayer(interaction.guildId);
-    interaction.reply("✅");
+    player.node.destroyPlayer(interaction.guildId);
+    await interaction.reply("✅");
   }
 
   @Slash("pause", { description: "Pausa a música atual" })
@@ -212,7 +211,7 @@ export abstract class MusicService {
     }
     const isPlaying = player.playing;
     await player.pause(isPlaying);
-    interaction.reply(isPlaying ? "Pausei ⏸" : "Despausei ▶️");
+    await interaction.reply(isPlaying ? "Pausei ⏸" : "Despausei ▶️");
   }
 
   @Slash("shuffle", { description: "Aleatoria a fila de música" })
@@ -231,6 +230,6 @@ export abstract class MusicService {
       });
     }
     player.queue.shuffle();
-    interaction.reply("Aleatorizado 👍");
+    await interaction.reply("Aleatorizado 👍");
   }
 }
