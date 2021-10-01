@@ -13,8 +13,3 @@ model User {
   tickets Int     @default(0)
   isAdmin Boolean @default(false)
 }
-
-model Todo {
-  id   Int    @id @default(autoincrement())
-  text String
-}
