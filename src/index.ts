@@ -1,6 +1,5 @@
 import "dotenv/config";
 import "reflect-metadata";
-import express = require("express");
 import { Client } from "discordx";
 import { Intents, MessageEmbed, TextChannel } from "discord.js";
 import * as queue from "@lavaclient/queue";
@@ -8,8 +7,11 @@ import { Node } from "lavaclient";
 import { load } from "@lavaclient/spotify";
 import { theme } from "./config";
 import { msToHMS } from "./utils";
+import * as path from "path";
+import express = require("express");
 
 queue.load();
+
 class Bot {
   client: Client;
   music: Node;
@@ -20,7 +22,10 @@ class Bot {
 
   start() {
     this.client = new Client({
-      classes: [`${__dirname}/services/*.{js,ts}`, `${__dirname}/bot.{js,ts}`],
+      classes: [
+        path.join(__dirname, "services", "*.{js,ts}"),
+        path.join(__dirname, "bot.{js,ts}"),
+      ],
       silent: false,
       commandUnauthorizedHandler: "Não Autorizado",
       botGuilds: [process.env.GUILD_ID],
@@ -49,7 +54,6 @@ class Bot {
     });
 
     this.music.on("trackStart", (queue, song) => {
-      console.log(song);
       const {
         player: { guildId },
       } = queue;

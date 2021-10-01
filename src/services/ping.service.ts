@@ -1,7 +1,6 @@
 import { Discord, Slash } from "discordx";
 import { CommandInteraction } from "discord.js";
 
-const category = ":globe_with_meridians: Geral";
 @Discord()
 export abstract class PingService {
   @Slash("ping", {

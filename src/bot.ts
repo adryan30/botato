@@ -1,7 +1,7 @@
 import { ArgsOf, Client, Discord, On } from "discordx";
 import * as cron from "node-cron";
-import { cleanChannel } from "./utils";
-import { Collection, Message, MessageEmbed } from "discord.js";
+import { cleanChannel, findChannel } from "./utils";
+import { MessageEmbed, TextChannel } from "discord.js";
 import { theme } from "./config";
 import { format, subHours } from "date-fns";
 import { PrismaClient } from "@prisma/client";
@@ -9,21 +9,9 @@ import { PrismaClient } from "@prisma/client";
 @Discord()
 export class AppDiscord {
   async clean(client: Client, channelName: string) {
-    const channel = client.channels.cache.find(
-      (c) => c.toJSON()["name"] == channelName
-    );
+    const channel = await findChannel(channelName, client);
     console.log(`Cleaning ${channelName} channel...`);
-
-    if (channel.isText() && channel.type === "GUILD_TEXT") {
-      let messageQuantity = 0;
-      let fetched: Collection<string, Message>;
-      do {
-        fetched = await channel.messages.fetch({ limit: 100 });
-        fetched = fetched.filter((message) => !message.pinned);
-        messageQuantity += fetched.size;
-        await channel.bulkDelete(fetched);
-      } while (fetched.size > 2);
-
+    if (channel instanceof TextChannel) {
       await cleanChannel(channel);
       return channel;
     }
@@ -60,7 +48,7 @@ export class AppDiscord {
       });
       const { members } = await client.guilds.fetch(process.env.GUILD_ID);
       const leaderboards = await Promise.all(
-        usersData.map(async (user, i) => {
+        usersData.map(async (user) => {
           const memberData = await members.fetch(user.id);
           const {
             user: { username },

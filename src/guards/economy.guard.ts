@@ -41,7 +41,7 @@ export const EconomyGuard: GuardFunction<
   | SelectMenuInteraction
   | ButtonInteraction
   | SimpleCommandMessage
-> = async (arg, _client, next, datas) => {
+> = async (arg, _client, next) => {
   const prisma = new PrismaClient();
   const interaction = arg instanceof Array ? arg[0] : arg;
   if (interaction instanceof CommandInteraction) {

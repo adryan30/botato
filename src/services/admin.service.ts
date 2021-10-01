@@ -1,37 +1,26 @@
-import { Slash, Guard, SlashOption, Discord } from "discordx";
+import { Discord, Guard, Slash, SlashOption } from "discordx";
 import {
-  Collection,
-  Message,
-  MessageEmbed,
   CommandInteraction,
-  Role,
   GuildMember,
+  MessageEmbed,
+  Role,
+  TextChannel,
 } from "discord.js";
-import { differenceInCalendarDays } from "date-fns";
 import { theme } from "../config";
 import { AdminGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
+import { cleanChannel } from "../utils";
 
 @Discord()
 export abstract class AdminService {
   @Slash("clear", { description: "Limpa as mesagens presentes no canal" })
   @Guard(AdminGuard)
   async clear(interaction: CommandInteraction) {
-    let messageQuantity = 0;
-    let fetched: Collection<string, Message>;
-    do {
-      fetched = await interaction.channel.messages.fetch({ limit: 100 });
-      fetched = fetched.filter(
-        (message) =>
-          !message.pinned &&
-          differenceInCalendarDays(message.createdAt, new Date()) < 13
-      );
-      messageQuantity += fetched.size;
-      if (interaction.channel.type === "GUILD_TEXT") {
-        await interaction.channel.bulkDelete(fetched);
-      }
-    } while (fetched.size > 2);
-    const embedMessage = await interaction.channel.send({
+    let messageQuantity: number;
+    if (interaction.channel instanceof TextChannel) {
+      messageQuantity = await cleanChannel(interaction.channel);
+    }
+    await interaction.reply({
       embeds: [
         new MessageEmbed()
           .setTitle("Limpeza concluída")
@@ -39,7 +28,7 @@ export abstract class AdminService {
           .setColor(theme.default),
       ],
     });
-    setTimeout(() => embedMessage.delete(), 5000);
+    setTimeout(() => interaction.deleteReply(), 5000);
   }
 
   @Slash("makeadmin", { description: "Transforma usuários comuns em admins" })
@@ -57,7 +46,9 @@ export abstract class AdminService {
     const id = user.id;
     await prisma.user.update({ where: { id }, data: { isAdmin: true } });
     await prisma.$disconnect();
-    await interaction.reply(`Usuário ${user.displayName} agora é um administrador!`);
+    await interaction.reply(
+      `Usuário ${user.displayName} agora é um administrador!`
+    );
   }
 
   @Slash("randomrole", {

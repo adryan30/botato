@@ -1,21 +1,21 @@
 import {
-  Slash,
-  Guard,
   Client,
-  SlashOption,
-  Discord,
   ContextMenu,
+  Discord,
+  Guard,
+  Slash,
+  SlashOption,
 } from "discordx";
 import {
-  MessageEmbed,
-  User,
   CommandInteraction,
   ContextMenuInteraction,
+  MessageEmbed,
+  User,
 } from "discord.js";
 import { theme } from "../config";
 import { AdminGuard, AuthorHasNoWalletEmbed, EconomyGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
-import { findDrolhosEmoji, getUser } from "../utils";
+import { findDrolhosEmoji, findUser } from "../utils";
 
 @Discord()
 export abstract class EconomyService {
@@ -70,7 +70,7 @@ export abstract class EconomyService {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
     const userToSearch: User = user ?? interaction.user;
-    const searchUser = getUser(interaction, userToSearch.id);
+    const searchUser = findUser(interaction, userToSearch.id);
     const userData = await prisma.user.findUnique({
       where: { id: userToSearch.id },
     });
@@ -162,7 +162,7 @@ export abstract class EconomyService {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
     const { id } = user;
-    const { displayName } = getUser(interaction, id);
+    const { displayName } = findUser(interaction, id);
 
     await prisma.user.update({
       data: { balance: { increment: awardValue } },
@@ -204,7 +204,7 @@ export abstract class EconomyService {
   ) {
     const prisma = new PrismaClient();
     const { id } = user;
-    const { displayName } = getUser(interaction, id);
+    const { displayName } = findUser(interaction, id);
 
     await prisma.user.update({
       data: { tickets: { increment: awardValue } },
@@ -248,7 +248,7 @@ export abstract class EconomyService {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
     const { id } = user;
-    const removedName = getUser(interaction, id);
+    const removedName = findUser(interaction, id);
 
     await prisma.user.update({
       data: { balance: { decrement: removeValue } },
@@ -291,7 +291,7 @@ export abstract class EconomyService {
   ) {
     const prisma = new PrismaClient();
     const { id } = user;
-    const removedName = getUser(interaction, id);
+    const removedName = findUser(interaction, id);
 
     await prisma.user.update({
       data: { tickets: { decrement: removeValue } },
@@ -334,9 +334,9 @@ export abstract class EconomyService {
     const prisma = new PrismaClient();
     const drolhosEmoji = findDrolhosEmoji(interaction);
     const { id: authorId } = interaction.user;
-    const authorUser = getUser(interaction, authorId);
+    const authorUser = findUser(interaction, authorId);
     const { id: receiverId } = user;
-    const receiverUser = getUser(interaction, receiverId);
+    const receiverUser = findUser(interaction, receiverId);
 
     await prisma.user.update({
       data: { balance: { decrement: tradeValue } },
@@ -381,9 +381,9 @@ export abstract class EconomyService {
   ) {
     const prisma = new PrismaClient();
     const { id: authorId } = interaction.user;
-    const authorUser = getUser(interaction, authorId);
+    const authorUser = findUser(interaction, authorId);
     const { id: receiverId } = user;
-    const receiverUser = getUser(interaction, receiverId);
+    const receiverUser = findUser(interaction, receiverId);
 
     await prisma.user.update({
       data: { tickets: { decrement: tradeValue } },
@@ -430,6 +430,7 @@ export abstract class EconomyService {
       })
       .finally(() => prisma.$disconnect());
   }
+
   @Slash("totalcareca", {
     description: "Lista a quantia total de drolhos para o Bruno Careca",
   })

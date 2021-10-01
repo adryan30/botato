@@ -7,9 +7,8 @@ import { bot } from "../";
 import { theme } from "../config";
 import { msToHMS, spliceIntoChunks } from "../utils";
 
-const urlRegex = new RegExp(
-  /^https?:\/\/((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i
-);
+const urlRegex =
+  /^https?:\/\/((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i;
 
 @Discord()
 export abstract class MusicService {
@@ -26,25 +25,18 @@ export abstract class MusicService {
     const { music } = bot;
     const player = music.createPlayer(interaction.guildId);
     let tracks: Track[];
-    let msg: string;
     if (music.spotify.isSpotifyUrl(query)) {
       const item = await music.spotify.load(query);
       switch (item?.type) {
         case SpotifyItemType.Track:
-          const track = await item.resolveYoutubeTrack();
-          tracks = [track];
-          msg = `Queued track [**${item.name}**](${query}).`;
+          tracks = [await item.resolveYoutubeTrack()];
           break;
         case SpotifyItemType.Artist:
           tracks = await item.resolveYoutubeTracks();
-          msg = `Queued the **Top ${tracks.length} tracks** for [**${item.name}**](${query}).`;
           break;
         case SpotifyItemType.Album:
         case SpotifyItemType.Playlist:
           tracks = await item.resolveYoutubeTracks();
-          msg = `Queued **${tracks.length} tracks** from ${SpotifyItemType[
-            item.type
-          ].toLowerCase()} [**${item.name}**](${query}).`;
           break;
         default:
           return interaction.reply({
@@ -82,7 +74,7 @@ export abstract class MusicService {
                   name: "Música",
                   value: `[${track.info.title}](${track.info.uri})`,
                 },
-                {inline: true, name: "Autor", value: track.info.author},
+                { inline: true, name: "Autor", value: track.info.author },
                 {
                   inline: true,
                   name: "Duração",
