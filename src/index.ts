@@ -53,30 +53,27 @@ class Bot {
       console.log(`[music] now connected to lavalink`);
     });
 
-    this.music.on("trackStart", (queue, song) => {
+    this.music.on("trackEnd", async (queue) => {
       const {
         player: { guildId },
+        tracks,
       } = queue;
+      const nextSong = tracks[0];
       const textChannel = this.client.guilds.cache
         .get(guildId)
         .channels.cache.find((ch) => ch.name === "magias-de-comando");
-      if (textChannel instanceof TextChannel) {
-        textChannel.send({
+      if (textChannel instanceof TextChannel && nextSong) {
+        const songName = `[${nextSong.title}](${nextSong.uri})`;
+        const songAuthor = nextSong.author;
+        const songDuration = msToHMS(nextSong.length);
+        await textChannel.send({
           embeds: [
             new MessageEmbed({
               title: "🎵 Tocando Agora:",
               fields: [
-                {
-                  inline: true,
-                  name: "Música",
-                  value: `[${song.title}](${song.uri})`,
-                },
-                { inline: true, name: "Autor", value: song.author },
-                {
-                  inline: true,
-                  name: "Duração",
-                  value: msToHMS(song.length),
-                },
+                { inline: true, name: "Música", value: songName },
+                { inline: true, name: "Autor", value: songAuthor },
+                { inline: true, name: "Duração", value: songDuration },
               ],
               color: theme.default,
             }),

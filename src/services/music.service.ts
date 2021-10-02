@@ -1,16 +1,19 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
-import { Discord, Slash, SlashOption } from "discordx";
+import { CommandInteraction, GuildMember, MessageEmbed } from "discord.js";
+import { Discord, Guard, Slash, SlashOption } from "discordx";
 import { SpotifyItemType } from "@lavaclient/spotify";
 import { Track } from "@lavaclient/types";
 import { sendPaginatedEmbeds } from "@discordx/utilities";
 import { bot } from "../";
 import { theme } from "../config";
 import { msToHMS, spliceIntoChunks } from "../utils";
+import { MusicGuard, QueueGuard } from "../guards";
+import { Node, Player } from "lavaclient";
 
 const urlRegex =
   /^https?:\/\/((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i;
 
 @Discord()
+@Guard(MusicGuard)
 export abstract class MusicService {
   @Slash("play", {
     description: "Toca a música que for enviada.",
@@ -61,39 +64,28 @@ export abstract class MusicService {
 
     if (tracks.length) {
       const track = tracks[0];
-      if (!player.playing) {
-        await interaction.reply("✅");
-      } else {
-        await interaction.reply({
-          embeds: [
-            new MessageEmbed({
-              title: `🎵 Adicionado a fila:`,
-              fields: [
-                {
-                  inline: true,
-                  name: "Música",
-                  value: `[${track.info.title}](${track.info.uri})`,
-                },
-                { inline: true, name: "Autor", value: track.info.author },
-                {
-                  inline: true,
-                  name: "Duração",
-                  value: msToHMS(track.info.length),
-                },
-              ],
-              color: theme.default,
-            }),
-          ],
-        });
-      }
+      const songName = `[${track.info.title}](${track.info.uri})`;
+      const songAuthor = track.info.author;
+      const songDuration = msToHMS(track.info.length);
+      await interaction.reply({
+        embeds: [
+          new MessageEmbed({
+            title: `🎵 ${
+              !player.playing ? "Tocando agora" : "Adicionado a fila"
+            }:`,
+            fields: [
+              { inline: true, name: "Música", value: songName },
+              { inline: true, name: "Autor", value: songAuthor },
+              { inline: true, name: "Duração", value: songDuration },
+            ],
+            color: theme.default,
+          }),
+        ],
+      });
     }
 
-    if (!player.connected) {
-      const member = interaction.guild.members.cache.get(
-        interaction.member.user.id
-      );
-      const voiceChannel = member.voice.channel;
-      player.connect(voiceChannel, { deafened: true });
+    if (!player.connected && interaction.member instanceof GuildMember) {
+      player.connect(interaction.member.voice.channelId, { deafened: true });
     }
     if (!player.playing) {
       await player.queue.start();
@@ -101,20 +93,10 @@ export abstract class MusicService {
   }
 
   @Slash("queue", { description: "Mostra a fila de músicas atual" })
-  async queue(interaction: CommandInteraction) {
-    const music = bot.music;
-    const player = music.players.get(interaction.guildId);
-    if (!player) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: "Não existe uma fila para esse servidor...",
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+  @Guard(QueueGuard)
+  async queue(interaction: CommandInteraction, _client, datas) {
+    const player = datas.player as Player<Node>;
+
     if (player.queue.tracks.length) {
       const tracks = Array.from(player.queue.tracks);
       const pages = spliceIntoChunks(tracks, 10).map((chunk, page) => {
@@ -141,86 +123,41 @@ export abstract class MusicService {
   }
 
   @Slash("skip", { description: "Pula a música atual" })
-  async skip(interaction: CommandInteraction) {
-    const music = bot.music;
-    const player = music.players.get(interaction.guildId);
-    if (!player) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: "Não existe uma fila para esse servidor...",
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+  @Guard(QueueGuard)
+  async skip(interaction: CommandInteraction, _client, datas) {
+    const player = datas.player as Player<Node>;
     player.queue.next().then((skipped) => {
       if (skipped) {
-        interaction.reply("Pulei 👍");
-      } else {
-        player.disconnect();
-        player.destroy();
-        interaction.reply("A fila acabou... 😩");
+        return interaction.reply("Pulei 👍");
       }
+      player.disconnect();
+      player.destroy();
+      return interaction.reply("A fila acabou... 😩");
     });
   }
 
   @Slash("leave", { description: "Para a música e desconecta o bot" })
-  async leave(interaction: CommandInteraction) {
-    const music = bot.music;
-    const player = music.players.get(interaction.guildId);
-    if (!player) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: "Não existe uma fila para esse servidor...",
-            color: theme.error,
-          }),
-        ],
-      });
-    }
-    await player.disconnect();
+  @Guard(QueueGuard)
+  async leave(interaction: CommandInteraction, _client, datas) {
+    const player = datas.player as Player<Node>;
+    player.disconnect();
     player.node.destroyPlayer(interaction.guildId);
     await interaction.reply("✅");
   }
 
   @Slash("pause", { description: "Pausa a música atual" })
-  async pause(interaction: CommandInteraction) {
-    const music = bot.music;
-    const player = music.players.get(interaction.guildId);
-    if (!player) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: "Não existe uma fila para esse servidor...",
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+  @Guard(QueueGuard)
+  async pause(interaction: CommandInteraction, _client, datas) {
+    const player = datas.player as Player<Node>;
     const isPlaying = player.playing;
     await player.pause(isPlaying);
     await interaction.reply(isPlaying ? "Pausei ⏸" : "Despausei ▶️");
   }
 
   @Slash("shuffle", { description: "Aleatoria a fila de música" })
-  async shuffle(interaction: CommandInteraction) {
-    const music = bot.music;
-    const player = music.players.get(interaction.guildId);
-    if (!player) {
-      return interaction.reply({
-        embeds: [
-          new MessageEmbed({
-            title: "Erro!",
-            description: "Não existe uma fila para esse servidor...",
-            color: theme.error,
-          }),
-        ],
-      });
-    }
+  @Guard(QueueGuard)
+  async shuffle(interaction: CommandInteraction, _client, datas) {
+    const player = datas.player as Player<Node>;
     player.queue.shuffle();
     await interaction.reply("Aleatorizado 👍");
   }

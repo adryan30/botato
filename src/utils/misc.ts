@@ -1,5 +1,5 @@
 import { Collection, Message, TextChannel } from "discord.js";
-import { intervalToDuration } from "date-fns";
+import { addMilliseconds, format } from "date-fns";
 
 export async function cleanChannel(channel: TextChannel) {
   let messageQuantity = 0;
@@ -14,15 +14,10 @@ export async function cleanChannel(channel: TextChannel) {
 }
 
 export function msToHMS(miliseconds: number) {
-  if (miliseconds > 10800000) {
-    return "Livestream";
+  const hour = 60 * 60 * 1000;
+  if (miliseconds > hour) {
+    return "> 1h";
   }
-  const { hours, minutes, seconds } = intervalToDuration({
-    start: 0,
-    end: miliseconds,
-  });
-  const hoursFmt = `${hours < 10 && "0"}${hours}`;
-  const minutesFmt = `${minutes < 10 && "0"}${minutes}`;
-  const secondsFmt = `${seconds < 10 && "0"}${seconds}`;
-  return `${hours ? `${hoursFmt}:` : ""}${minutesFmt}:${secondsFmt}`;
+  const duration = addMilliseconds(0, miliseconds);
+  return format(duration, "mm:ss");
 }
