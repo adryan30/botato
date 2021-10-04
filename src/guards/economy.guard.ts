@@ -1,11 +1,5 @@
-import { ArgsOf, GuardFunction, SimpleCommandMessage } from "discordx";
-import {
-  ButtonInteraction,
-  CommandInteraction,
-  ContextMenuInteraction,
-  MessageEmbed,
-  SelectMenuInteraction,
-} from "discord.js";
+import { GuardFunction } from "discordx";
+import { CommandInteraction, MessageEmbed } from "discord.js";
 import { theme } from "../config";
 import { PrismaClient } from "@prisma/client";
 
@@ -34,67 +28,61 @@ export const ValueCantBeNegativeEmbed = new MessageEmbed({
   color: theme.error,
 });
 
-export const EconomyGuard: GuardFunction<
-  | ArgsOf<"messageCreate" | "messageReactionAdd" | "voiceStateUpdate">
-  | CommandInteraction
-  | ContextMenuInteraction
-  | SelectMenuInteraction
-  | ButtonInteraction
-  | SimpleCommandMessage
-> = async (arg, _client, next) => {
+export const EconomyGuard: GuardFunction<CommandInteraction> = async (
+  arg,
+  _client,
+  next
+) => {
   const prisma = new PrismaClient();
   const interaction = arg instanceof Array ? arg[0] : arg;
-  if (interaction instanceof CommandInteraction) {
-    const { commandName, user: author, options } = interaction;
-    const userMentioned = options.getUser("user");
-    const valueInformed = options.getInteger("value");
-    const { id: authorId } = author;
-    const authorData = await prisma.user.findUnique({
-      where: { id: authorId },
+  const { commandName, user: author, options } = interaction;
+  const userMentioned = options.getUser("user");
+  const valueInformed = options.getInteger("value");
+  const { id: authorId } = author;
+  const authorData = await prisma.user.findUnique({
+    where: { id: authorId },
+  });
+  if (!authorData) {
+    return interaction.reply({ embeds: [AuthorHasNoWalletEmbed] });
+  }
+
+  if (
+    ["remove", "removet", "award", "awardt"].includes(commandName) ||
+    userMentioned
+  ) {
+    const userData = await prisma.user.count({
+      where: { id: userMentioned.id },
     });
-    if (!authorData) {
-      return interaction.reply({ embeds: [AuthorHasNoWalletEmbed] });
+    if (!userData) {
+      return interaction
+        .reply({ embeds: [ReceiverHasNoWalletEmbed] })
+        .finally(() => prisma.$disconnect());
     }
+  }
 
+  if (["give", "givet"].includes(commandName)) {
+    const isDrolhosTrasaction = commandName === "give";
     if (
-      ["remove", "removet", "award", "awardt"].includes(commandName) ||
-      userMentioned
+      valueInformed >
+      (isDrolhosTrasaction ? authorData.balance : authorData.tickets)
     ) {
-      const userData = await prisma.user.count({
-        where: { id: userMentioned.id },
-      });
-      if (!userData) {
-        return interaction
-          .reply({ embeds: [ReceiverHasNoWalletEmbed] })
-          .finally(() => prisma.$disconnect());
-      }
-    }
-
-    if (["give", "givet"].includes(commandName)) {
-      const isDrolhosTrasaction = commandName === "give";
-      if (
-        valueInformed >
-        (isDrolhosTrasaction ? authorData.balance : authorData.tickets)
-      ) {
-        return interaction
-          .reply({
-            embeds: [
-              NotEnoughtCreditsEmbed(
-                isDrolhosTrasaction ? "drolhos" : "bilhetes"
-              ),
-            ],
-          })
-          .finally(() => prisma.$disconnect());
-      }
-    }
-    console.log(valueInformed);
-    if (valueInformed && valueInformed <= 0) {
       return interaction
         .reply({
-          embeds: [ValueCantBeNegativeEmbed],
+          embeds: [
+            NotEnoughtCreditsEmbed(
+              isDrolhosTrasaction ? "drolhos" : "bilhetes"
+            ),
+          ],
         })
         .finally(() => prisma.$disconnect());
     }
-    await next().finally(() => prisma.$disconnect());
   }
+  if (valueInformed && valueInformed <= 0) {
+    return interaction
+      .reply({
+        embeds: [ValueCantBeNegativeEmbed],
+      })
+      .finally(() => prisma.$disconnect());
+  }
+  await next().finally(() => prisma.$disconnect());
 };

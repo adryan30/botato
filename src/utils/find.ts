@@ -1,4 +1,5 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
+import { bot } from "../index";
 
 const guildId = process.env.GUILD_ID;
 
@@ -14,8 +15,8 @@ export async function findChannel(channelName: string, client: Client) {
   });
 }
 
-export function findDrolhosEmoji(interaction: CommandInteraction) {
-  return interaction.client.emojis.cache.find((e) => e.name === "drolhoscoin");
+export function findDrolhosEmoji() {
+  return bot.client.emojis.cache.find((e) => e.name === "drolhoscoin");
 }
 
 export function findUser(interaction: CommandInteraction, userId: string) {
