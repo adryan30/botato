@@ -7,13 +7,21 @@ type Operation = `${Verb}|${UserField}`;
 
 export class UserRepository {
   private client: PrismaClient;
+  private static instance: UserRepository;
 
-  constructor() {
+  private constructor() {
     this.client = new PrismaClient();
   }
 
+  static getInstance() {
+    if (!UserRepository.instance) {
+      this.instance = new UserRepository();
+    }
+    return this.instance;
+  }
+
   public async createUser(id: string) {
-    const userExists = this.getUser(id);
+    const userExists = await this.getUser(id);
     if (userExists) throw Error("User exists");
     return await this.client.user.create({ data: { id } });
   }

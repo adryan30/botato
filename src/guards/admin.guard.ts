@@ -28,6 +28,7 @@ export const AdminGuard: GuardFunction<
   if (interaction instanceof CommandInteraction) {
     const { id } = interaction.user;
     const authorData = await prisma.user.findUnique({ where: { id } });
+    console.log(authorData);
     if (!authorData?.isAdmin) {
       return interaction
         .reply({ embeds: [AdminUnathorizedEmbed] })

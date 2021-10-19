@@ -30,7 +30,7 @@ const CurrencyChoices = {
 
 @Discord()
 export abstract class EconomyService {
-  private userRepository = new UserRepository();
+  private userRepository = UserRepository.getInstance();
 
   @Slash("register", {
     description: "Registra o usuário no sistema de economia",

@@ -10,9 +10,12 @@ import { theme } from "../config";
 import { AdminGuard } from "../guards";
 import { PrismaClient } from "@prisma/client";
 import { cleanChannel } from "../utils";
+import { UserRepository } from "../repositories/user.repository";
 
 @Discord()
 export abstract class AdminService {
+  private userRepository = UserRepository.getInstance();
+
   @Slash("clear", { description: "Limpa as mesagens presentes no canal" })
   @Guard(AdminGuard)
   async clear(interaction: CommandInteraction) {
@@ -42,10 +45,8 @@ export abstract class AdminService {
     user: GuildMember,
     interaction: CommandInteraction
   ) {
-    const prisma = new PrismaClient();
     const id = user.id;
-    await prisma.user.update({ where: { id }, data: { isAdmin: true } });
-    await prisma.$disconnect();
+    await this.userRepository.makeAdmin(id);
     await interaction.reply(
       `Usuário ${user.displayName} agora é um administrador!`
     );
@@ -112,16 +113,19 @@ export abstract class AdminService {
     const randomUserData = (await message.guild.members.fetch()).get(
       randomUser
     );
-    message.channel.send({
-      embeds: [
-        new MessageEmbed()
-          .setTitle("Usuário escolhido:")
-          .setColor(theme.default)
-          .setImage(
-            randomUserData.user.avatarURL() || "https://i.imgur.com/ZyTkCb1.png"
-          )
-          .setFooter(randomUserData.user.username),
-      ],
-    });
+    message.channel
+      .send({
+        embeds: [
+          new MessageEmbed()
+            .setTitle("Usuário escolhido:")
+            .setColor(theme.default)
+            .setImage(
+              randomUserData.user.avatarURL() ||
+                "https://i.imgur.com/ZyTkCb1.png"
+            )
+            .setFooter(randomUserData.user.username),
+        ],
+      })
+      .finally(() => prisma.$disconnect());
   }
 }

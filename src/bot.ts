@@ -18,7 +18,7 @@ export class AppDiscord {
   }
 
   @On("ready")
-  async ready([_]: ArgsOf<"message">, client: Client) {
+  async ready([_]: ArgsOf<"ready">, client: Client) {
     // Limpeza - magias-de-comando
     cron.schedule(
       "0 0 * * *",
