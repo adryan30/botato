@@ -1,14 +1,24 @@
-FROM node:12-alpine
+FROM node:16 AS builder
 
-RUN apk update && apk add python make g++ ffmpeg
-
+# Create app directory
 WORKDIR /app
 
-COPY ["package.json", "package-lock.json*", "./"]
+COPY package*.json ./
+COPY prisma ./prisma/
 
-RUN npm -g install pnpm
-RUN pnpm install
+# Install app dependencies
+RUN npm install
 
 COPY . .
 
-CMD ["pnpm", "start:dev"]
+RUN npm run build
+
+FROM node:16
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+COPY .env .env
+
+EXPOSE 3000
+CMD [ "npm", "run", "start" ]
