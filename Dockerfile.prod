@@ -19,4 +19,5 @@ COPY --from=builder /app/dist ./dist
 COPY .env .env
 
 EXPOSE 3000
+RUN npx prisma generate
 CMD [ "npm", "run", "start" ]
