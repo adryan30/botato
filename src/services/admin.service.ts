@@ -2,9 +2,10 @@ import { Discord, Guard, Slash, SlashOption } from "discordx";
 import {
   CommandInteraction,
   GuildMember,
-  MessageEmbed,
+  EmbedBuilder,
   Role,
   TextChannel,
+  ApplicationCommandOptionType,
 } from "discord.js";
 import { theme } from "../config";
 import { AdminGuard } from "../guards";
@@ -25,7 +26,7 @@ export abstract class AdminService {
     }
     await interaction.reply({
       embeds: [
-        new MessageEmbed()
+        new EmbedBuilder()
           .setTitle("Limpeza concluída")
           .setDescription(`${messageQuantity} mensagens apagadas!`)
           .setColor(theme.default),
@@ -40,7 +41,7 @@ export abstract class AdminService {
     @SlashOption("usuário", {
       description: "Usuário a ser transformado",
       required: true,
-      type: "USER",
+      type: ApplicationCommandOptionType.User,
     })
     user: GuildMember,
     interaction: CommandInteraction
@@ -59,7 +60,7 @@ export abstract class AdminService {
     @SlashOption("role", {
       description: "Role a ser buscado",
       required: true,
-      type: "ROLE",
+      type: ApplicationCommandOptionType.Role,
     })
     role: Role,
     interaction: CommandInteraction
@@ -79,20 +80,20 @@ export abstract class AdminService {
     if (randomUserData) {
       interaction.channel.send({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setTitle("Usuário escolhido:")
             .setColor(theme.default)
             .setImage(
               randomUserData.user.avatarURL() ||
                 "https://i.imgur.com/ZyTkCb1.png"
             )
-            .setFooter(randomUserData.user.username),
+            .setFooter({ text: randomUserData.user.username }),
         ],
       });
     } else {
       interaction.channel.send({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setTitle("Argumentos inválidos...")
             .setDescription("Nenhum usuário válido nos cargos mencionados.")
             .setColor(theme.error),
@@ -116,14 +117,14 @@ export abstract class AdminService {
     message.channel
       .send({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setTitle("Usuário escolhido:")
             .setColor(theme.default)
             .setImage(
               randomUserData.user.avatarURL() ||
                 "https://i.imgur.com/ZyTkCb1.png"
             )
-            .setFooter(randomUserData.user.username),
+            .setFooter({ text: randomUserData.user.username }),
         ],
       })
       .finally(() => prisma.$disconnect());

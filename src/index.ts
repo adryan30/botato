@@ -1,42 +1,43 @@
 import "dotenv/config";
 import "reflect-metadata";
 import { Client } from "discordx";
-import { Intents, MessageEmbed, TextChannel } from "discord.js";
+import { importx } from "@discordx/importer";
+import {
+  EmbedBuilder,
+  TextChannel,
+  IntentsBitField,
+  GatewayDispatchEvents,
+} from "discord.js";
 import * as queue from "@lavaclient/queue";
 import { Node } from "lavaclient";
 import { load } from "@lavaclient/spotify";
 import { theme } from "./config";
 import { msToHMS } from "./utils";
-import * as path from "path";
 import express = require("express");
 
 queue.load();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 class Bot {
-  client: Client;
-  music: Node;
+  static client: Client;
+  static music: Node;
 
-  constructor() {
-    this.start();
-  }
-
-  start() {
+  static async start() {
     this.client = new Client({
-      classes: [
-        path.join(__dirname, "services", "*.{js,ts}"),
-        path.join(__dirname, "bot.{js,ts}"),
-      ],
       silent: false,
-      commandUnauthorizedHandler: "Não Autorizado",
       botGuilds: [process.env.GUILD_ID],
       intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_PRESENCES,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MEMBERS,
-        Intents.FLAGS.GUILD_VOICE_STATES,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-        Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
+        IntentsBitField.Flags.Guilds,
+        IntentsBitField.Flags.GuildPresences,
+        IntentsBitField.Flags.GuildMessages,
+        IntentsBitField.Flags.GuildMembers,
+        IntentsBitField.Flags.GuildVoiceStates,
+        IntentsBitField.Flags.GuildMessageReactions,
+        IntentsBitField.Flags.GuildEmojisAndStickers,
       ],
     });
 
@@ -69,7 +70,7 @@ class Bot {
         const songDuration = msToHMS(nextSong.length);
         await textChannel.send({
           embeds: [
-            new MessageEmbed({
+            new EmbedBuilder({
               title: "🎵 Tocando Agora:",
               fields: [
                 { inline: true, name: "Música", value: songName },
@@ -89,10 +90,10 @@ class Bot {
       player.node.destroyPlayer(player.guildId);
     });
 
-    this.client.ws.on("VOICE_SERVER_UPDATE", (data) =>
+    this.client.ws.on(GatewayDispatchEvents.VoiceServerUpdate, (data) =>
       this.music.handleVoiceUpdate(data)
     );
-    this.client.ws.on("VOICE_STATE_UPDATE", (data) =>
+    this.client.ws.on(GatewayDispatchEvents.VoiceStateUpdate, (data) =>
       this.music.handleVoiceUpdate(data)
     );
 
@@ -107,6 +108,11 @@ class Bot {
     this.client.on("error", (err) => {
       console.error(err);
     });
+
+    await importx(
+      __dirname + "/services/*.service.{ts,js}",
+      __dirname + "bot.{js,ts}"
+    );
 
     this.client.login(process.env.DISCORD_TOKEN);
   }
@@ -124,6 +130,6 @@ load({
   autoResolveYoutubeTracks: false,
 });
 
-const bot = new Bot();
+Bot.start();
 
-export { bot };
+export { Bot };

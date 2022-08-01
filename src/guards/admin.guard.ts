@@ -2,14 +2,14 @@ import { ArgsOf, GuardFunction, SimpleCommandMessage } from "discordx";
 import {
   ButtonInteraction,
   CommandInteraction,
-  ContextMenuInteraction,
-  MessageEmbed,
+  ContextMenuCommandInteraction,
+  EmbedBuilder,
   SelectMenuInteraction,
 } from "discord.js";
 import { theme } from "../config";
 import { PrismaClient } from "@prisma/client";
 
-export const AdminUnathorizedEmbed = new MessageEmbed({
+export const AdminUnathorizedEmbed = new EmbedBuilder({
   title: "Permissão Negada",
   description: "Você não possui autorização para usar esse comando.",
   color: theme.error,
@@ -18,7 +18,7 @@ export const AdminUnathorizedEmbed = new MessageEmbed({
 export const AdminGuard: GuardFunction<
   | ArgsOf<"messageCreate" | "messageReactionAdd" | "voiceStateUpdate">
   | CommandInteraction
-  | ContextMenuInteraction
+  | ContextMenuCommandInteraction
   | SelectMenuInteraction
   | ButtonInteraction
   | SimpleCommandMessage

@@ -1,6 +1,8 @@
 node_modules
 dist
 logs
+backups
 .log
 *.env
+.env.prod
 *.jar

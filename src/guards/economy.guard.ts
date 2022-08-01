@@ -1,28 +1,28 @@
 import { GuardFunction } from "discordx";
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, EmbedBuilder } from "discord.js";
 import { theme } from "../config";
 import { PrismaClient } from "@prisma/client";
 
-export const AuthorHasNoWalletEmbed = new MessageEmbed({
+export const AuthorHasNoWalletEmbed = new EmbedBuilder({
   title: "Carteira não cadastrada!",
   description: `Você ainda não possui uma carteira de drolhos, com ela você estará apto a participar de eventos, ganhar drolhos e usar seus drolhos para comprar recompensas exclusivas no #mercado-negro.\n\nPara cadastrar sua carteira digite '/register'.`,
   color: theme.error,
 });
 
-export const ReceiverHasNoWalletEmbed = new MessageEmbed({
+export const ReceiverHasNoWalletEmbed = new EmbedBuilder({
   title: "Carteira não cadastrada!",
   description: `O usuário mencionado não possui carteira cadastrada. Tentem usar '/register'.`,
   color: theme.error,
 });
 
 export const NotEnoughtCreditsEmbed = (type: "drolhos" | "bilhetes") =>
-  new MessageEmbed({
+  new EmbedBuilder({
     title: "Saldo insuficiente!",
     description: `Você não tem ${type} suficientes para essa transação.`,
     color: theme.error,
   });
 
-export const ValueCantBeNegativeEmbed = new MessageEmbed({
+export const ValueCantBeNegativeEmbed = new EmbedBuilder({
   title: "Erro!",
   description: "Digite um valor acima de 0 para a transação.",
   color: theme.error,

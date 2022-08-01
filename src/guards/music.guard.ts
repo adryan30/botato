@@ -1,21 +1,21 @@
 import { GuardFunction } from "discordx";
-import { CommandInteraction, GuildMember, MessageEmbed } from "discord.js";
+import { CommandInteraction, GuildMember, EmbedBuilder } from "discord.js";
 import { theme } from "../config";
-import { bot } from "../index";
+import { Bot } from "../index";
 import { Node, Player } from "lavaclient";
 
-export const NoQueueEmbed = new MessageEmbed({
+export const NoQueueEmbed = new EmbedBuilder({
   title: "Erro!",
   description: "Não existe uma fila para esse servidor...",
   color: theme.error,
 });
-export const NotInVoiceChannelEmbed = new MessageEmbed({
+export const NotInVoiceChannelEmbed = new EmbedBuilder({
   title: "Erro!",
   description:
     "Você precisa estar em um canal de voz para utilizar esse comando!",
   color: theme.error,
 });
-export const NoPermissionEmbed = new MessageEmbed({
+export const NoPermissionEmbed = new EmbedBuilder({
   title: "Erro!",
   description: "Não tenho permissões para entrar no canal que você está!",
   color: theme.error,
@@ -28,7 +28,7 @@ export const QueueGuard: GuardFunction<CommandInteraction> = async (
   datas: { player: Player<Node> }
 ) => {
   const interaction = arg instanceof Array ? arg[0] : arg;
-  const music = bot.music;
+  const music = Bot.music;
   const player = music.players.get(interaction.guildId);
   if (!player) return interaction.reply({ embeds: [NoQueueEmbed] });
   datas.player = player;

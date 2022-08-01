@@ -2,7 +2,7 @@ import { ArgsOf, Discord, On } from "discordx";
 import {
   Client,
   ColorResolvable,
-  MessageEmbed,
+  EmbedBuilder,
   MessageReaction,
   TextChannel,
   User,
@@ -41,12 +41,11 @@ export abstract class RoleService {
       await cleanChannel(channel);
       const messageEmbed = await channel.send({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setColor(embedColor)
             .setTitle(embedTitle)
             .setDescription(embedDescription)
-            .setImage(embedImage)
-            .setFooter(footer || ""),
+            .setImage(embedImage),
         ],
       });
       await messageEmbed.react(emoji);
@@ -87,7 +86,7 @@ export abstract class RoleService {
   }
 
   @On("ready")
-  async setupAdventurer([_]: ArgsOf<"message">, client: Client) {
+  async setupAdventurer([_]: ArgsOf<"messageCreate">, client: Client) {
     await this.setupEmbed({
       client,
       roleName: "Aventureiro",
@@ -95,13 +94,13 @@ export abstract class RoleService {
       emoji: "🎲",
       embedColor: theme.default,
       embedTitle: "Escolha seu role!",
-      embedDescription: `Ocasionalmente, organizamos campanhas de RPG narradas e jogadas aqui pelo Discord, caso você tenha interesse em participar ou organizar uma campanha, reaja a essa mensagem com um "🎲" e assim saberemos do seu interesse.`,
+      embedDescription: `Ocasionalmente, organizamos campanhas de RPG narradas e jogadas aqui pelo Discord, caso você tenha i`,
       embedImage: "https://i.imgur.com/HzQGust.png",
     });
   }
 
   @On("ready")
-  async setupAcademic([_]: ArgsOf<"message">, client: Client) {
+  async setupAcademic([_]: ArgsOf<"messageCreate">, client: Client) {
     await this.setupEmbed({
       client,
       roleName: "Acadêmico",
@@ -109,13 +108,13 @@ export abstract class RoleService {
       emoji: "📕",
       embedColor: theme.default,
       embedTitle: "Escolha seu role!",
-      embedDescription: `Se você é aluno do curso de Ciência da Computação da UFAL e/ou deseja ser avisado de "Coisas da UFAL" (aulas, trabalhos, arquivos), reaja com "📕".`,
+      embedDescription: `Se você é aluno do curso de Ciência da Computação da UFAL e/ou deseja ser avisado de "Coisas da UFAL`,
       embedImage: "https://i.imgur.com/mfNsMid.png",
     });
   }
 
   @On("ready")
-  async setupBrothel([_]: ArgsOf<"message">, client: Client) {
+  async setupBrothel([_]: ArgsOf<"messageCreate">, client: Client) {
     await this.setupEmbed({
       client,
       roleName: "Cafetão",
@@ -123,7 +122,7 @@ export abstract class RoleService {
       emoji: "🎰",
       embedColor: "#151429",
       embedTitle: "Bordel",
-      embedDescription: `Para poder roletar suas waifus, husbandos e pokémons, reaja ao emoji de 🎰 abaixo para receber um cargo e ser notificado ou notificar seus paceiros quando for rolar personagens, ser avisado quando algum leilão oficial estiver acontecendo e participar de sorteios e eventos relacionados às rolagens.`,
+      embedDescription: `Para poder roletar suas waifus, husbandos e pokémons, reaja ao emoji de 🎰 abaixo para receber um car`,
       embedImage: "https://i.imgur.com/SbR74KF.png",
       footer: "Caso precise de ajuda com o bot use $help.",
     });

@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  botato:
+    container_name: botato
+    env_file: .env
+    restart: 'always'
+    depends_on:
+      - db
+      - lavalink
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+
+  db:
+    container_name: botato_db
+    image: bitnami/postgresql:13
+    restart: 'always'
+    env_file: .env
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgresql_data:/bitnami/postgresql'
+
+  lavalink:
+    container_name: botato_lavalink
+    image: fredboat/lavalink:latest
+    restart: 'always'
+    ports:
+      - '2333:2333'
+    volumes:
+      - ./lavalink.yml:/opt/Lavalink/application.yml
+
+volumes:
+  postgresql_data:
+    name: botato_db_data
+    driver: local
+
+networks:
+  default:
+    name: botato_network
+    driver: bridge

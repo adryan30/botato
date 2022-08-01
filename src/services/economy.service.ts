@@ -5,9 +5,16 @@ import {
   Guard,
   Slash,
   SlashChoice,
+  SlashChoiceType,
   SlashOption,
 } from "discordx";
-import { CommandInteraction, ContextMenuInteraction, User } from "discord.js";
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  CommandInteraction,
+  ContextMenuCommandInteraction,
+  User,
+} from "discord.js";
 import { theme } from "../config";
 import { AdminGuard, AuthorHasNoWalletEmbed, EconomyGuard } from "../guards";
 import { findDrolhosEmoji } from "../utils";
@@ -23,10 +30,10 @@ import {
 
 type Currency = "drolhos" | "tickets";
 
-const CurrencyChoices = {
-  Drolhos: "drolhos",
-  Bilhetes: "tickets",
-};
+const CurrencyChoices: SlashChoiceType[] = [
+  { name: "Drolhos", value: "drolhos" },
+  { name: "Tickets", value: "tickets" },
+];
 
 @Discord()
 export abstract class EconomyService {
@@ -46,12 +53,11 @@ export abstract class EconomyService {
     description: "Mostra seu saldo no servidor",
   })
   @Guard(EconomyGuard)
-  @ContextMenu("USER", "Saldo")
   async balance(
     @SlashOption("user", {
       description: "Usuário a ser buscado",
       required: false,
-      type: "USER",
+      type: ApplicationCommandOptionType.User,
     })
     user: User,
     interaction: CommandInteraction
@@ -72,33 +78,6 @@ export abstract class EconomyService {
     });
   }
 
-  @ContextMenu("USER", "Saldo")
-  async balanceMenu(interaction: ContextMenuInteraction) {
-    const { targetId, guildId } = interaction;
-    const searchUser = this.userRepository.getGuildMember(targetId, guildId);
-    const userData = await this.userRepository.getUser(targetId);
-
-    if (!userData) {
-      return interaction.reply({
-        embeds: [
-          AuthorHasNoWalletEmbed.setDescription(
-            "O usuário clicado não tem uma carteira... Tente usar /register."
-          ),
-        ],
-      });
-    }
-
-    return interaction.reply({
-      embeds: [
-        createWalletEmbed(
-          searchUser.displayName,
-          userData.balance,
-          userData.tickets
-        ),
-      ],
-    });
-  }
-
   @Slash("award", {
     description: "Recompensa o usuário mencionado com a moeda selecionada",
   })
@@ -107,10 +86,10 @@ export abstract class EconomyService {
     @SlashOption("user", {
       description: "Usuário a ser recompensado",
       required: true,
-      type: "USER",
+      type: ApplicationCommandOptionType.User,
     })
     user: User,
-    @SlashChoice(CurrencyChoices)
+    @SlashChoice(...CurrencyChoices)
     @SlashOption("currency", {
       description: "Qual moeda deseja utilizar?",
       required: true,
@@ -119,7 +98,7 @@ export abstract class EconomyService {
     @SlashOption("value", {
       description: "Valor da recompensa",
       required: true,
-      type: "INTEGER",
+      type: ApplicationCommandOptionType.Integer,
     })
     awardValue: number,
     interaction: CommandInteraction
@@ -145,10 +124,10 @@ export abstract class EconomyService {
     @SlashOption("user", {
       description: "Usuário a ser recompensado",
       required: true,
-      type: "USER",
+      type: ApplicationCommandOptionType.User,
     })
     user: User,
-    @SlashChoice(CurrencyChoices)
+    @SlashChoice(...CurrencyChoices)
     @SlashOption("currency", {
       description: "Qual moeda deseja utilizar?",
       required: true,
@@ -157,7 +136,7 @@ export abstract class EconomyService {
     @SlashOption("value", {
       description: "Valor da recompensa",
       required: true,
-      type: "INTEGER",
+      type: ApplicationCommandOptionType.Integer,
     })
     removeValue: number,
     interaction: CommandInteraction
@@ -184,7 +163,7 @@ export abstract class EconomyService {
     @SlashOption("destinatário", {
       description: "Usuário a ser transferido",
       required: true,
-      type: "USER",
+      type: ApplicationCommandOptionType.User,
     })
     user: User,
     @SlashChoice("Drolhos", "drolhos")
@@ -197,7 +176,7 @@ export abstract class EconomyService {
     @SlashOption("value", {
       description: "Valor da transferência",
       required: true,
-      type: "INTEGER",
+      type: ApplicationCommandOptionType.Number,
     })
     tradeValue: number,
     interaction: CommandInteraction

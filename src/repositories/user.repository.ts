@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { bot } from "../";
+import { Bot } from "../";
 
 type Verb = "increase" | "decrease" | "transfer";
 type UserField = "drolhos" | "tickets";
@@ -35,7 +35,7 @@ export class UserRepository {
   }
 
   public getGuildMember(id: string, guildId: string) {
-    return bot.client.guilds.cache.get(guildId).members.cache.get(id);
+    return Bot.client.guilds.cache.get(guildId).members.cache.get(id);
   }
 
   public async updateUser(

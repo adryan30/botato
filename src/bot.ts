@@ -1,7 +1,7 @@
 import { ArgsOf, Client, Discord, On } from "discordx";
 import * as cron from "node-cron";
 import { cleanChannel, findChannel } from "./utils";
-import { MessageEmbed, TextChannel } from "discord.js";
+import { EmbedBuilder, TextChannel } from "discord.js";
 import { theme } from "./config";
 import { format, subHours } from "date-fns";
 import { PrismaClient } from "@prisma/client";
@@ -62,7 +62,7 @@ export class AppDiscord {
       );
       await podiumChannel.send({
         embeds: [
-          new MessageEmbed({
+          new EmbedBuilder({
             title: "🏆 Ranque",
             color: theme.default,
             footer: { text: `Pódio atualizado às ${updatedDate}` },

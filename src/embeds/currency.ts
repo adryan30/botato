@@ -1,4 +1,4 @@
-import { MessageEmbed } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import { findDrolhosEmoji } from "../utils";
 import { theme } from "../config";
 
@@ -9,7 +9,7 @@ export const createAwardEmbed = (
   value: number,
   currency: Currency
 ) => {
-  return new MessageEmbed({
+  return new EmbedBuilder({
     title: "🎉 Parabéns!",
     description: `${name} ganhou ${value} ${
       currency === "drolhos" ? findDrolhosEmoji() : "🎟"
@@ -23,7 +23,7 @@ export const createRemoveEmbed = (
   value: number,
   currency: Currency
 ) => {
-  return new MessageEmbed({
+  return new EmbedBuilder({
     title: "Sucesso!",
     description: `${name} perdeu ${value} ${
       currency === "drolhos" ? findDrolhosEmoji() : "🎟"
@@ -38,7 +38,7 @@ export const createTransferEmbed = (
   value: number,
   currency: Currency
 ) => {
-  return new MessageEmbed({
+  return new EmbedBuilder({
     title: "Transferência bem sucedida.",
     description: `${name} transferiu ${value} ${
       currency === "drolhos" ? findDrolhosEmoji() : "🎟"
@@ -48,7 +48,7 @@ export const createTransferEmbed = (
 };
 
 export const createWalletEmbed = (name, balance, tickets) => {
-  return new MessageEmbed({
+  return new EmbedBuilder({
     title: `Carteira de ${name}`,
     color: theme.default,
     fields: [
@@ -64,7 +64,7 @@ export const createWalletEmbed = (name, balance, tickets) => {
   });
 };
 
-export const WalletAlreadyExistsEmbed = new MessageEmbed({
+export const WalletAlreadyExistsEmbed = new EmbedBuilder({
   title: "Carteira já cadastrada!",
   description:
     "Você já possui uma carteira cadastrada! Use '/balance' para vê-la.",
@@ -72,7 +72,7 @@ export const WalletAlreadyExistsEmbed = new MessageEmbed({
 });
 
 export const WalletCreatedEmbed = () =>
-  new MessageEmbed({
+  new EmbedBuilder({
     title: "Carteira cadastrada com sucesso!",
     description: `Você cadastrou sua carteira, a partir de agora use '=balance' para checar o seu saldo de ${findDrolhosEmoji()}.`,
     color: theme.success,

@@ -1,9 +1,8 @@
-import { CommandInteraction, GuildMember, MessageEmbed } from "discord.js";
+import { CommandInteraction, GuildMember, EmbedBuilder } from "discord.js";
 import { Discord, Guard, Slash, SlashOption } from "discordx";
 import { SpotifyItemType } from "@lavaclient/spotify";
-import { Track } from "@lavaclient/types";
-import { sendPaginatedEmbeds } from "@discordx/utilities";
-import { bot } from "../";
+import { Pagination, PaginationType } from "@discordx/pagination";
+import { Bot } from "../";
 import { theme } from "../config";
 import { msToHMS, spliceIntoChunks } from "../utils";
 import { MusicGuard, QueueGuard } from "../guards";
@@ -21,13 +20,15 @@ export abstract class MusicService {
   async play(
     @SlashOption("song", { required: true, description: "Música a ser tocada" })
     query: string,
-    @SlashOption("next", { description: "Adicionar no início da fila?" })
+    @SlashOption("next", {
+      description: "Adicionar no início da fila?",
+    })
     next: boolean = false,
     interaction: CommandInteraction
   ) {
-    const { music } = bot;
+    const { music } = Bot;
     const player = music.createPlayer(interaction.guildId);
-    let tracks: Track[];
+    let tracks;
     if (music.spotify.isSpotifyUrl(query)) {
       const item = await music.spotify.load(query);
       switch (item?.type) {
@@ -69,7 +70,7 @@ export abstract class MusicService {
       const songDuration = msToHMS(track.info.length);
       await interaction.reply({
         embeds: [
-          new MessageEmbed({
+          new EmbedBuilder({
             title: `🎵 ${
               !player.playing ? "Tocando agora" : "Adicionado a fila"
             }:`,
@@ -100,7 +101,7 @@ export abstract class MusicService {
     if (player.queue.tracks.length) {
       const tracks = Array.from(player.queue.tracks);
       const pages = spliceIntoChunks(tracks, 10).map((chunk, page) => {
-        return new MessageEmbed({
+        return new EmbedBuilder({
           title: "📜 Fila",
           color: theme.default,
           fields: chunk.map(({ title, author, length }, index) => {
@@ -111,13 +112,14 @@ export abstract class MusicService {
           }),
         });
       });
-      await sendPaginatedEmbeds(interaction.channel, pages, {
-        type: "BUTTON",
-        endLabel: "Fim",
-        startLabel: "Início",
-        nextLabel: "Próximo",
-        previousLabel: "Anterior",
-      });
+
+      new Pagination(interaction.channel, pages, {
+        type: PaginationType.Button,
+        start: { label: "Início" },
+        next: { label: "Próximo" },
+        previous: { label: "Anterior" },
+        end: { label: "Fim" },
+      }).send();
       return interaction.reply({ content: "Fila a seguir:" });
     }
   }

@@ -1,24 +1,14 @@
-FROM node:16 AS builder
+FROM bitnami/node
 
-# Create app directory
+# Legacy Alpine code
+# RUN apk update && apk add python make g++ ffmpeg
+
 WORKDIR /app
 
-COPY package*.json ./
-COPY prisma ./prisma/
+COPY ["package.json", "package-lock.json*", "./"]
 
-# Install app dependencies
 RUN npm install
 
 COPY . .
 
-RUN npm run build
-
-FROM node:16
-
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/dist ./dist
-COPY .env .env
-
-EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+CMD ["npm", "run", "start:dev"]
