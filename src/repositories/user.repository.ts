@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { Bot } from "../";
+import { Bot } from "../index.old";
 
 type Verb = "increase" | "decrease" | "transfer";
 type UserField = "drolhos" | "tickets";

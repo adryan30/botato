@@ -1,7 +1,7 @@
 import { GuardFunction } from "discordx";
 import { CommandInteraction, GuildMember, EmbedBuilder } from "discord.js";
 import { theme } from "../config";
-import { Bot } from "../index";
+import { Bot } from "../index.old";
 import { Node, Player } from "lavaclient";
 
 export const NoQueueEmbed = new EmbedBuilder({
