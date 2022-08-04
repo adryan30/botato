@@ -1,41 +1,31 @@
-import { PrismaClient } from "@prisma/client";
-import { Bot } from "../index.old";
+import { injectable } from "tsyringe";
+import { Bot } from "../services/bot.service";
+import { Database } from "../services/database.service";
 
 type Verb = "increase" | "decrease" | "transfer";
 type UserField = "drolhos" | "tickets";
 type Operation = `${Verb}|${UserField}`;
 
+@injectable()
 export class UserRepository {
-  private client: PrismaClient;
-  private static instance: UserRepository;
-
-  private constructor() {
-    this.client = new PrismaClient();
-  }
-
-  static getInstance() {
-    if (!UserRepository.instance) {
-      this.instance = new UserRepository();
-    }
-    return this.instance;
-  }
+  constructor(private readonly _db: Database, private readonly _bot: Bot) {}
 
   public async createUser(id: string) {
     const userExists = await this.getUser(id);
     if (userExists) throw Error("User exists");
-    return await this.client.user.create({ data: { id } });
+    return await this._db.client.user.create({ data: { id } });
   }
 
   public async getUser(id: string) {
-    return await this.client.user.findUnique({ where: { id } });
+    return await this._db.client.user.findUnique({ where: { id } });
   }
 
   public async getAllUsers() {
-    return await this.client.user.findMany();
+    return await this._db.client.user.findMany();
   }
 
   public getGuildMember(id: string, guildId: string) {
-    return Bot.client.guilds.cache.get(guildId).members.cache.get(id);
+    return this._bot.client.guilds.cache.get(guildId).members.cache.get(id);
   }
 
   public async updateUser(
@@ -47,37 +37,37 @@ export class UserRepository {
     const where = { id };
     switch (operation) {
       case "increase|drolhos":
-        await this.client.user.update({
+        await this._db.client.user.update({
           where,
           data: { balance: { increment: value } },
         });
         break;
       case "increase|tickets":
-        await this.client.user.update({
+        await this._db.client.user.update({
           where,
           data: { tickets: { increment: value } },
         });
         break;
       case "decrease|drolhos":
-        await this.client.user.update({
+        await this._db.client.user.update({
           where,
           data: { balance: { decrement: value } },
         });
         break;
       case "decrease|tickets":
-        await this.client.user.update({
+        await this._db.client.user.update({
           where,
           data: { tickets: { decrement: value } },
         });
         break;
       case "transfer|drolhos":
         if (!transferId) throw new Error("No transfer ID specified");
-        await this.client.$transaction([
-          this.client.user.update({
+        await this._db.client.$transaction([
+          this._db.client.user.update({
             data: { balance: { decrement: value } },
             where: { id: id },
           }),
-          this.client.user.update({
+          this._db.client.user.update({
             data: { balance: { increment: value } },
             where: { id: transferId },
           }),
@@ -85,12 +75,12 @@ export class UserRepository {
         break;
       case "transfer|tickets":
         if (!transferId) throw new Error("No transfer ID specified");
-        await this.client.$transaction([
-          this.client.user.update({
+        await this._db.client.$transaction([
+          this._db.client.user.update({
             data: { tickets: { decrement: value } },
             where: { id: id },
           }),
-          this.client.user.update({
+          this._db.client.user.update({
             data: { tickets: { increment: value } },
             where: { id: transferId },
           }),
@@ -100,7 +90,7 @@ export class UserRepository {
   }
 
   public async makeAdmin(id: string) {
-    return await this.client.user.update({
+    return await this._db.client.user.update({
       where: { id },
       data: {
         isAdmin: true,
