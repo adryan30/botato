@@ -2,6 +2,7 @@ import { container, singleton } from "tsyringe";
 import { Client, DIService, tsyringeDependencyRegistryEngine } from "discordx";
 import { IntentsBitField, Interaction, Message } from "discord.js";
 import { importx } from "@discordx/importer";
+import { WinstonLogger } from "./logger.service";
 
 @singleton()
 export class Bot {
@@ -11,9 +12,8 @@ export class Bot {
     return this._client;
   }
 
-  constructor() {
+  constructor(private readonly _logger: WinstonLogger) {
     DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
-    console.log("constructor");
   }
 
   async start() {
@@ -27,7 +27,8 @@ export class Bot {
         IntentsBitField.Flags.GuildMessageReactions,
         IntentsBitField.Flags.GuildEmojisAndStickers,
       ],
-      silent: false,
+      sweepers: {},
+      silent: true,
       botGuilds:
         process.env.NODE_ENV === "development"
           ? [process.env.GUILD_ID]
@@ -40,7 +41,8 @@ export class Bot {
         guild: { log: true },
         global: { log: true },
       });
-      console.log("Bot started"); // TODO Replace with winston logger
+
+      this._logger.log.info("Bot started");
     });
 
     this._client.on("interactionCreate", (interaction: Interaction) => {
@@ -51,7 +53,11 @@ export class Bot {
       this._client.executeCommand(message);
     });
 
-    // await importx(__dirname + "/commands/**/*.{ts,js}");
+    await importx(
+      `${process.cwd()}/src/commands/ping.cmd.{ts,js}`,
+      `${process.cwd()}/src/commands/prefix.cmd.{ts,js}`,
+      `${process.cwd()}/src/commands/admin.cmd.{ts,js}`
+    );
     await this._client.login(process.env.DISCORD_TOKEN);
   }
 }

@@ -3,40 +3,54 @@ import {
   CommandInteraction,
   GuildMember,
   EmbedBuilder,
-  Role,
   TextChannel,
   ApplicationCommandOptionType,
 } from "discord.js";
-import { theme } from "../config";
+import { injectable } from "tsyringe";
 import { AdminGuard } from "../guards";
-import { PrismaClient } from "@prisma/client";
-import { cleanChannel } from "../utils";
 import { UserRepository } from "../repositories/user.repository";
+import { Utils } from "../services/utils.service";
+import { Theme } from "../services/theme.service";
 
+// TODO Reimpletment admin guard
 @Discord()
-export abstract class AdminService {
-  private userRepository = UserRepository.getInstance();
+@injectable()
+export class AdminService {
+  constructor(
+    private readonly _userRepository: UserRepository,
+    private readonly _utils: Utils,
+    private readonly _theme: Theme
+  ) {}
 
-  @Slash("clear", { description: "Limpa as mesagens presentes no canal" })
-  @Guard(AdminGuard)
+  @Slash("clear", {
+    nameLocalizations: { "pt-BR": "limpar" },
+    description: "Clears all channel messages",
+    descriptionLocalizations: {
+      "pt-BR": "Limpa as mensagens presentes no canal",
+    },
+    defaultMemberPermissions: "ManageMessages",
+  })
   async clear(interaction: CommandInteraction) {
-    let messageQuantity: number;
-    if (interaction.channel instanceof TextChannel) {
-      messageQuantity = await cleanChannel(interaction.channel);
-    }
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("Limpeza concluída")
-          .setDescription(`${messageQuantity} mensagens apagadas!`)
-          .setColor(theme.default),
-      ],
+    if (!(interaction.channel instanceof TextChannel)) return;
+    await interaction.deferReply();
+    const messagesDeleted = await this._utils.cleanChannel(interaction.channel);
+    const embed = new EmbedBuilder({
+      title: "Limpeza concluída",
+      description: `${messagesDeleted} mensagens apagadas!`,
+      color: this._theme.colors.default,
     });
+
+    await interaction.reply({ embeds: [embed] });
     setTimeout(() => interaction.deleteReply(), 5000);
   }
 
-  @Slash("makeadmin", { description: "Transforma usuários comuns em admins" })
-  @Guard(AdminGuard)
+  @Slash("make-admin", {
+    nameLocalizations: { "pt-BR": "tornar-admin" },
+    description: "Turn normal users into admins",
+    descriptionLocalizations: {
+      "pt-BR": "Transforma usuários comuns em admins",
+    },
+  })
   async makeAdmin(
     @SlashOption("usuário", {
       description: "Usuário a ser transformado",
@@ -47,86 +61,9 @@ export abstract class AdminService {
     interaction: CommandInteraction
   ) {
     const id = user.id;
-    await this.userRepository.makeAdmin(id);
+    await this._userRepository.makeAdmin(id);
     await interaction.reply(
       `Usuário ${user.displayName} agora é um administrador!`
     );
-  }
-
-  @Slash("randomrole", {
-    description: "Seleciona um usuário aleatório do role mencionado",
-  })
-  async randomRole(
-    @SlashOption("role", {
-      description: "Role a ser buscado",
-      required: true,
-      type: ApplicationCommandOptionType.Role,
-    })
-    role: Role,
-    interaction: CommandInteraction
-  ) {
-    const users = interaction.guild.members.cache;
-    const validUsers = users
-      .filter((u) => !u.user.bot)
-      .filter((u) => {
-        const roles = u.roles.cache.map((r) => r.id);
-        return roles.includes(role.id);
-      })
-      .map((u) => u.user.id);
-
-    const randomUser =
-      validUsers[Math.floor(Math.random() * validUsers.length)];
-    const randomUserData = users.get(randomUser);
-    if (randomUserData) {
-      interaction.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle("Usuário escolhido:")
-            .setColor(theme.default)
-            .setImage(
-              randomUserData.user.avatarURL() ||
-                "https://i.imgur.com/ZyTkCb1.png"
-            )
-            .setFooter({ text: randomUserData.user.username }),
-        ],
-      });
-    } else {
-      interaction.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle("Argumentos inválidos...")
-            .setDescription("Nenhum usuário válido nos cargos mencionados.")
-            .setColor(theme.error),
-        ],
-      });
-    }
-  }
-
-  @Slash("random", {
-    description: "Seleciona um usuário aleatório com carteira",
-  })
-  async random(message: CommandInteraction) {
-    const prisma = new PrismaClient();
-    const users = await (
-      await prisma.user.findMany({ select: { id: true } })
-    ).map((u) => u.id);
-    const randomUser = users[Math.floor(Math.random() * users.length)];
-    const randomUserData = (await message.guild.members.fetch()).get(
-      randomUser
-    );
-    message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle("Usuário escolhido:")
-            .setColor(theme.default)
-            .setImage(
-              randomUserData.user.avatarURL() ||
-                "https://i.imgur.com/ZyTkCb1.png"
-            )
-            .setFooter({ text: randomUserData.user.username }),
-        ],
-      })
-      .finally(() => prisma.$disconnect());
   }
 }
