@@ -83,6 +83,58 @@ src/features/<name>/
 
 Music-session permissions are **unrestricted** pending a later decision (no role/channel gates yet).
 
+## Optional tier 2 (container smoke)
+
+Tier 2 runs Botato in a container beside the Compose music node for image/container smoke. It is **not** the default day-to-day loop.
+
+```bash
+docker compose -f compose.yml -f compose.tier2.yml up --build
+```
+
+Uses the in-repo `Dockerfile`, points `MUSIC_NODE_HOST` at the Compose `music-node` service, and still reads secrets from `.env`. Stop with `docker compose -f compose.yml -f compose.tier2.yml down`.
+
+## Image publish
+
+GitHub Actions (`.github/workflows/publish-image.yml`) builds **linux/arm64** and pushes `ghcr.io/adryan30/botato` with:
+
+- `sha-<full-git-sha>` on every publish
+- Semver tags (`{{version}}`, e.g. `1.2.3`) when a `v*` git tag is pushed
+
+The workflow does **not** publish `latest`. Pin Argo (or any deploy) to a digest or an immutable SHA/semver tag.
+
+The music node stays on the official Lavalink image; this repo does not publish a custom music-node image.
+
+### Releases (release-please)
+
+[release-please](https://github.com/googleapis/release-please) opens/updates a **Release PR** on pushes to `main` from Conventional Commits. Merging that PR:
+
+1. Bumps `package.json` / `CHANGELOG.md`
+2. Creates the GitHub Release and `vX.Y.Z` tag
+3. Triggers image publish with the matching semver tag
+
+Unmerged commits stack into the same Release PR (one batched version). You do not create the PR by hand — only merge it when you want the tag.
+
+Repo setting required once: **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**.
+
+Bootstrap: after this lands, tag the current shipped line once if needed (`git tag v1.0.0 && git push origin v1.0.0`) so the next Release PR starts from a clean baseline.
+
+## Deploy contract (ADR 0004 handoff)
+
+In-repo contract for cluster wiring in `adryan30/infra` — **do not** apply Argo/ESO/Vault from this repository:
+
+| Concern | Contract |
+| --- | --- |
+| Cluster | `shardblade-001` |
+| Argo Application name | `botato` (bjw-s app-template; replaces old `discord-music`; do not revive that name) |
+| Namespace | `discord` |
+| Controllers | `bot` + `lavalink` |
+| Mesh | Istio injection enabled |
+| Bot image | `ghcr.io/adryan30/botato` pinned by digest or immutable tag (never `latest`) |
+| Music node image | Official Lavalink ≥ 4.2 (`youtube-source` via config / download-on-start) |
+| Secrets | ESO + Vault in cluster (Discord token, Lavalink password, optional YouTube OAuth/poToken; no Spotify secrets) |
+
+See [docs/adr/0004-image-publish-argo-wiring.md](docs/adr/0004-image-publish-argo-wiring.md).
+
 ## Domain language
 
 See [CONTEXT.md](CONTEXT.md) for **Botato**, **feature module**, **music node**, and **music session**. Architecture decisions live under [docs/adr/](docs/adr/).
