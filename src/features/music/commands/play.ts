@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { sessionReplyPayload } from '../lib/session-ui.js';
 import { resolveRequesterVoiceChannel } from '../lib/voice.js';
 
 export class PlayCommand extends Command {
@@ -73,21 +74,21 @@ export class PlayCommand extends Command {
       }
 
       if (!wasPlaying) {
-        await interaction.editReply(
-          `Playing **${snapshot.nowPlaying.title}**`,
-        );
+        await interaction.editReply(sessionReplyPayload(snapshot));
         return;
       }
 
       const queued = snapshot.queue.at(-1);
+      const payload = sessionReplyPayload(snapshot);
       if (queued) {
-        await interaction.editReply(`Queued **${queued.title}**`);
+        await interaction.editReply({
+          content: `Queued **${queued.title}**\n\n${payload.content}`,
+          components: payload.components,
+        });
         return;
       }
 
-      await interaction.editReply(
-        `Playing **${snapshot.nowPlaying.title}**`,
-      );
+      await interaction.editReply(payload);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to play that query.';

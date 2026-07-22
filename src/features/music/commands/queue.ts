@@ -1,23 +1,21 @@
 import { Command } from '@sapphire/framework';
 import { sessionReplyPayload } from '../lib/session-ui.js';
 
-export class NowPlayingCommand extends Command {
+export class QueueCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, {
       ...options,
-      description: 'Show the currently playing track',
+      description: 'Show the music session (now playing, queue, and controls)',
     });
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand(
-      (builder) =>
-        builder
-          .setName('nowplaying')
-          .setDescription('Show the currently playing track'),
-      {
-        idHints: ['1529466509636669551'],
-      },
+    registry.registerChatInputCommand((builder) =>
+      builder
+        .setName('queue')
+        .setDescription(
+          'Show the music session (now playing, queue, and controls)',
+        ),
     );
   }
 
@@ -38,7 +36,9 @@ export class NowPlayingCommand extends Command {
       await interaction.reply(sessionReplyPayload(snapshot));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to read now playing.';
+        error instanceof Error
+          ? error.message
+          : 'Failed to read the music session.';
       await interaction.reply({ content: message, ephemeral: true });
     }
   }
