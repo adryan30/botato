@@ -1,0 +1,50 @@
+{
+  "name": "botato",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal Discord bot for a private guild: modular capabilities with voice music playback.",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "build": "tsc && mkdir -p dist/features/music",
+    "start": "node --env-file=.env dist/index.js",
+    "dev": "NODE_ENV=development tsx watch --env-file=.env src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "commit": "cz",
+    "prepare": "lefthook install"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["lefthook", "esbuild"]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sapphire/framework": "^5.5.0",
+    "@sapphire/plugin-hmr": "^3.0.2",
+    "@sapphire/plugin-logger": "^4.1.0",
+    "@sapphire/plugin-subcommands": "^7.0.1",
+    "discord.js": "^14.27.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "@types/node": "^26.1.1",
+    "commitizen": "^4.3.2",
+    "cz-conventional-changelog": "^3.3.0",
+    "lefthook": "^2.1.10",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
