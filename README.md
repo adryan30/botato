@@ -53,6 +53,18 @@ pnpm dev
 
 Point Botato at the Compose music node with `MUSIC_NODE_HOST` / `MUSIC_NODE_PORT` / `MUSIC_NODE_PASSWORD` from `.env`.
 
+Set `DISCORD_GUILD_ID` (or `DISCORD_GUILD_IDS`) to your private guild so slash commands register instantly. Without it, Discord can take up to an hour to show globally registered commands.
+
+### Tier-1 music smoke checklist
+
+With the music node healthy and Botato logged in to your private guild:
+
+1. Join a voice channel.
+2. `/join` — Botato enters the channel.
+3. `/play` with a YouTube URL or search query — audio starts (join-on-play also works without `/join` first).
+4. `/nowplaying` — shows the current track.
+5. `/leave` — Botato exits and the music session ends.
+
 ### Feature modules
 
 Botato expands by adding in-repo **feature modules** under `src/features/<name>/`, not runtime plugins. Each feature uses Sapphire piece folders (`commands`, `listeners`, `interaction-handlers`, `lib`, …). Core stays thin (client boot, plugin registration, explicit `stores.registerPath`, cross-feature utils) and registers **`features/music`** only for v1.

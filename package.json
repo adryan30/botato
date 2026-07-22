@@ -24,17 +24,23 @@
     }
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["lefthook", "esbuild"]
+    "onlyBuiltDependencies": [
+      "lefthook",
+      "esbuild"
+    ]
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@sapphire/framework": "^5.5.0",
+    "@sapphire/pieces": "^4.4.1",
     "@sapphire/plugin-hmr": "^3.0.2",
     "@sapphire/plugin-logger": "^4.1.0",
     "@sapphire/plugin-subcommands": "^7.0.1",
-    "discord.js": "^14.27.0"
+    "discord.js": "^14.27.0",
+    "kazagumo": "^3.4.3",
+    "shoukaku": "^4.3.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
