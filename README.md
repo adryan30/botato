@@ -83,6 +83,44 @@ src/features/<name>/
 
 Music-session permissions are **unrestricted** pending a later decision (no role/channel gates yet).
 
+## Optional tier 2 (container smoke)
+
+Tier 2 runs Botato in a container beside the Compose music node for image/container smoke. It is **not** the default day-to-day loop.
+
+```bash
+docker compose -f compose.yml -f compose.tier2.yml up --build
+```
+
+Uses the in-repo `Dockerfile`, points `MUSIC_NODE_HOST` at the Compose `music-node` service, and still reads secrets from `.env`. Stop with `docker compose -f compose.yml -f compose.tier2.yml down`.
+
+## Image publish
+
+GitHub Actions (`.github/workflows/publish-image.yml`) builds **linux/arm64** and pushes `ghcr.io/adryan30/botato` with:
+
+- `sha-<full-git-sha>` on every publish
+- Semver tags (`{{version}}`, e.g. `1.2.3`) when a `v*` git tag is pushed
+
+The workflow does **not** publish `latest`. Pin Argo (or any deploy) to a digest or an immutable SHA/semver tag.
+
+The music node stays on the official Lavalink image; this repo does not publish a custom music-node image.
+
+## Deploy contract (ADR 0004 handoff)
+
+In-repo contract for cluster wiring in `adryan30/infra` — **do not** apply Argo/ESO/Vault from this repository:
+
+| Concern | Contract |
+| --- | --- |
+| Cluster | `shardblade-001` |
+| Argo Application name | `botato` (bjw-s app-template; replaces old `discord-music`; do not revive that name) |
+| Namespace | `discord` |
+| Controllers | `bot` + `lavalink` |
+| Mesh | Istio injection enabled |
+| Bot image | `ghcr.io/adryan30/botato` pinned by digest or immutable tag (never `latest`) |
+| Music node image | Official Lavalink ≥ 4.2 (`youtube-source` via config / download-on-start) |
+| Secrets | ESO + Vault in cluster (Discord token, Lavalink password, optional YouTube OAuth/poToken; no Spotify secrets) |
+
+See [docs/adr/0004-image-publish-argo-wiring.md](docs/adr/0004-image-publish-argo-wiring.md).
+
 ## Domain language
 
 See [CONTEXT.md](CONTEXT.md) for **Botato**, **feature module**, **music node**, and **music session**. Architecture decisions live under [docs/adr/](docs/adr/).

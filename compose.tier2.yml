@@ -1,0 +1,25 @@
+# Optional tier-2 Compose: Botato container + music node for image/container smoke.
+# Not the default local loop — prefer tier 1 (host Botato + `compose.yml` music node).
+#
+#   docker compose -f compose.yml -f compose.tier2.yml up --build
+#
+# Requires DISCORD_TOKEN and MUSIC_NODE_PASSWORD in `.env`. Do not run this at the
+# same time as host Botato or cluster Botato with the same Discord token.
+services:
+  botato:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: botato:local
+    container_name: botato
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      NODE_ENV: production
+      MUSIC_NODE_HOST: music-node
+      MUSIC_NODE_PORT: '2333'
+    depends_on:
+      music-node:
+        condition: service_healthy
