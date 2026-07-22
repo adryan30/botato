@@ -10,7 +10,7 @@
   },
   "packageManager": "pnpm@10.28.2",
   "scripts": {
-    "build": "tsc && mkdir -p dist/features/music",
+    "build": "tsc -p tsconfig.build.json && mkdir -p dist/features/music",
     "start": "node --env-file=.env dist/index.js",
     "dev": "NODE_ENV=development tsx watch --env-file=.env src/index.ts",
     "typecheck": "tsc --noEmit",
