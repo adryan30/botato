@@ -44,7 +44,8 @@ export function formatSessionMessage(snapshot: MusicSessionSnapshot): string {
     const paused = snapshot.paused ? ' *(paused)*' : '';
     lines.push(`Now playing: **${snapshot.nowPlaying.title}**${paused}`);
     if (snapshot.nowPlaying.uri) {
-      lines.push(snapshot.nowPlaying.uri);
+      // Angle brackets suppress Discord's large link embeds.
+      lines.push(`<${snapshot.nowPlaying.uri}>`);
     }
     lines.push('');
     if (snapshot.queue.length === 0) {

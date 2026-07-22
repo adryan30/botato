@@ -9,8 +9,12 @@ export class SkipCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder.setName('skip').setDescription('Skip the current track'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder.setName('skip').setDescription('Skip the current track'),
+      {
+        idHints: ['1529489112464228526'],
+      },
     );
   }
 

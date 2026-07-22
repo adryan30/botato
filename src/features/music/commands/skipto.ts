@@ -9,17 +9,21 @@ export class SkipToCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('skipto')
-        .setDescription('Skip to a specific queue position')
-        .addIntegerOption((option) =>
-          option
-            .setName('position')
-            .setDescription('1-based queue position to play next')
-            .setRequired(true)
-            .setMinValue(1),
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('skipto')
+          .setDescription('Skip to a specific queue position')
+          .addIntegerOption((option) =>
+            option
+              .setName('position')
+              .setDescription('1-based queue position to play next')
+              .setRequired(true)
+              .setMinValue(1),
+          ),
+      {
+        idHints: ['1529489030453006386'],
+      },
     );
   }
 

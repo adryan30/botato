@@ -9,10 +9,14 @@ export class ClearCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('clear')
-        .setDescription('Clear upcoming tracks from the queue'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('clear')
+          .setDescription('Clear upcoming tracks from the queue'),
+      {
+        idHints: ['1529493021530525898'],
+      },
     );
   }
 

@@ -58,7 +58,7 @@ describe('session-ui', () => {
     ).toBe(
       [
         'Now playing: **Now**',
-        'https://youtube.com/watch?v=np',
+        '<https://youtube.com/watch?v=np>',
         '',
         'Up next:',
         '1. Alpha',
@@ -81,7 +81,7 @@ describe('session-ui', () => {
     ).toBe(
       [
         'Now playing: **Solo** *(paused)*',
-        'https://youtube.com/watch?v=np',
+        '<https://youtube.com/watch?v=np>',
         '',
         'Up next: *(empty)*',
         '',

@@ -12,21 +12,25 @@ export class RepeatCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('repeat')
-        .setDescription('Set the music session repeat mode')
-        .addStringOption((option) =>
-          option
-            .setName('mode')
-            .setDescription('Repeat mode for this guild music session')
-            .setRequired(true)
-            .addChoices(
-              { name: 'Off', value: 'off' },
-              { name: 'Track', value: 'track' },
-              { name: 'Queue', value: 'queue' },
-            ),
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('repeat')
+          .setDescription('Set the music session repeat mode')
+          .addStringOption((option) =>
+            option
+              .setName('mode')
+              .setDescription('Repeat mode for this guild music session')
+              .setRequired(true)
+              .addChoices(
+                { name: 'Off', value: 'off' },
+                { name: 'Track', value: 'track' },
+                { name: 'Queue', value: 'queue' },
+              ),
+          ),
+      {
+        idHints: ['1529493017386291413'],
+      },
     );
   }
 

@@ -9,8 +9,12 @@ export class PauseCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder.setName('pause').setDescription('Pause the current track'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder.setName('pause').setDescription('Pause the current track'),
+      {
+        idHints: ['1529489027160342569'],
+      },
     );
   }
 

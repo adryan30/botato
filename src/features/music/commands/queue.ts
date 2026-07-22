@@ -10,12 +10,16 @@ export class QueueCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('queue')
-        .setDescription(
-          'Show the music session (now playing, queue, and controls)',
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('queue')
+          .setDescription(
+            'Show the music session (now playing, queue, and controls)',
+          ),
+      {
+        idHints: ['1529493101410779310'],
+      },
     );
   }
 

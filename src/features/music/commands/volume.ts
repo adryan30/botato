@@ -9,18 +9,22 @@ export class VolumeCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('volume')
-        .setDescription('Set the music session volume')
-        .addIntegerOption((option) =>
-          option
-            .setName('level')
-            .setDescription('Volume from 0 to 100')
-            .setRequired(true)
-            .setMinValue(0)
-            .setMaxValue(100),
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('volume')
+          .setDescription('Set the music session volume')
+          .addIntegerOption((option) =>
+            option
+              .setName('level')
+              .setDescription('Volume from 0 to 100')
+              .setRequired(true)
+              .setMinValue(0)
+              .setMaxValue(100),
+          ),
+      {
+        idHints: ['1529489029400232057'],
+      },
     );
   }
 

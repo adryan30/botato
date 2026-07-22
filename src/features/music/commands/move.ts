@@ -9,24 +9,28 @@ export class MoveCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('move')
-        .setDescription('Move a queued track to another position')
-        .addIntegerOption((option) =>
-          option
-            .setName('from')
-            .setDescription('1-based queue position to move from')
-            .setRequired(true)
-            .setMinValue(1),
-        )
-        .addIntegerOption((option) =>
-          option
-            .setName('to')
-            .setDescription('1-based queue position to move to')
-            .setRequired(true)
-            .setMinValue(1),
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('move')
+          .setDescription('Move a queued track to another position')
+          .addIntegerOption((option) =>
+            option
+              .setName('from')
+              .setDescription('1-based queue position to move from')
+              .setRequired(true)
+              .setMinValue(1),
+          )
+          .addIntegerOption((option) =>
+            option
+              .setName('to')
+              .setDescription('1-based queue position to move to')
+              .setRequired(true)
+              .setMinValue(1),
+          ),
+      {
+        idHints: ['1529493016245571714'],
+      },
     );
   }
 

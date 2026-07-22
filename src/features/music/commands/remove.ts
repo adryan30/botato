@@ -9,17 +9,21 @@ export class RemoveCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('remove')
-        .setDescription('Remove a track from the queue by position')
-        .addIntegerOption((option) =>
-          option
-            .setName('position')
-            .setDescription('1-based queue position to remove')
-            .setRequired(true)
-            .setMinValue(1),
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('remove')
+          .setDescription('Remove a track from the queue by position')
+          .addIntegerOption((option) =>
+            option
+              .setName('position')
+              .setDescription('1-based queue position to remove')
+              .setRequired(true)
+              .setMinValue(1),
+          ),
+      {
+        idHints: ['1529493020221767793'],
+      },
     );
   }
 

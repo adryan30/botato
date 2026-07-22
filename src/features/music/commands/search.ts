@@ -21,16 +21,20 @@ export class SearchCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('search')
-        .setDescription('Search YouTube and pick a track to play')
-        .addStringOption((option) =>
-          option
-            .setName('query')
-            .setDescription('YouTube search query')
-            .setRequired(true),
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('search')
+          .setDescription('Search YouTube and pick a track to play')
+          .addStringOption((option) =>
+            option
+              .setName('query')
+              .setDescription('YouTube search query')
+              .setRequired(true),
+          ),
+      {
+        idHints: ['1529489026187399319'],
+      },
     );
   }
 

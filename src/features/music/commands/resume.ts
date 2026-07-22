@@ -9,8 +9,12 @@ export class ResumeCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder.setName('resume').setDescription('Resume the paused track'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder.setName('resume').setDescription('Resume the paused track'),
+      {
+        idHints: ['1529489114238550046'],
+      },
     );
   }
 

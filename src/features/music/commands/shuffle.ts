@@ -9,10 +9,14 @@ export class ShuffleCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('shuffle')
-        .setDescription('Shuffle upcoming tracks in the queue'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('shuffle')
+          .setDescription('Shuffle upcoming tracks in the queue'),
+      {
+        idHints: ['1529493018451771432'],
+      },
     );
   }
 
