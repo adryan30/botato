@@ -1,0 +1,36 @@
+---
+description: Use Conventional Commits (Commitizen) for every git commit
+alwaysApply: true
+---
+
+# Conventional commits
+
+Every commit message MUST follow [Conventional Commits](https://www.conventionalcommits.org/) / Commitizen style:
+
+```text
+type(optional-scope): short imperative summary
+
+optional body
+
+optional footer
+```
+
+## Types
+
+Use one of: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+
+## Rules
+
+- Subject: imperative mood, no trailing period, ~72 chars or less
+- Reference issues in the subject or footer when applicable (`(#17)` or `Closes #17`)
+- Do not write free-form subjects like "Bootstrap a runnable…" — prefer `feat: bootstrap runnable Sapphire Botato (#17)`
+- Prefer `pnpm exec cz` / Commitizen when a human is committing interactively; agents write the conventional message directly via HEREDOC
+
+## Examples
+
+```text
+feat: bootstrap runnable Sapphire Botato (#17)
+fix(music): reconnect voice on node resume
+docs: document single-token concurrency
+chore: ignore local pnpm store
+```

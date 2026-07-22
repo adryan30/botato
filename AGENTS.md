@@ -14,4 +14,4 @@ Single-context: root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
 
 ### Git workflow
 
-`main` is PR-only (direct pushes rejected). See `docs/agents/git-workflow.md`.
+`main` is PR-only (direct pushes rejected). Conventional Commits (Commitizen) are required — see `docs/agents/git-workflow.md`.
