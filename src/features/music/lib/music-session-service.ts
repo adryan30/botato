@@ -3,6 +3,8 @@ import type { MusicNodePort, Track } from './music-node-port.js';
 const NO_SESSION = 'No active music session';
 const NO_VOICE = 'No voice channel';
 const INDEX_BOUNDS = 'Queue index out of bounds';
+const SPOTIFY_UNSUPPORTED =
+  'Spotify is not supported. Use a YouTube URL or search query.';
 
 export type RepeatMode = 'off' | 'track' | 'queue';
 
@@ -28,6 +30,15 @@ type MusicSession = {
   repeat: RepeatMode;
   paused: boolean;
 };
+
+export function isSpotifyQuery(query: string): boolean {
+  const trimmed = query.trim().toLowerCase();
+  return (
+    trimmed.includes('open.spotify.com/') ||
+    trimmed.includes('spotify.link/') ||
+    trimmed.startsWith('spotify:')
+  );
+}
 
 export class MusicSessionService {
   readonly #musicNode: MusicNodePort;
@@ -63,6 +74,10 @@ export class MusicSessionService {
     query: string,
     voiceChannelId?: string,
   ): Promise<void> {
+    if (isSpotifyQuery(query)) {
+      throw new Error(SPOTIFY_UNSUPPORTED);
+    }
+
     const existing = this.#sessions.get(guildId);
     const channelId = voiceChannelId ?? existing?.voiceChannelId ?? null;
     if (!channelId) {
@@ -96,6 +111,9 @@ export class MusicSessionService {
   }
 
   async search(query: string): Promise<Track[]> {
+    if (isSpotifyQuery(query)) {
+      throw new Error(SPOTIFY_UNSUPPORTED);
+    }
     return this.#musicNode.search(query);
   }
 

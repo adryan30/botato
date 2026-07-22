@@ -27,7 +27,7 @@ Containerizing Botato is **not** the default for day-to-day development.
 cp .env.example .env
 ```
 
-Set `DISCORD_TOKEN` and at least `MUSIC_NODE_PASSWORD`. Add Spotify client id/secret when you need Spotify resolve-to-playable. Optional YouTube OAuth / poToken vars are documented in `.env.example`.
+Set `DISCORD_TOKEN` and at least `MUSIC_NODE_PASSWORD`. Optional YouTube OAuth / poToken vars are documented in `.env.example`. Spotify is not supported in v1.
 
 **Single-token concurrency:** local and production share one Discord application token. Do not run host Botato and cluster Botato with that token at the same time.
 
@@ -38,7 +38,7 @@ docker compose up -d
 docker compose ps
 ```
 
-Compose brings up **only** the music node (official Lavalink ≥ 4.2 image `ghcr.io/lavalink-devs/lavalink:4.2.2-alpine`) with **youtube-source** and **LavaSrc**, listening on `127.0.0.1:2333`. Plugins download into `music-node/plugins/` on first start (gitignored).
+Compose brings up **only** the music node (official Lavalink ≥ 4.2 image `ghcr.io/lavalink-devs/lavalink:4.2.2-alpine`) with **youtube-source**, listening on `127.0.0.1:2333`. Plugins download into `music-node/plugins/` on first start (gitignored).
 
 Stop with `docker compose down`.
 

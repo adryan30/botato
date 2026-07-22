@@ -2,7 +2,7 @@ export type Track = {
   id: string;
   title: string;
   uri: string;
-  source: 'youtube' | 'spotify' | 'other';
+  source: 'youtube' | 'other';
 };
 
 export type ResolveResult =
