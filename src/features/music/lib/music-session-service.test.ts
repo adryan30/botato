@@ -199,6 +199,57 @@ describe('MusicSessionService', () => {
     expect(service.snapshot('guild-1').nowPlaying).toBeNull();
   });
 
+  it('refuses Spotify search queries with a clear unsupported error', async () => {
+    const node = createFakeMusicNode({
+      searchImpl: async () => {
+        throw new Error('music-node should not be called for Spotify queries');
+      },
+    });
+    const service = new MusicSessionService(node);
+
+    await expect(
+      service.search('https://open.spotify.com/track/abc'),
+    ).rejects.toThrow('Spotify is not supported');
+  });
+
+  it('plays an already-resolved track without calling resolve', async () => {
+    const node = createFakeMusicNode({
+      resolveImpl: async () => {
+        throw new Error('resolve should not be called for playTrack');
+      },
+    });
+    const service = new MusicSessionService(node);
+
+    await service.playTrack('guild-1', youtubeTrack, 'voice-1');
+
+    expect(service.snapshot('guild-1')).toMatchObject({
+      voiceChannelId: 'voice-1',
+      nowPlaying: youtubeTrack,
+      queue: [],
+      paused: false,
+    });
+  });
+
+  it('enqueues an already-resolved track behind now playing', async () => {
+    const second = track('yt-2', 'Second');
+    const service = await playingService([youtubeTrack]);
+
+    await service.playTrack('guild-1', second);
+
+    expect(service.snapshot('guild-1')).toMatchObject({
+      nowPlaying: youtubeTrack,
+      queue: [second],
+    });
+  });
+
+  it('rejects playTrack when no voice channel is provided and none is joined', async () => {
+    const service = new MusicSessionService(createFakeMusicNode());
+
+    await expect(service.playTrack('guild-1', youtubeTrack)).rejects.toThrow(
+      'No voice channel',
+    );
+  });
+
   it('pauses and resumes the current track', async () => {
     const service = await playingService([youtubeTrack]);
 

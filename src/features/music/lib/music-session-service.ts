@@ -91,23 +91,21 @@ export class MusicSessionService {
       return;
     }
 
-    const session = this.#ensureSession(guildId);
+    await this.#enqueueTracks(guildId, tracks, channelId);
+  }
 
-    if (session.voiceChannelId !== channelId) {
-      await this.#musicNode.connect(guildId, channelId);
-      session.voiceChannelId = channelId;
+  async playTrack(
+    guildId: string,
+    track: Track,
+    voiceChannelId?: string,
+  ): Promise<void> {
+    const existing = this.#sessions.get(guildId);
+    const channelId = voiceChannelId ?? existing?.voiceChannelId ?? null;
+    if (!channelId) {
+      throw new Error(NO_VOICE);
     }
 
-    if (!session.nowPlaying) {
-      const [first, ...rest] = tracks;
-      await this.#musicNode.play(guildId, first);
-      session.nowPlaying = first;
-      session.queue.push(...rest);
-      session.paused = false;
-      return;
-    }
-
-    session.queue.push(...tracks);
+    await this.#enqueueTracks(guildId, [track], channelId);
   }
 
   async search(query: string): Promise<Track[]> {
@@ -201,6 +199,30 @@ export class MusicSessionService {
   async setRepeat(guildId: string, mode: RepeatMode): Promise<void> {
     const session = this.#requireSession(guildId);
     session.repeat = mode;
+  }
+
+  async #enqueueTracks(
+    guildId: string,
+    tracks: Track[],
+    channelId: string,
+  ): Promise<void> {
+    const session = this.#ensureSession(guildId);
+
+    if (session.voiceChannelId !== channelId) {
+      await this.#musicNode.connect(guildId, channelId);
+      session.voiceChannelId = channelId;
+    }
+
+    if (!session.nowPlaying) {
+      const [first, ...rest] = tracks;
+      await this.#musicNode.play(guildId, first);
+      session.nowPlaying = first;
+      session.queue.push(...rest);
+      session.paused = false;
+      return;
+    }
+
+    session.queue.push(...tracks);
   }
 
   async #advance(guildId: string, session: MusicSession): Promise<void> {
