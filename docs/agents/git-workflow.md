@@ -10,3 +10,5 @@
 2. `git push -u origin HEAD`
 3. Open a PR with `gh pr create` (base `main`).
 4. Merge via the PR; pull `main` locally after merge.
+
+Head branches are **deleted automatically on merge** — no manual remote branch cleanup.
