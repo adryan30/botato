@@ -20,7 +20,7 @@ Examples:
 - `fix(music): reconnect voice on node resume`
 - `docs: document single-token concurrency`
 
-Locally, `pnpm commit` runs Commitizen. A `commit-msg` hook runs commitlint so non-conforming messages are rejected.
+Locally, `pnpm commit` runs Commitizen. Lefthook installs a `commit-msg` hook that runs commitlint so non-conforming messages are rejected.
 
 ## Landing changes
 
