@@ -116,7 +116,10 @@ export function createKazagumoMusicNode(
 
     async play(guildId, track) {
       const player = requirePlayer(guildId);
-      await player.play(requireEncodedTrack(track));
+      // Botato owns the queue in MusicSessionService. Without replaceCurrent,
+      // Kazagumo unshifts the previous track into its own queue and will
+      // auto-play it when the "last" session track is stopped.
+      await player.play(requireEncodedTrack(track), { replaceCurrent: true });
     },
 
     async pause(guildId) {
@@ -136,6 +139,8 @@ export function createKazagumoMusicNode(
       if (!player) {
         return;
       }
+      player.queue.clear();
+      player.queue.current = null;
       player.shoukaku.stopTrack();
     },
 

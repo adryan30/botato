@@ -1,19 +1,21 @@
 import { Command } from '@sapphire/framework';
 
-export class SkipCommand extends Command {
+export class ClearCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, {
       ...options,
-      description: 'Skip the current track',
+      description: 'Clear upcoming tracks from the queue',
     });
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
       (builder) =>
-        builder.setName('skip').setDescription('Skip the current track'),
+        builder
+          .setName('clear')
+          .setDescription('Clear upcoming tracks from the queue'),
       {
-        idHints: ['1529489112464228526'],
+        idHints: ['1529493021530525898'],
       },
     );
   }
@@ -31,16 +33,11 @@ export class SkipCommand extends Command {
     }
 
     try {
-      await this.container.musicSessions.skip(guildId);
-      const track = this.container.musicSessions.nowPlaying(guildId);
-      if (!track) {
-        await interaction.reply('Skipped. Nothing left in the queue.');
-        return;
-      }
-      await interaction.reply(`Skipped. Now playing **${track.title}**.`);
+      await this.container.musicSessions.clear(guildId);
+      await interaction.reply('Cleared the queue.');
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to skip.';
+        error instanceof Error ? error.message : 'Failed to clear the queue.';
       await interaction.reply({ content: message, ephemeral: true });
     }
   }

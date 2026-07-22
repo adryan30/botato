@@ -1,19 +1,24 @@
 import { Command } from '@sapphire/framework';
+import { sessionReplyPayload } from '../lib/session-ui.js';
 
-export class SkipCommand extends Command {
+export class QueueCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, {
       ...options,
-      description: 'Skip the current track',
+      description: 'Show the music session (now playing, queue, and controls)',
     });
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
       (builder) =>
-        builder.setName('skip').setDescription('Skip the current track'),
+        builder
+          .setName('queue')
+          .setDescription(
+            'Show the music session (now playing, queue, and controls)',
+          ),
       {
-        idHints: ['1529489112464228526'],
+        idHints: ['1529493101410779310'],
       },
     );
   }
@@ -31,16 +36,13 @@ export class SkipCommand extends Command {
     }
 
     try {
-      await this.container.musicSessions.skip(guildId);
-      const track = this.container.musicSessions.nowPlaying(guildId);
-      if (!track) {
-        await interaction.reply('Skipped. Nothing left in the queue.');
-        return;
-      }
-      await interaction.reply(`Skipped. Now playing **${track.title}**.`);
+      const snapshot = this.container.musicSessions.snapshot(guildId);
+      await interaction.reply(sessionReplyPayload(snapshot));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to skip.';
+        error instanceof Error
+          ? error.message
+          : 'Failed to read the music session.';
       await interaction.reply({ content: message, ephemeral: true });
     }
   }

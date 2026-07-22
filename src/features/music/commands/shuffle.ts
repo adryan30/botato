@@ -1,19 +1,21 @@
 import { Command } from '@sapphire/framework';
 
-export class SkipCommand extends Command {
+export class ShuffleCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, {
       ...options,
-      description: 'Skip the current track',
+      description: 'Shuffle upcoming tracks in the queue',
     });
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
       (builder) =>
-        builder.setName('skip').setDescription('Skip the current track'),
+        builder
+          .setName('shuffle')
+          .setDescription('Shuffle upcoming tracks in the queue'),
       {
-        idHints: ['1529489112464228526'],
+        idHints: ['1529493018451771432'],
       },
     );
   }
@@ -31,16 +33,16 @@ export class SkipCommand extends Command {
     }
 
     try {
-      await this.container.musicSessions.skip(guildId);
-      const track = this.container.musicSessions.nowPlaying(guildId);
-      if (!track) {
-        await interaction.reply('Skipped. Nothing left in the queue.');
-        return;
-      }
-      await interaction.reply(`Skipped. Now playing **${track.title}**.`);
+      await this.container.musicSessions.shuffle(guildId);
+      const count = this.container.musicSessions.queue(guildId).length;
+      await interaction.reply(
+        count === 0
+          ? 'Shuffled the queue. Nothing left to play next.'
+          : `Shuffled ${count} upcoming track${count === 1 ? '' : 's'}.`,
+      );
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to skip.';
+        error instanceof Error ? error.message : 'Failed to shuffle the queue.';
       await interaction.reply({ content: message, ephemeral: true });
     }
   }

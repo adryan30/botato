@@ -5,6 +5,7 @@ import {
   peekSearchResults,
   takeSearchResults,
 } from '../lib/search-results-cache.js';
+import { sessionReplyPayload } from '../lib/session-ui.js';
 import { resolveRequesterVoiceChannel } from '../lib/voice.js';
 
 export class SearchSelectHandler extends InteractionHandler {
@@ -96,19 +97,17 @@ export class SearchSelectHandler extends InteractionHandler {
       const snapshot = this.container.musicSessions.snapshot(guildId);
 
       if (!wasPlaying) {
-        await interaction.editReply({
-          content: `Playing **${selected.title}**`,
-          components: [],
-        });
+        await interaction.editReply(sessionReplyPayload(snapshot));
         return;
       }
 
       const queued = snapshot.queue.at(-1);
+      const payload = sessionReplyPayload(snapshot);
       await interaction.editReply({
         content: queued
-          ? `Queued **${queued.title}**`
-          : `Playing **${selected.title}**`,
-        components: [],
+          ? `Queued **${queued.title}**\n\n${payload.content}`
+          : payload.content,
+        components: payload.components,
       });
     } catch (error) {
       const message =

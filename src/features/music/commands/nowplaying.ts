@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { sessionReplyPayload } from '../lib/session-ui.js';
 
 export class NowPlayingCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -33,16 +34,8 @@ export class NowPlayingCommand extends Command {
     }
 
     try {
-      const track = this.container.musicSessions.nowPlaying(guildId);
-      if (!track) {
-        await interaction.reply('Nothing is playing right now.');
-        return;
-      }
-
-      const line = track.uri
-        ? `Now playing: **${track.title}**\n${track.uri}`
-        : `Now playing: **${track.title}**`;
-      await interaction.reply(line);
+      const snapshot = this.container.musicSessions.snapshot(guildId);
+      await interaction.reply(sessionReplyPayload(snapshot));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to read now playing.';

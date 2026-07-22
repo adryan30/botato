@@ -1,10 +1,10 @@
 import { Command } from '@sapphire/framework';
 
-export class SkipToCommand extends Command {
+export class RemoveCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, {
       ...options,
-      description: 'Skip to a specific queue position',
+      description: 'Remove a track from the queue by position',
     });
   }
 
@@ -12,17 +12,17 @@ export class SkipToCommand extends Command {
     registry.registerChatInputCommand(
       (builder) =>
         builder
-          .setName('skipto')
-          .setDescription('Skip to a specific queue position')
+          .setName('remove')
+          .setDescription('Remove a track from the queue by position')
           .addIntegerOption((option) =>
             option
               .setName('position')
-              .setDescription('1-based queue position to play next')
+              .setDescription('1-based queue position to remove')
               .setRequired(true)
               .setMinValue(1),
           ),
       {
-        idHints: ['1529489030453006386'],
+        idHints: ['1529493020221767793'],
       },
     );
   }
@@ -42,16 +42,19 @@ export class SkipToCommand extends Command {
     const position = interaction.options.getInteger('position', true);
 
     try {
-      await this.container.musicSessions.skipTo(guildId, position);
-      const track = this.container.musicSessions.nowPlaying(guildId);
+      const before = this.container.musicSessions.queue(guildId);
+      const removed = before[position - 1];
+      await this.container.musicSessions.remove(guildId, position);
       await interaction.reply(
-        track
-          ? `Skipped to **${track.title}**.`
-          : `Skipped to position ${position}.`,
+        removed
+          ? `Removed **${removed.title}** from the queue.`
+          : `Removed queue position ${position}.`,
       );
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to skip to that position.';
+        error instanceof Error
+          ? error.message
+          : 'Failed to remove that queue position.';
       await interaction.reply({ content: message, ephemeral: true });
     }
   }

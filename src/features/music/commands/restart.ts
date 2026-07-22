@@ -9,10 +9,14 @@ export class RestartCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('restart')
-        .setDescription('Restart the current track from the beginning'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('restart')
+          .setDescription('Restart the current track from the beginning'),
+      {
+        idHints: ['1529489028435415061'],
+      },
     );
   }
 

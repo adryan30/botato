@@ -24,16 +24,8 @@ function bindSessionAdvanceOnTrackEnd(
   sessions: MusicSessionService,
 ): void {
   node.kazagumo.on('playerEmpty', (player) => {
-    try {
-      if (!sessions.nowPlaying(player.guildId)) {
-        return;
-      }
-    } catch {
-      return;
-    }
-
-    void sessions.skip(player.guildId).catch(() => {
-      // Session went idle between the check and skip — ignore.
+    void sessions.handleTrackEnd(player.guildId).catch(() => {
+      // Session went idle between the event and advance — ignore.
     });
   });
 }

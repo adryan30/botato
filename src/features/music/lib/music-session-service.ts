@@ -44,6 +44,7 @@ export class MusicSessionService {
   readonly #musicNode: MusicNodePort;
   readonly #sessions = new Map<string, MusicSession>();
   readonly #shuffle: (items: Track[]) => Track[];
+  readonly #advancing = new Set<string>();
 
   constructor(
     musicNode: MusicNodePort,
@@ -129,15 +130,36 @@ export class MusicSessionService {
 
   async skip(guildId: string): Promise<void> {
     const session = this.#requireSession(guildId);
-    await this.#advance(guildId, session);
+    await this.#withAdvance(guildId, () => this.#advance(guildId, session));
+  }
+
+  /**
+   * Advance after the music node reports the current track ended.
+   * No-ops while a skip/advance is already in flight so node empty events
+   * from replace/stop do not double-advance the session.
+   */
+  async handleTrackEnd(guildId: string): Promise<void> {
+    if (this.#advancing.has(guildId)) {
+      return;
+    }
+    try {
+      if (!this.nowPlaying(guildId)) {
+        return;
+      }
+    } catch {
+      return;
+    }
+    await this.skip(guildId);
   }
 
   async skipTo(guildId: string, index: number): Promise<void> {
     const session = this.#requireSession(guildId);
     this.#requireQueueIndex(session, index);
-    const removed = session.queue.splice(0, index);
-    const next = removed[index - 1]!;
-    await this.#playTrack(guildId, session, next);
+    await this.#withAdvance(guildId, async () => {
+      const removed = session.queue.splice(0, index);
+      const next = removed[index - 1]!;
+      await this.#playTrack(guildId, session, next);
+    });
   }
 
   async restart(guildId: string): Promise<void> {
@@ -259,9 +281,21 @@ export class MusicSessionService {
     session: MusicSession,
     track: Track,
   ): Promise<void> {
-    await this.#musicNode.play(guildId, track);
     session.nowPlaying = track;
     session.paused = false;
+    await this.#musicNode.play(guildId, track);
+  }
+
+  async #withAdvance(
+    guildId: string,
+    run: () => Promise<void>,
+  ): Promise<void> {
+    this.#advancing.add(guildId);
+    try {
+      await run();
+    } finally {
+      this.#advancing.delete(guildId);
+    }
   }
 
   #ensureSession(guildId: string): MusicSession {
