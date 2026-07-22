@@ -104,6 +104,20 @@ The workflow does **not** publish `latest`. Pin Argo (or any deploy) to a digest
 
 The music node stays on the official Lavalink image; this repo does not publish a custom music-node image.
 
+### Releases (release-please)
+
+[release-please](https://github.com/googleapis/release-please) opens/updates a **Release PR** on pushes to `main` from Conventional Commits. Merging that PR:
+
+1. Bumps `package.json` / `CHANGELOG.md`
+2. Creates the GitHub Release and `vX.Y.Z` tag
+3. Triggers image publish with the matching semver tag
+
+Unmerged commits stack into the same Release PR (one batched version). You do not create the PR by hand — only merge it when you want the tag.
+
+Repo setting required once: **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**.
+
+Bootstrap: after this lands, tag the current shipped line once if needed (`git tag v1.0.0 && git push origin v1.0.0`) so the next Release PR starts from a clean baseline.
+
 ## Deploy contract (ADR 0004 handoff)
 
 In-repo contract for cluster wiring in `adryan30/infra` — **do not** apply Argo/ESO/Vault from this repository:
