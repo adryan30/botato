@@ -20,7 +20,7 @@ export function createBotatoClient(
 
   const client = new SapphireClient({
     baseUserDirectory: null,
-    intents: [GatewayIntentBits.Guilds],
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
     loadMessageCommandListeners: false,
     logger: {
       level: LogLevel.Info,

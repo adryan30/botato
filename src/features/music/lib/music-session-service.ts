@@ -69,18 +69,18 @@ export class MusicSessionService {
       throw new Error(NO_VOICE);
     }
 
-    const session = this.#ensureSession(guildId);
-
-    if (session.voiceChannelId !== channelId) {
-      await this.#musicNode.connect(guildId, channelId);
-      session.voiceChannelId = channelId;
-    }
-
     const resolved = await this.#musicNode.resolve(query);
     const tracks =
       resolved.kind === 'track' ? [resolved.track] : resolved.tracks;
     if (tracks.length === 0) {
       return;
+    }
+
+    const session = this.#ensureSession(guildId);
+
+    if (session.voiceChannelId !== channelId) {
+      await this.#musicNode.connect(guildId, channelId);
+      session.voiceChannelId = channelId;
     }
 
     if (!session.nowPlaying) {

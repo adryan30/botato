@@ -1,5 +1,12 @@
+export type MusicNodeConfig = {
+  host: string;
+  port: number;
+  password: string;
+};
+
 export type BotatoConfig = {
   discordToken: string;
+  musicNode: MusicNodeConfig;
 };
 
 export function loadConfig(
@@ -10,5 +17,20 @@ export function loadConfig(
     throw new Error('DISCORD_TOKEN is required');
   }
 
-  return { discordToken };
+  const password = env.MUSIC_NODE_PASSWORD?.trim();
+  if (!password) {
+    throw new Error('MUSIC_NODE_PASSWORD is required');
+  }
+
+  const host = env.MUSIC_NODE_HOST?.trim() || '127.0.0.1';
+  const portRaw = env.MUSIC_NODE_PORT?.trim() || '2333';
+  const port = Number(portRaw);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error('MUSIC_NODE_PORT must be an integer between 1 and 65535');
+  }
+
+  return {
+    discordToken,
+    musicNode: { host, port, password },
+  };
 }

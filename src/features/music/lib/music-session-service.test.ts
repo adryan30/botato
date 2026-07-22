@@ -103,6 +103,18 @@ describe('MusicSessionService', () => {
     );
   });
 
+  it('does not join voice or create a session when resolve returns no tracks', async () => {
+    const node = createFakeMusicNode({
+      resolveImpl: async () => ({ kind: 'playlist', tracks: [] }),
+    });
+    const service = new MusicSessionService(node);
+
+    await service.play('guild-1', 'missing song', 'voice-1');
+
+    expect(node.connected.has('guild-1')).toBe(false);
+    expect(() => service.snapshot('guild-1')).toThrow('No active music session');
+  });
+
   it('plays a YouTube resolve result and shows it as now playing', async () => {
     const service = new MusicSessionService(
       createFakeMusicNode({
