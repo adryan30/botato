@@ -9,10 +9,14 @@ export class LeaveCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('leave')
-        .setDescription('Leave the voice channel and end the music session'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('leave')
+          .setDescription('Leave the voice channel and end the music session'),
+      {
+        idHints: ['1529465455105015840', '1529466505538965534'],
+      },
     );
   }
 

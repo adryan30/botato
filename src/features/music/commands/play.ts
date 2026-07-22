@@ -10,18 +10,22 @@ export class PlayCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('play')
-        .setDescription(
-          'Play a YouTube URL or search query in your voice channel',
-        )
-        .addStringOption((option) =>
-          option
-            .setName('query')
-            .setDescription('YouTube URL or search query')
-            .setRequired(true),
-        ),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('play')
+          .setDescription(
+            'Play a YouTube URL or search query in your voice channel',
+          )
+          .addStringOption((option) =>
+            option
+              .setName('query')
+              .setDescription('YouTube URL or search query')
+              .setRequired(true),
+          ),
+      {
+        idHints: ['1529465457986375680', '1529466506562244618'],
+      },
     );
   }
 

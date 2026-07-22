@@ -16,6 +16,7 @@ describe('loadConfig', () => {
       }),
     ).toEqual({
       discordToken: 'test-token',
+      discordGuildIds: [],
       musicNode: {
         host: 'music-node',
         port: 2334,
@@ -27,12 +28,23 @@ describe('loadConfig', () => {
   it('defaults music-node host and port', () => {
     expect(loadConfig(validEnv)).toEqual({
       discordToken: 'test-token',
+      discordGuildIds: [],
       musicNode: {
         host: '127.0.0.1',
         port: 2333,
         password: 'node-password',
       },
     });
+  });
+
+  it('parses discord guild ids for instant slash registration', () => {
+    expect(
+      loadConfig({
+        ...validEnv,
+        DISCORD_GUILD_ID: '111',
+        DISCORD_GUILD_IDS: '222, 111 ,333',
+      }).discordGuildIds,
+    ).toEqual(['222', '111', '333']);
   });
 
   it('rejects a missing Discord token', () => {

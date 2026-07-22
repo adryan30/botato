@@ -6,6 +6,7 @@ export type MusicNodeConfig = {
 
 export type BotatoConfig = {
   discordToken: string;
+  discordGuildIds: string[];
   musicNode: MusicNodeConfig;
 };
 
@@ -31,6 +32,16 @@ export function loadConfig(
 
   return {
     discordToken,
+    discordGuildIds: parseGuildIds(env),
     musicNode: { host, port, password },
   };
+}
+
+function parseGuildIds(env: NodeJS.ProcessEnv): string[] {
+  const fromList = env.DISCORD_GUILD_IDS?.split(',') ?? [];
+  const fromSingle = env.DISCORD_GUILD_ID ? [env.DISCORD_GUILD_ID] : [];
+  const ids = [...fromList, ...fromSingle]
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+  return [...new Set(ids)];
 }

@@ -9,10 +9,14 @@ export class NowPlayingCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName('nowplaying')
-        .setDescription('Show the currently playing track'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder
+          .setName('nowplaying')
+          .setDescription('Show the currently playing track'),
+      {
+        idHints: ['1529465462826467458', '1529466509636669551'],
+      },
     );
   }
 

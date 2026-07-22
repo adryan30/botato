@@ -10,8 +10,12 @@ export class JoinCommand extends Command {
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder.setName('join').setDescription('Join your voice channel'),
+    registry.registerChatInputCommand(
+      (builder) =>
+        builder.setName('join').setDescription('Join your voice channel'),
+      {
+        idHints: ['1529465461253734440', '1529466508424642702'],
+      },
     );
   }
 

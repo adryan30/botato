@@ -53,6 +53,8 @@ pnpm dev
 
 Point Botato at the Compose music node with `MUSIC_NODE_HOST` / `MUSIC_NODE_PORT` / `MUSIC_NODE_PASSWORD` from `.env`.
 
+Set `DISCORD_GUILD_ID` (or `DISCORD_GUILD_IDS`) to your private guild so slash commands register instantly. Without it, Discord can take up to an hour to show globally registered commands.
+
 ### Tier-1 music smoke checklist
 
 With the music node healthy and Botato logged in to your private guild:
