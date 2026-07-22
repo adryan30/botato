@@ -15,7 +15,7 @@ export class LeaveCommand extends Command {
           .setName('leave')
           .setDescription('Leave the voice channel and end the music session'),
       {
-        idHints: ['1529465455105015840', '1529466505538965534'],
+        idHints: ['1529466505538965534'],
       },
     );
   }

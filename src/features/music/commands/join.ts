@@ -14,7 +14,7 @@ export class JoinCommand extends Command {
       (builder) =>
         builder.setName('join').setDescription('Join your voice channel'),
       {
-        idHints: ['1529465461253734440', '1529466508424642702'],
+        idHints: ['1529466508424642702'],
       },
     );
   }

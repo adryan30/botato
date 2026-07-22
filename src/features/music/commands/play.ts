@@ -24,7 +24,7 @@ export class PlayCommand extends Command {
               .setRequired(true),
           ),
       {
-        idHints: ['1529465457986375680', '1529466506562244618'],
+        idHints: ['1529466506562244618'],
       },
     );
   }
