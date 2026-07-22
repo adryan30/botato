@@ -1,3 +1,6 @@
 .env
+node_modules/
+dist/
+.pnpm-store/
 music-node/plugins/*
 !music-node/plugins/.gitkeep
