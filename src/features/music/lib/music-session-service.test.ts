@@ -10,13 +10,6 @@ const youtubeTrack: Track = {
   source: 'youtube',
 };
 
-const spotifyResolvedTrack: Track = {
-  id: 'yt-from-spotify',
-  title: 'Spotify Mirror Song',
-  uri: 'https://youtube.com/watch?v=mirrored',
-  source: 'youtube',
-};
-
 function track(id: string, title = id): Track {
   return {
     id,
@@ -132,23 +125,22 @@ describe('MusicSessionService', () => {
     });
   });
 
-  it('resolves a Spotify query to a playable track via the music-node port', async () => {
-    const service = new MusicSessionService(
-      createFakeMusicNode({
-        resolveImpl: async (query) => {
-          expect(query).toBe('https://open.spotify.com/track/abc');
-          return { kind: 'track', track: spotifyResolvedTrack };
-        },
-      }),
-    );
+  it('refuses Spotify URLs with a clear unsupported error', async () => {
+    const node = createFakeMusicNode({
+      resolveImpl: async () => {
+        throw new Error('music-node should not be called for Spotify URLs');
+      },
+    });
+    const service = new MusicSessionService(node);
 
-    await service.play(
-      'guild-1',
-      'https://open.spotify.com/track/abc',
-      'voice-1',
-    );
-
-    expect(service.snapshot('guild-1').nowPlaying).toEqual(spotifyResolvedTrack);
+    await expect(
+      service.play(
+        'guild-1',
+        'https://open.spotify.com/track/abc',
+        'voice-1',
+      ),
+    ).rejects.toThrow('Spotify is not supported');
+    expect(node.connected.has('guild-1')).toBe(false);
   });
 
   it('enqueues subsequent tracks behind the current now playing', async () => {

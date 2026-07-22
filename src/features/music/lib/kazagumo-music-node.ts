@@ -152,8 +152,5 @@ function mapSource(sourceName: string): Track['source'] {
   if (normalized.includes('youtube')) {
     return 'youtube';
   }
-  if (normalized.includes('spotify')) {
-    return 'spotify';
-  }
   return 'other';
 }
