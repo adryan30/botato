@@ -37,9 +37,12 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
+    # TV is the only OAuth-compatible client (needed when YOUTUBE_OAUTH_ENABLED=true).
+    # ANDROID_VR currently streams reliably; TV covers OAuth/age-gated playback.
     clients:
       - MUSIC
       - ANDROID_VR
+      - TV
       - WEB
       - WEBEMBEDDED
     oauth:
