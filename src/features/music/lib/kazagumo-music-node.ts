@@ -6,19 +6,18 @@ import type { MusicNodePort, Track } from './music-node-port.js';
 
 export type KazagumoMusicNode = MusicNodePort & {
   readonly kazagumo: Kazagumo;
+  readonly nodeOption: NodeOption;
 };
 
 export function createKazagumoMusicNode(
   client: Client,
   connection: MusicNodeConfig,
 ): KazagumoMusicNode {
-  const nodes: NodeOption[] = [
-    {
-      name: 'main',
-      url: `${connection.host}:${connection.port}`,
-      auth: connection.password,
-    },
-  ];
+  const nodeOption: NodeOption = {
+    name: 'main',
+    url: `${connection.host}:${connection.port}`,
+    auth: connection.password,
+  };
 
   const kazagumo = new Kazagumo(
     {
@@ -31,11 +30,13 @@ export function createKazagumoMusicNode(
       },
     },
     new Connectors.DiscordJS(client),
-    nodes,
+    [nodeOption],
     {
-      // Keep retrying so a late-starting or restarted music node can recover
-      // without restarting Botato (Shoukaku default is 3 tries).
-      reconnectTries: Number.POSITIVE_INFINITY,
+      // Single-attempt connect: Shoukaku keeps a stale connectError across
+      // retries, so a late success after failures tears the socket down and
+      // removes the node. Botato re-adds the node on disconnect instead.
+      reconnectTries: 1,
+      reconnectInterval: 5,
     },
   );
 
@@ -70,6 +71,7 @@ export function createKazagumoMusicNode(
 
   const node: KazagumoMusicNode = {
     kazagumo,
+    nodeOption,
 
     async connect(guildId, channelId) {
       const existing = kazagumo.getPlayer(guildId);

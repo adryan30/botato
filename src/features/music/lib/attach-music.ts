@@ -10,6 +10,7 @@ import { MusicNodeAvailability } from './music-node-availability.js';
 import { MusicSessionService } from './music-session-service.js';
 
 const MUSIC_UNAVAILABLE_PRESENCE = 'Music unavailable';
+const MUSIC_NODE_READD_DELAY_MS = 5_000;
 
 export function attachMusicFeature(
   client: Client,
@@ -42,6 +43,26 @@ function bindMusicNodeAvailability(
   sessions: MusicSessionService,
 ): void {
   const shoukaku = node.kazagumo.shoukaku;
+  const { nodeOption } = node;
+  let readdScheduled = false;
+
+  const scheduleNodeReadd = () => {
+    if (readdScheduled) {
+      return;
+    }
+    readdScheduled = true;
+    setTimeout(() => {
+      readdScheduled = false;
+      if (shoukaku.nodes.has(nodeOption.name)) {
+        return;
+      }
+      client.logger.warn(
+        `Music node "${nodeOption.name}" was removed; reconnecting`,
+      );
+      availability.markUnavailable();
+      shoukaku.addNode(nodeOption);
+    }, MUSIC_NODE_READD_DELAY_MS);
+  };
 
   shoukaku.on('ready', (name) => {
     client.logger.info(`Music node "${name}" is available`);
@@ -65,6 +86,8 @@ function bindMusicNodeAvailability(
     client.logger.error(
       `Music node "${name}" error: ${error instanceof Error ? error.message : String(error)}`,
     );
+    availability.markUnavailable();
+    scheduleNodeReadd();
   });
 
   availability.onChange((available) => {
