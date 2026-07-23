@@ -5,6 +5,15 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      git_tag:
+        description: >-
+          Optional v* tag for semver image tagging when chained from
+          release-please (GITHUB_TOKEN tag pushes do not start this workflow).
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -38,9 +47,12 @@ jobs:
           # Immutable pins only — never publish `latest` for the Argo story.
           flavor: |
             latest=false
+          # Semver from the push/tag ref, or from release-please's tag when
+          # chained (event ref is still main in that case).
           tags: |
             type=sha,prefix=sha-,format=long
-            type=semver,pattern={{version}}
+            type=semver,pattern={{version}},enable=${{ inputs.git_tag == '' }}
+            type=semver,pattern={{version}},value=${{ inputs.git_tag }},enable=${{ inputs.git_tag != '' }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
