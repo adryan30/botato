@@ -110,9 +110,9 @@ The music node stays on the official Lavalink image; this repo does not publish 
 
 1. Bumps `package.json` / `CHANGELOG.md`
 2. Creates the GitHub Release and `vX.Y.Z` tag
-3. Triggers image publish with the matching semver tag
+3. Chains **Publish Botato image** in the same workflow (semver + SHA tags). Tag pushes from `GITHUB_TOKEN` do not start other workflows, so publish is not left to a separate tag trigger.
 
-Unmerged commits stack into the same Release PR (one batched version). You do not create the PR by hand — only merge it when you want the tag.
+Hand-pushed `v*` tags and `workflow_dispatch` still run publish directly. Unmerged commits stack into the same Release PR (one batched version). You do not create the PR by hand — only merge it when you want the tag.
 
 Repo setting required once: **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**.
 
