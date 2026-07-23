@@ -10,6 +10,14 @@ const client = createBotatoClient({
   rootDir: dirname(fileURLToPath(import.meta.url)),
 });
 
+process.on('unhandledRejection', (reason) => {
+  client.logger.error(
+    `Unhandled rejection: ${
+      reason instanceof Error ? (reason.stack ?? reason.message) : String(reason)
+    }`,
+  );
+});
+
 if (config.discordGuildIds.length > 0) {
   ApplicationCommandRegistries.setDefaultGuildIds(config.discordGuildIds);
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createFakeMusicNode } from './fake-music-node.js';
+import { MusicNodeAvailability } from './music-node-availability.js';
 import type { Track } from './music-node-port.js';
+import { MUSIC_UNAVAILABLE } from './require-music-available.js';
 import { MusicSessionService } from './music-session-service.js';
 
 const youtubeTrack: Track = {
@@ -79,6 +81,36 @@ describe('MusicSessionService', () => {
     await expect(service.leave('guild-1')).rejects.toThrow(
       'No active music session',
     );
+  });
+
+  it('ends all music sessions when the music node is lost', async () => {
+    const node = createFakeMusicNode({
+      resolveImpl: async () => ({ kind: 'track', track: youtubeTrack }),
+    });
+    const service = new MusicSessionService(node);
+    await service.play('guild-1', 'song', 'voice-1');
+    await service.join('guild-2', 'voice-2');
+
+    await service.handleMusicNodeLost();
+
+    expect(() => service.snapshot('guild-1')).toThrow('No active music session');
+    expect(() => service.snapshot('guild-2')).toThrow('No active music session');
+    expect(node.connected.has('guild-1')).toBe(false);
+    expect(node.connected.has('guild-2')).toBe(false);
+  });
+
+  it('rejects music actions when the music node is unavailable', async () => {
+    const availability = new MusicNodeAvailability();
+    const service = new MusicSessionService(
+      createFakeMusicNode({
+        resolveImpl: async () => ({ kind: 'track', track: youtubeTrack }),
+      }),
+      { availability },
+    );
+
+    await expect(
+      service.play('guild-1', 'song', 'voice-1'),
+    ).rejects.toThrow(MUSIC_UNAVAILABLE);
   });
 
   it('rejects play when no voice channel is provided and none is joined', async () => {

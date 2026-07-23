@@ -1,4 +1,6 @@
+import type { MusicNodeAvailability } from './music-node-availability.js';
 import type { MusicNodePort, Track } from './music-node-port.js';
+import { requireMusicAvailable } from './require-music-available.js';
 
 const NO_SESSION = 'No active music session';
 const NO_VOICE = 'No voice channel';
@@ -20,6 +22,7 @@ export type MusicSessionSnapshot = {
 
 export type MusicSessionServiceOptions = {
   shuffle?: (items: Track[]) => Track[];
+  availability?: MusicNodeAvailability;
 };
 
 type MusicSession = {
@@ -44,6 +47,7 @@ export class MusicSessionService {
   readonly #musicNode: MusicNodePort;
   readonly #sessions = new Map<string, MusicSession>();
   readonly #shuffle: (items: Track[]) => Track[];
+  readonly #availability: MusicNodeAvailability | null;
   readonly #advancing = new Set<string>();
 
   constructor(
@@ -52,22 +56,41 @@ export class MusicSessionService {
   ) {
     this.#musicNode = musicNode;
     this.#shuffle = options.shuffle ?? defaultShuffle;
+    this.#availability = options.availability ?? null;
   }
 
   async ensure(guildId: string, voiceChannelId: string): Promise<void> {
+    this.#requireAvailable();
     await this.join(guildId, voiceChannelId);
   }
 
   async join(guildId: string, voiceChannelId: string): Promise<void> {
+    this.#requireAvailable();
     await this.#musicNode.connect(guildId, voiceChannelId);
     const session = this.#ensureSession(guildId);
     session.voiceChannelId = voiceChannelId;
   }
 
   async leave(guildId: string): Promise<void> {
+    this.#requireAvailable();
     this.#requireSession(guildId);
     await this.#musicNode.disconnect(guildId);
     this.#sessions.delete(guildId);
+  }
+
+  async handleMusicNodeLost(): Promise<void> {
+    const guildIds = [...this.#sessions.keys()];
+    this.#sessions.clear();
+    this.#advancing.clear();
+    await Promise.all(
+      guildIds.map(async (guildId) => {
+        try {
+          await this.#musicNode.disconnect(guildId);
+        } catch {
+          // Best-effort: the music node may already be unreachable.
+        }
+      }),
+    );
   }
 
   async play(
@@ -75,6 +98,7 @@ export class MusicSessionService {
     query: string,
     voiceChannelId?: string,
   ): Promise<void> {
+    this.#requireAvailable();
     if (isSpotifyQuery(query)) {
       throw new Error(SPOTIFY_UNSUPPORTED);
     }
@@ -100,6 +124,7 @@ export class MusicSessionService {
     track: Track,
     voiceChannelId?: string,
   ): Promise<void> {
+    this.#requireAvailable();
     const existing = this.#sessions.get(guildId);
     const channelId = voiceChannelId ?? existing?.voiceChannelId ?? null;
     if (!channelId) {
@@ -110,6 +135,7 @@ export class MusicSessionService {
   }
 
   async search(query: string): Promise<Track[]> {
+    this.#requireAvailable();
     if (isSpotifyQuery(query)) {
       throw new Error(SPOTIFY_UNSUPPORTED);
     }
@@ -117,18 +143,21 @@ export class MusicSessionService {
   }
 
   async pause(guildId: string): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     await this.#musicNode.pause(guildId);
     session.paused = true;
   }
 
   async resume(guildId: string): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     await this.#musicNode.resume(guildId);
     session.paused = false;
   }
 
   async skip(guildId: string): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     await this.#withAdvance(guildId, () => this.#advance(guildId, session));
   }
@@ -139,6 +168,9 @@ export class MusicSessionService {
    * from replace/stop do not double-advance the session.
    */
   async handleTrackEnd(guildId: string): Promise<void> {
+    if (this.#availability && !this.#availability.isAvailable()) {
+      return;
+    }
     if (this.#advancing.has(guildId)) {
       return;
     }
@@ -153,6 +185,7 @@ export class MusicSessionService {
   }
 
   async skipTo(guildId: string, index: number): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     this.#requireQueueIndex(session, index);
     await this.#withAdvance(guildId, async () => {
@@ -163,11 +196,13 @@ export class MusicSessionService {
   }
 
   async restart(guildId: string): Promise<void> {
+    this.#requireAvailable();
     this.#requireSession(guildId);
     await this.#musicNode.seek(guildId, 0);
   }
 
   async setVolume(guildId: string, volume: number): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     await this.#musicNode.setVolume(guildId, volume);
     session.volume = volume;
@@ -182,6 +217,7 @@ export class MusicSessionService {
   }
 
   snapshot(guildId: string): MusicSessionSnapshot {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     return {
       guildId,
@@ -195,22 +231,26 @@ export class MusicSessionService {
   }
 
   async clear(guildId: string): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     session.queue = [];
   }
 
   async shuffle(guildId: string): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     session.queue = this.#shuffle(session.queue);
   }
 
   async remove(guildId: string, index: number): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     this.#requireQueueIndex(session, index);
     session.queue.splice(index - 1, 1);
   }
 
   async move(guildId: string, from: number, to: number): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     this.#requireQueueIndex(session, from);
     this.#requireQueueIndex(session, to);
@@ -219,6 +259,7 @@ export class MusicSessionService {
   }
 
   async setRepeat(guildId: string, mode: RepeatMode): Promise<void> {
+    this.#requireAvailable();
     const session = this.#requireSession(guildId);
     session.repeat = mode;
   }
@@ -306,6 +347,13 @@ export class MusicSessionService {
     const session = createEmptySession();
     this.#sessions.set(guildId, session);
     return session;
+  }
+
+  #requireAvailable(): void {
+    if (!this.#availability) {
+      return;
+    }
+    requireMusicAvailable(this.#availability.isAvailable());
   }
 
   #requireSession(guildId: string): MusicSession {
