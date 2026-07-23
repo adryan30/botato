@@ -32,6 +32,11 @@ export function createKazagumoMusicNode(
     },
     new Connectors.DiscordJS(client),
     nodes,
+    {
+      // Keep retrying so a late-starting or restarted music node can recover
+      // without restarting Botato (Shoukaku default is 3 tries).
+      reconnectTries: Number.POSITIVE_INFINITY,
+    },
   );
 
   const encodedTracks = new Map<string, KazagumoTrack>();
