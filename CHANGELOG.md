@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/adryan30/botato/compare/v1.1.1...v1.1.2) (2026-07-23)
+
+
+### Bug Fixes
+
+* **ci:** chain image publish after release-please ([#41](https://github.com/adryan30/botato/issues/41)) ([dda2460](https://github.com/adryan30/botato/commit/dda2460e75cb55bac01bfaf9af07f3f80b19099f))
+* **music:** enable YouTube OAuth TV client and document token setup ([#50](https://github.com/adryan30/botato/issues/50)) ([84e40cf](https://github.com/adryan30/botato/commit/84e40cf47fa89274cc326b6906e7d496437bdffd))
+
 ## [1.1.1](https://github.com/adryan30/botato/compare/v1.1.0...v1.1.1) (2026-07-23)
 
 
