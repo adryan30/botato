@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/adryan30/botato/compare/v1.1.0...v1.1.1) (2026-07-23)
+
+
+### Bug Fixes
+
+* **ci:** emit v* tags from release-please ([#39](https://github.com/adryan30/botato/issues/39)) ([2212cde](https://github.com/adryan30/botato/commit/2212cdef0b56aebab98d087f46f6e389df315066))
+
 ## [1.1.0](https://github.com/adryan30/botato/compare/botato-v1.0.0...botato-v1.1.0) (2026-07-23)
 
 

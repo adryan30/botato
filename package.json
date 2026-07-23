@@ -1,6 +1,6 @@
 {
   "name": "botato",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Personal Discord bot for a private guild: modular capabilities with voice music playback.",
   "type": "module",
