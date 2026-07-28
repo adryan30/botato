@@ -4,7 +4,7 @@ server:
 
 lavalink:
   plugins:
-    - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.1"
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.2"
       snapshot: false
   server:
     # Placeholder only — Compose sets LAVALINK_SERVER_PASSWORD from MUSIC_NODE_PASSWORD.
@@ -49,6 +49,10 @@ plugins:
       enabled: ${YOUTUBE_OAUTH_ENABLED:false}
       refreshToken: "${YOUTUBE_OAUTH_REFRESH_TOKEN:}"
       skipInitialization: ${YOUTUBE_OAUTH_SKIP_INITIALIZATION:false}
+    # Remote cipher replaces broken local sig extraction when YouTube churns player scripts.
+    remoteCipher:
+      url: "https://cipher.kikkia.dev/"
+      userAgent: "botato"
     pot:
       token: "${YOUTUBE_PO_TOKEN:}"
       visitorData: "${YOUTUBE_VISITOR_DATA:}"
