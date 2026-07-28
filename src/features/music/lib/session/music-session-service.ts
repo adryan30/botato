@@ -1,5 +1,6 @@
 import type { MusicNodeAvailability } from '../music-node/music-node-availability.js';
 import type { MusicNodePort, Track } from '../music-node/music-node-port.js';
+import { youtubeResolveCandidates } from '../youtube-query.js';
 import { requireMusicAvailable } from './require-music-available.js';
 
 const NO_SESSION = 'No active music session';
@@ -120,11 +121,15 @@ export class MusicSessionService {
     }
   }
 
+  /**
+   * Resolve and enqueue tracks for a query.
+   * @returns Tracks added by this call (empty when resolve found nothing).
+   */
   async play(
     guildId: string,
     query: string,
     voiceChannelId?: string,
-  ): Promise<void> {
+  ): Promise<Track[]> {
     this.#requireAvailable();
     if (isSpotifyQuery(query)) {
       throw new Error(SPOTIFY_UNSUPPORTED);
@@ -136,14 +141,13 @@ export class MusicSessionService {
       throw new Error(NO_VOICE);
     }
 
-    const resolved = await this.#musicNode.resolve(query);
-    const tracks =
-      resolved.kind === 'track' ? [resolved.track] : resolved.tracks;
+    const tracks = await this.#resolveTracks(query);
     if (tracks.length === 0) {
-      return;
+      return [];
     }
 
     await this.#enqueueTracks(guildId, tracks, channelId);
+    return tracks;
   }
 
   async playTrack(
@@ -350,6 +354,18 @@ export class MusicSessionService {
     session.paused = false;
     await this.#musicNode.stop(guildId);
     this.#emit({ kind: 'state-change', guildId });
+  }
+
+  async #resolveTracks(query: string): Promise<Track[]> {
+    for (const candidate of youtubeResolveCandidates(query)) {
+      const resolved = await this.#musicNode.resolve(candidate);
+      const tracks =
+        resolved.kind === 'track' ? [resolved.track] : resolved.tracks;
+      if (tracks.length > 0) {
+        return tracks;
+      }
+    }
+    return [];
   }
 
   async #playTrack(

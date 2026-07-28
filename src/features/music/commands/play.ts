@@ -1,5 +1,6 @@
 import { Command } from '@sapphire/framework';
 import { MessageFlags } from 'discord.js';
+import { playConfirmation } from '../lib/play-confirmation.js';
 import { resolveRequesterVoiceChannel } from '../lib/voice.js';
 
 export class PlayCommand extends Command {
@@ -74,28 +75,12 @@ export class PlayCommand extends Command {
         guildId,
         interaction.channelId,
       );
-      await this.container.musicSessions.play(
+      const added = await this.container.musicSessions.play(
         guildId,
         query,
         voiceChannel.id,
       );
-      const snapshot = this.container.musicSessions.snapshot(guildId);
-      if (!snapshot.nowPlaying) {
-        await interaction.editReply('No tracks found for that query.');
-        return;
-      }
-
-      if (!wasPlaying) {
-        await interaction.editReply(`Playing **${snapshot.nowPlaying.title}**`);
-        return;
-      }
-
-      const queued = snapshot.queue.at(-1);
-      await interaction.editReply(
-        queued
-          ? `Queued **${queued.title}**`
-          : `Playing **${snapshot.nowPlaying.title}**`,
-      );
+      await interaction.editReply(playConfirmation(wasPlaying, added));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to play that query.';
