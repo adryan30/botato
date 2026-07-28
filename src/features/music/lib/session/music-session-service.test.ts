@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createFakeMusicNode } from './fake-music-node.js';
-import { MusicNodeAvailability } from './music-node-availability.js';
-import type { Track } from './music-node-port.js';
+import { createFakeMusicNode } from '../music-node/fake-music-node.js';
+import { MusicNodeAvailability } from '../music-node/music-node-availability.js';
+import type { Track } from '../music-node/music-node-port.js';
 import { MUSIC_UNAVAILABLE } from './require-music-available.js';
 import {
   type MusicSessionLifecycleEvent,

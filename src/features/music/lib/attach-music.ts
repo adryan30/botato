@@ -5,9 +5,9 @@ import './container-augment.js';
 import {
   createKazagumoMusicNode,
   type KazagumoMusicNode,
-} from './kazagumo-music-node.js';
-import { MusicNodeAvailability } from './music-node-availability.js';
-import { MusicSessionService } from './music-session-service.js';
+} from './music-node/kazagumo-music-node.js';
+import { MusicNodeAvailability } from './music-node/music-node-availability.js';
+import { MusicSessionService } from './session/music-session-service.js';
 
 const MUSIC_UNAVAILABLE_PRESENCE = 'Music unavailable';
 const MUSIC_NODE_READD_DELAY_MS = 5_000;

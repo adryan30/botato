@@ -1,5 +1,5 @@
-import type { MusicNodeAvailability } from './music-node-availability.js';
-import type { MusicNodePort, Track } from './music-node-port.js';
+import type { MusicNodeAvailability } from '../music-node/music-node-availability.js';
+import type { MusicNodePort, Track } from '../music-node/music-node-port.js';
 import { requireMusicAvailable } from './require-music-available.js';
 
 const NO_SESSION = 'No active music session';

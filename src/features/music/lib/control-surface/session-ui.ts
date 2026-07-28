@@ -4,11 +4,11 @@ import {
   ButtonStyle,
   EmbedBuilder,
 } from 'discord.js';
-import type { Track } from './music-node-port.js';
+import type { Track } from '../music-node/music-node-port.js';
 import type {
   MusicSessionSnapshot,
   RepeatMode,
-} from './music-session-service.js';
+} from '../session/music-session-service.js';
 
 export const SESSION_CONTROL_CUSTOM_ID_PREFIX = 'music:session:';
 

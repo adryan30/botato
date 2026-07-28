@@ -1,4 +1,4 @@
-import type { MusicSessionService } from './music-session-service.js';
+import type { MusicSessionService } from './session/music-session-service.js';
 
 declare module '@sapphire/pieces' {
   interface Container {

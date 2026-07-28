@@ -79,6 +79,8 @@ src/features/<name>/
   lib/
 ```
 
+As a feature grows, split `lib/` into domain concern folders (music uses `session/`, `music-node/`, `control-surface/`). See `docs/agents/feature-layout.md`.
+
 ### Music-session permissions
 
 Music-session permissions are **unrestricted** pending a later decision (no role/channel gates yet).

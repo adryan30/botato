@@ -1,7 +1,7 @@
 import type { Client } from 'discord.js';
 import { Kazagumo, type KazagumoTrack } from 'kazagumo';
 import { Connectors, type NodeOption } from 'shoukaku';
-import type { MusicNodeConfig } from '../../../lib/config.js';
+import type { MusicNodeConfig } from '../../../../lib/config.js';
 import type { MusicNodePort, Track } from './music-node-port.js';
 
 export type KazagumoMusicNode = MusicNodePort & {

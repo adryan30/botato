@@ -1,5 +1,5 @@
 import { Command } from '@sapphire/framework';
-import type { RepeatMode } from '../lib/music-session-service.js';
+import type { RepeatMode } from '../lib/session/music-session-service.js';
 
 const REPEAT_MODES = ['off', 'track', 'queue'] as const satisfies readonly RepeatMode[];
 

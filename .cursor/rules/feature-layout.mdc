@@ -1,0 +1,36 @@
+---
+description: Feature module folder layout under src/features/
+globs: src/features/**
+alwaysApply: false
+---
+
+# Feature folder layout
+
+Full guide: `docs/agents/feature-layout.md` (ADR-0003).
+
+## Shape
+
+```text
+src/features/<name>/
+  commands/ | listeners/ | interaction-handlers/   # Sapphire pieces only
+  lib/
+    attach-<name>.ts | container-augment.ts        # wiring / DI typing
+    <domain>/                                      # one folder per concern
+    <tiny-helper>.ts                               # only until it earns a folder
+```
+
+Music domains today: `lib/session/`, `lib/music-node/`, `lib/control-surface/`.
+
+## Do
+
+- Split `lib/` by **domain concern** (session, music-node, control-surface), not by layer
+- Colocate `*.test.ts` and port+fake with the module they belong to
+- Keep commands/handlers thin; import from `lib/<domain>/`
+- Name folders with CONTEXT.md vocabulary
+
+## Don't
+
+- Dump new modules into a flat `lib/` once a domain folder already exists for that concern
+- Nest Sapphire piece folders under `lib/`
+- Put Kazagumo/Discord clients in core (`src/lib/`) — feature `lib/` only
+- Create `adapters/` / `domain/` / `ui/` trees unless a concern truly needs them

@@ -8,7 +8,7 @@ import {
   putSearchResults,
   searchSelectCustomId,
 } from '../lib/search-results-cache.js';
-import type { Track } from '../lib/music-node-port.js';
+import type { Track } from '../lib/music-node/music-node-port.js';
 
 const MAX_SEARCH_RESULTS = 10;
 

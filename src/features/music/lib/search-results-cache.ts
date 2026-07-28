@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Track } from './music-node-port.js';
+import type { Track } from './music-node/music-node-port.js';
 
 const TTL_MS = 5 * 60 * 1000;
 export const SEARCH_SELECT_CUSTOM_ID_PREFIX = 'music:search:';

@@ -1,5 +1,5 @@
 import { Command } from '@sapphire/framework';
-import { sessionReplyPayload } from '../lib/session-ui.js';
+import { sessionReplyPayload } from '../lib/control-surface/session-ui.js';
 
 export class QueueCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
