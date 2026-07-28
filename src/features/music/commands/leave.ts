@@ -34,7 +34,10 @@ export class LeaveCommand extends Command {
 
     try {
       await this.container.musicSessions.leave(guildId);
-      await interaction.reply('Left the voice channel.');
+      await interaction.reply({
+        content: 'Left the voice channel.',
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to leave voice.';

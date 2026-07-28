@@ -1,16 +1,16 @@
 # Graph Report - botato  (2026-07-28)
 
 ## Corpus Check
-- 68 files · ~16,699 words
+- 69 files · ~17,019 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 419 nodes · 673 edges · 29 communities (17 shown, 12 thin omitted)
+- 421 nodes · 681 edges · 28 communities (16 shown, 12 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2d1f56f0`
+- Built from commit: `04dd72f6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -28,7 +28,6 @@
 - Runtime Dependencies
 - Agent Git Workflow
 - Test Build Config
-- MusicNodeAvailability
 - Clear Command
 - Leave Command
 - Move Command
@@ -53,7 +52,7 @@
 7. `MusicNodeAvailability` - 11 edges
 8. `bindMusicNodeAvailability()` - 9 edges
 9. `ControlSurfacePayload` - 9 edges
-10. `scripts` - 8 edges
+10. `resolveRequesterVoiceChannel()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Keep Botato up when music node down` --semantically_similar_to--> `Music node degraded operation`  [INFERRED] [semantically similar]
@@ -64,8 +63,8 @@
   compose.yml → README.md
 - `createKazagumoMusicNode()` --references--> `kazagumo`  [EXTRACTED]
   src/features/music/lib/music-node/kazagumo-music-node.ts → package.json
-- `setup()` --indirect_call--> `track()`  [INFERRED]
-  src/features/music/lib/control-surface/bind-control-surface.test.ts → src/features/music/lib/control-surface/session-ui.test.ts
+- `Domain docs consumption` --references--> `Botato`  [EXTRACTED]
+  docs/agents/domain.md → CONTEXT.md
 
 ## Import Cycles
 - None detected.
@@ -75,23 +74,23 @@
 - **Music playback stack** — docs_adr_0002_lavalink_shoukaku_kazagumo_lavalink, docs_adr_0002_lavalink_shoukaku_kazagumo_shoukaku_kazagumo, docs_adr_0002_lavalink_shoukaku_kazagumo_youtube_source, docs_adr_0003_feature_module_layout_features_music, context_music_session [INFERRED 0.85]
 - **Release publish and deploy chain** — _github_workflows_release_please_release_please, _github_workflows_publish_image_publish_botato_image, readme_ghcr_botato_image, docs_adr_0004_image_publish_argo_wiring_argo_app_botato [INFERRED 0.85]
 
-## Communities (29 total, 12 thin omitted)
+## Communities (28 total, 12 thin omitted)
 
 ### Community 0 - "Deploy & Domain Concepts"
 Cohesion: 0.08
 Nodes (34): Publish Botato image workflow, publish-image workflow_call git_tag, release-please publish-image job, CI chain image publish after release-please, Keep Botato up when music node down, Compose music-node service, Compose tier-2 botato service, Botato (+26 more)
 
 ### Community 1 - "Queue & Session UI"
-Cohesion: 0.10
-Nodes (20): NowPlayingCommand, QueueCommand, SessionControlsHandler, buildSessionControlRows(), buildSessionEmbed(), formatDuration(), formatUpNext(), nextRepeatMode() (+12 more)
+Cohesion: 0.11
+Nodes (19): NowPlayingCommand, QueueCommand, SessionControlsHandler, buildSessionControlRows(), buildSessionEmbed(), formatDuration(), formatUpNext(), nextRepeatMode() (+11 more)
 
 ### Community 2 - "Music Session Service"
-Cohesion: 0.09
-Nodes (26): attachMusicFeature(), bindSessionAdvanceOnTrackEnd(), Container, @sapphire/pieces, bindControlSurface(), BoundControlSurface, first, second (+18 more)
+Cohesion: 0.11
+Nodes (15): Container, @sapphire/pieces, bindControlSurface(), BoundControlSurface, ControlSurfacePayload, DiscordMessagePort, isMissingDiscordMessageError(), MissingDiscordMessageError (+7 more)
 
 ### Community 3 - "Music Node Attachment"
-Cohesion: 0.19
-Nodes (9): config, BotatoNodeEnv, createBotatoClient(), CreateBotatoClientOptions, normalizeNodeEnv(), BotatoConfig, loadConfig(), parseGuildIds() (+1 more)
+Cohesion: 0.10
+Nodes (21): attachMusicFeature(), bindMusicNodeAvailability(), bindSessionAdvanceOnTrackEnd(), syncMusicUnavailablePresence(), createDiscordMessagePort(), createKazagumoMusicNode(), KazagumoMusicNode, mapSource() (+13 more)
 
 ### Community 4 - "Root Package Metadata"
 Cohesion: 0.07
@@ -106,16 +105,16 @@ Cohesion: 0.09
 Nodes (22): ES2022, node, src/**/*.ts, compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, lib (+14 more)
 
 ### Community 7 - "Join Play Search Select"
-Cohesion: 0.10
-Nodes (16): JoinCommand, PlayCommand, SearchCommand, toSelectOption(), truncate(), SearchSelectHandler, cache, CacheEntry (+8 more)
+Cohesion: 0.09
+Nodes (17): JoinCommand, PlayCommand, SearchCommand, toSelectOption(), truncate(), SearchSelectHandler, cache, CacheEntry (+9 more)
 
 ### Community 8 - "Commit Tooling Deps"
 Cohesion: 0.11
 Nodes (19): commitizen, @commitlint/cli, @commitlint/config-conventional, cz-conventional-changelog, lefthook, devDependencies, commitizen, @commitlint/cli (+11 more)
 
 ### Community 9 - "Repeat & Session Types"
-Cohesion: 0.10
-Nodes (15): isRepeatMode(), RepeatCommand, createFakeMusicNode(), FakeMusicNode, MusicNodePort, ResolveResult, createEmptySession(), MusicSession (+7 more)
+Cohesion: 0.09
+Nodes (20): isRepeatMode(), RepeatCommand, first, second, setup(), createFakeDiscordMessages(), track(), createFakeMusicNode() (+12 more)
 
 ### Community 10 - "Runtime Dependencies"
 Cohesion: 0.12
@@ -129,10 +128,6 @@ Nodes (15): release-please workflow, AGENTS issue tracker pointer, Domain docs c
 Cohesion: 0.29
 Nodes (6): src/**/*.test.ts, ./tsconfig.json, exclude, extends, dist, node_modules
 
-### Community 13 - "MusicNodeAvailability"
-Cohesion: 0.26
-Nodes (5): bindMusicNodeAvailability(), syncMusicUnavailablePresence(), MusicNodeAvailability, MusicNodeAvailabilityListener, client
-
 ### Community 28 - "Feature module layout"
 Cohesion: 0.25
 Nodes (7): Adding a new concern inside an existing feature, Adding a new feature, Feature module layout, Feature root shape, `lib/` domain folders, Rules of thumb, What goes where
@@ -145,17 +140,17 @@ Nodes (7): Adding a new concern inside an existing feature, Adding a new feature
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `createKazagumoMusicNode()` connect `Music Session Service` to `Runtime Dependencies`, `MusicSessionService`?**
-  _High betweenness centrality (0.156) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `Runtime Dependencies` to `Root Package Metadata`?**
   _High betweenness centrality (0.155) - this node is a cross-community bridge._
-- **Why does `kazagumo` connect `Runtime Dependencies` to `Music Session Service`?**
+- **Why does `createKazagumoMusicNode()` connect `Music Node Attachment` to `Runtime Dependencies`, `Music Session Service`, `MusicSessionService`?**
+  _High betweenness centrality (0.155) - this node is a cross-community bridge._
+- **Why does `kazagumo` connect `Runtime Dependencies` to `Music Node Attachment`?**
   _High betweenness centrality (0.151) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `private` to the rest of the system?**
   _101 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Deploy & Domain Concepts` be split into smaller, more focused modules?**
   _Cohesion score 0.0766488413547237 - nodes in this community are weakly interconnected._
 - **Should `Queue & Session UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.10158730158730159 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10588235294117647 - nodes in this community are weakly interconnected._
 - **Should `Music Session Service` be split into smaller, more focused modules?**
-  _Cohesion score 0.08865248226950355 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1140819964349376 - nodes in this community are weakly interconnected._

@@ -6,6 +6,11 @@ import {
   sessionReplyPayload,
   type SessionControlAction,
 } from '../lib/control-surface/session-ui.js';
+import {
+  isMemberInSessionVoice,
+  resolveRequesterVoiceChannel,
+  SESSION_VOICE_CONTROL_DENIED,
+} from '../lib/voice.js';
 
 export class SessionControlsHandler extends InteractionHandler {
   public constructor(
@@ -39,6 +44,32 @@ export class SessionControlsHandler extends InteractionHandler {
       return;
     }
 
+    const sessions = this.container.musicSessions;
+    let sessionVoiceChannelId: string | null;
+    try {
+      sessionVoiceChannelId = sessions.snapshot(guildId).voiceChannelId;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to update the music session.';
+      await interaction.reply({
+        content: message,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const memberVoiceChannelId =
+      resolveRequesterVoiceChannel(interaction)?.id ?? null;
+    if (!isMemberInSessionVoice(memberVoiceChannelId, sessionVoiceChannelId)) {
+      await interaction.reply({
+        content: SESSION_VOICE_CONTROL_DENIED,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     // Acknowledge before voice/node work — leave/skip can exceed Discord's
     // 3s interaction window and otherwise surface as Unknown interaction (10062).
     await interaction.deferUpdate();
@@ -55,7 +86,7 @@ export class SessionControlsHandler extends InteractionHandler {
         });
         return;
       }
-      const snapshot = this.container.musicSessions.snapshot(guildId);
+      const snapshot = sessions.snapshot(guildId);
       await interaction.editReply({
         content: null,
         ...sessionReplyPayload(snapshot),

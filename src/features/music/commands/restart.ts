@@ -34,7 +34,10 @@ export class RestartCommand extends Command {
 
     try {
       await this.container.musicSessions.restart(guildId);
-      await interaction.reply('Restarted the current track.');
+      await interaction.reply({
+        content: 'Restarted the current track.',
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to restart.';

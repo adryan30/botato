@@ -32,7 +32,7 @@ export class PauseCommand extends Command {
 
     try {
       await this.container.musicSessions.pause(guildId);
-      await interaction.reply('Paused.');
+      await interaction.reply({ content: 'Paused.', ephemeral: true });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to pause.';

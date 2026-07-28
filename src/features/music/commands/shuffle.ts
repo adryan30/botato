@@ -35,11 +35,13 @@ export class ShuffleCommand extends Command {
     try {
       await this.container.musicSessions.shuffle(guildId);
       const count = this.container.musicSessions.queue(guildId).length;
-      await interaction.reply(
-        count === 0
-          ? 'Shuffled the queue. Nothing left to play next.'
-          : `Shuffled ${count} upcoming track${count === 1 ? '' : 's'}.`,
-      );
+      await interaction.reply({
+        content:
+          count === 0
+            ? 'Shuffled the queue. Nothing left to play next.'
+            : `Shuffled ${count} upcoming track${count === 1 ? '' : 's'}.`,
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to shuffle the queue.';

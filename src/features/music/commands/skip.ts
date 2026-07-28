@@ -34,10 +34,16 @@ export class SkipCommand extends Command {
       await this.container.musicSessions.skip(guildId);
       const track = this.container.musicSessions.nowPlaying(guildId);
       if (!track) {
-        await interaction.reply('Skipped. Nothing left in the queue.');
+        await interaction.reply({
+          content: 'Skipped. Nothing left in the queue.',
+          ephemeral: true,
+        });
         return;
       }
-      await interaction.reply(`Skipped. Now playing **${track.title}**.`);
+      await interaction.reply({
+        content: `Skipped. Now playing **${track.title}**.`,
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to skip.';

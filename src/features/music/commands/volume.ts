@@ -44,7 +44,10 @@ export class VolumeCommand extends Command {
 
     try {
       await this.container.musicSessions.setVolume(guildId, level);
-      await interaction.reply(`Volume set to **${level}**.`);
+      await interaction.reply({
+        content: `Volume set to **${level}**.`,
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to set volume.';

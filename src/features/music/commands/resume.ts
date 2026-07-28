@@ -32,7 +32,7 @@ export class ResumeCommand extends Command {
 
     try {
       await this.container.musicSessions.resume(guildId);
-      await interaction.reply('Resumed.');
+      await interaction.reply({ content: 'Resumed.', ephemeral: true });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to resume.';

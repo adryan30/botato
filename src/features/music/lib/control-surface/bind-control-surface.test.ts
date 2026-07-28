@@ -77,6 +77,29 @@ describe('bindControlSurface', () => {
     );
   });
 
+  it('edits the live surface on transport state changes without bumping', async () => {
+    const { sessions, messages, surface, bound } = setup();
+    bound.noteTextChannel('guild-1', 'text-1');
+    await sessions.play('guild-1', 'first', 'voice-1');
+    await bound.whenIdle();
+    messages.calls.length = 0;
+
+    await sessions.pause('guild-1');
+    await sessions.setRepeat('guild-1', 'track');
+    await sessions.shuffle('guild-1');
+    await bound.whenIdle();
+
+    expect(messages.calls.map((call) => call.op)).toEqual([
+      'edit',
+      'edit',
+      'edit',
+    ]);
+    expect(surface.liveMessageId('guild-1')).toBe('msg-2');
+    expect(messages.messages.get('msg-2')?.payload).toEqual(
+      sessionReplyPayload(sessions.snapshot('guild-1')),
+    );
+  });
+
   it('bumps on track start when auto-advancing the queue', async () => {
     const { sessions, messages, surface, bound } = setup();
     bound.noteTextChannel('guild-1', 'text-1');
