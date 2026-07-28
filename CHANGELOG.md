@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/adryan30/botato/compare/v1.1.2...v1.2.0) (2026-07-28)
+
+
+### Features
+
+* **music:** control surface lifecycle module ([#55](https://github.com/adryan30/botato/issues/55)) ([#61](https://github.com/adryan30/botato/issues/61)) ([2d1f56f](https://github.com/adryan30/botato/commit/2d1f56f06c6b8bba4d84b21d7124f268d1bff8f6))
+* **music:** control-surface embed and transport builders ([#53](https://github.com/adryan30/botato/issues/53)) ([#60](https://github.com/adryan30/botato/issues/60)) ([3cf12d0](https://github.com/adryan30/botato/commit/3cf12d0a681ecc565993231a22659ea9954d457f))
+* **music:** gate surface transport by session voice ([#56](https://github.com/adryan30/botato/issues/56)) ([#63](https://github.com/adryan30/botato/issues/63)) ([1f3f591](https://github.com/adryan30/botato/commit/1f3f591a6b331176d0ee407d8c200b347b2d1c81))
+* **music:** re-summon queue, full peek, and session-end teardown ([#57](https://github.com/adryan30/botato/issues/57)) ([#64](https://github.com/adryan30/botato/issues/64)) ([6882cdd](https://github.com/adryan30/botato/commit/6882cdd0608b7f0fb82d61c1515dabe76243936e))
+* **music:** wire sticky surface into play and search ([#54](https://github.com/adryan30/botato/issues/54)) ([#62](https://github.com/adryan30/botato/issues/62)) ([2927d6e](https://github.com/adryan30/botato/commit/2927d6e8851c2d61ffe01efe4a71414e94647124))
+
+
+### Bug Fixes
+
+* **music:** bump youtube-plugin and use remote cipher ([#58](https://github.com/adryan30/botato/issues/58)) ([366accb](https://github.com/adryan30/botato/commit/366accb2bf697e2997bd953549af5914b22ee8db))
+
 ## [1.1.2](https://github.com/adryan30/botato/compare/v1.1.1...v1.1.2) (2026-07-23)
 
 
