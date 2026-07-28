@@ -42,10 +42,10 @@ export class SessionControlsHandler extends InteractionHandler {
     try {
       await this.#applyAction(guildId, action);
       if (action === 'leave') {
-        // Session teardown (delete the live surface) lands in a later ticket;
-        // clear interactive controls so Leave does not leave a dead row.
+        // Full sticky-surface delete lands in a later ticket; clear controls so
+        // Leave does not leave a dead interactive row after the session ends.
         await interaction.update({
-          content: 'Left the voice channel.',
+          content: null,
           embeds: [],
           components: [],
         });
