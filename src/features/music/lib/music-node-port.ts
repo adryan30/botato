@@ -3,6 +3,10 @@ export type Track = {
   title: string;
   uri: string;
   source: 'youtube' | 'other';
+  /** Artwork URL from the music node when available. */
+  artworkUrl?: string;
+  /** Duration in milliseconds from the music node when available. */
+  durationMs?: number;
 };
 
 export type ResolveResult =

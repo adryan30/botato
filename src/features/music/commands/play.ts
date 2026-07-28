@@ -74,7 +74,10 @@ export class PlayCommand extends Command {
       }
 
       if (!wasPlaying) {
-        await interaction.editReply(sessionReplyPayload(snapshot));
+        await interaction.editReply({
+          content: null,
+          ...sessionReplyPayload(snapshot),
+        });
         return;
       }
 
@@ -82,13 +85,17 @@ export class PlayCommand extends Command {
       const payload = sessionReplyPayload(snapshot);
       if (queued) {
         await interaction.editReply({
-          content: `Queued **${queued.title}**\n\n${payload.content}`,
+          content: `Queued **${queued.title}**`,
+          embeds: payload.embeds,
           components: payload.components,
         });
         return;
       }
 
-      await interaction.editReply(payload);
+      await interaction.editReply({
+        content: null,
+        ...payload,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to play that query.';

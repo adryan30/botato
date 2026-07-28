@@ -97,16 +97,18 @@ export class SearchSelectHandler extends InteractionHandler {
       const snapshot = this.container.musicSessions.snapshot(guildId);
 
       if (!wasPlaying) {
-        await interaction.editReply(sessionReplyPayload(snapshot));
+        await interaction.editReply({
+          content: null,
+          ...sessionReplyPayload(snapshot),
+        });
         return;
       }
 
       const queued = snapshot.queue.at(-1);
       const payload = sessionReplyPayload(snapshot);
       await interaction.editReply({
-        content: queued
-          ? `Queued **${queued.title}**\n\n${payload.content}`
-          : payload.content,
+        content: queued ? `Queued **${queued.title}**` : null,
+        embeds: payload.embeds,
         components: payload.components,
       });
     } catch (error) {

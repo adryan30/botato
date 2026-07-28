@@ -41,8 +41,21 @@ export class SessionControlsHandler extends InteractionHandler {
 
     try {
       await this.#applyAction(guildId, action);
+      if (action === 'leave') {
+        // Session teardown (delete the live surface) lands in a later ticket;
+        // clear interactive controls so Leave does not leave a dead row.
+        await interaction.update({
+          content: 'Left the voice channel.',
+          embeds: [],
+          components: [],
+        });
+        return;
+      }
       const snapshot = this.container.musicSessions.snapshot(guildId);
-      await interaction.update(sessionReplyPayload(snapshot));
+      await interaction.update({
+        content: null,
+        ...sessionReplyPayload(snapshot),
+      });
     } catch (error) {
       const message =
         error instanceof Error
@@ -73,6 +86,12 @@ export class SessionControlsHandler extends InteractionHandler {
         await sessions.setRepeat(guildId, nextRepeatMode(current));
         return;
       }
+      case 'shuffle':
+        await sessions.shuffle(guildId);
+        return;
+      case 'leave':
+        await sessions.leave(guildId);
+        return;
     }
   }
 }
