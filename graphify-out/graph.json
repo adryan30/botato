@@ -1351,7 +1351,7 @@
       "label": "isRepeatMode()",
       "file_type": "code",
       "source_file": "src/features/music/commands/repeat.ts",
-      "source_location": "L71",
+      "source_location": "L74",
       "_origin": "ast",
       "id": "src_features_music_commands_repeat_isrepeatmode",
       "community": 9,
@@ -1835,7 +1835,7 @@
       "label": "SessionControlsHandler",
       "file_type": "code",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L10",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler",
       "community": 1,
@@ -1846,7 +1846,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L11",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_constructor",
       "community": 1,
@@ -1857,7 +1857,7 @@
       "label": ".parse()",
       "file_type": "code",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L21",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_parse",
       "community": 1,
@@ -1868,7 +1868,7 @@
       "label": ".run()",
       "file_type": "code",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L29",
+      "source_location": "L34",
       "_origin": "ast",
       "id": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_run",
       "community": 1,
@@ -1879,7 +1879,7 @@
       "label": ".#applyAction()",
       "file_type": "code",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L79",
+      "source_location": "L110",
       "_origin": "ast",
       "id": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_applyaction",
       "community": 1,
@@ -1893,8 +1893,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_music_lib_attach_music",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "attach-music.ts"
     },
     {
@@ -1904,8 +1904,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_features_music_lib_attach_music_attachmusicfeature",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "attachmusicfeature()"
     },
     {
@@ -1915,8 +1915,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_music_lib_attach_music_bindsessionadvanceontrackend",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "bindsessionadvanceontrackend()"
     },
     {
@@ -1926,8 +1926,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_features_music_lib_attach_music_bindmusicnodeavailability",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "bindmusicnodeavailability()"
     },
     {
@@ -1937,8 +1937,8 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "src_features_music_lib_attach_music_syncmusicunavailablepresence",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "syncmusicunavailablepresence()"
     },
     {
@@ -1981,8 +1981,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_music_lib_control_surface_bind_control_surface_test",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 9,
+      "community_name": "Repeat & Session Types",
       "norm_label": "bind-control-surface.test.ts"
     },
     {
@@ -1992,8 +1992,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_music_lib_control_surface_bind_control_surface_test_first",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 9,
+      "community_name": "Repeat & Session Types",
       "norm_label": "first"
     },
     {
@@ -2003,8 +2003,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_music_lib_control_surface_bind_control_surface_test_second",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 9,
+      "community_name": "Repeat & Session Types",
       "norm_label": "second"
     },
     {
@@ -2014,8 +2014,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_features_music_lib_control_surface_bind_control_surface_test_setup",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 9,
+      "community_name": "Repeat & Session Types",
       "norm_label": "setup()"
     },
     {
@@ -2179,8 +2179,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_features_music_lib_control_surface_discord_messages_creatediscordmessageport",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "creatediscordmessageport()"
     },
     {
@@ -2223,8 +2223,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_features_music_lib_control_surface_fake_discord_messages_createfakediscordmessages",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 9,
+      "community_name": "Repeat & Session Types",
       "norm_label": "createfakediscordmessages()"
     },
     {
@@ -2388,8 +2388,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_music_lib_control_surface_session_ui_test_track",
-      "community": 1,
-      "community_name": "Queue & Session UI",
+      "community": 9,
+      "community_name": "Repeat & Session Types",
       "norm_label": "track()"
     },
     {
@@ -2619,8 +2619,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_kazagumo_music_node",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "kazagumo-music-node.ts"
     },
     {
@@ -2630,8 +2630,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_kazagumo_music_node_kazagumomusicnode",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "kazagumomusicnode"
     },
     {
@@ -2641,8 +2641,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_kazagumo_music_node_createkazagumomusicnode",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "createkazagumomusicnode()"
     },
     {
@@ -2652,8 +2652,8 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_kazagumo_music_node_mapsource",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "mapsource()"
     },
     {
@@ -2663,8 +2663,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_test",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "music-node-availability.test.ts"
     },
     {
@@ -2674,8 +2674,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "music-node-availability.ts"
     },
     {
@@ -2685,8 +2685,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_musicnodeavailabilitylistener",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "musicnodeavailabilitylistener"
     },
     {
@@ -2696,8 +2696,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_musicnodeavailability",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "musicnodeavailability"
     },
     {
@@ -2707,8 +2707,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_musicnodeavailability_isavailable",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": ".isavailable()"
     },
     {
@@ -2718,8 +2718,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_musicnodeavailability_onchange",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": ".onchange()"
     },
     {
@@ -2729,8 +2729,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_musicnodeavailability_markavailable",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": ".markavailable()"
     },
     {
@@ -2740,8 +2740,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_musicnodeavailability_markunavailable",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": ".markunavailable()"
     },
     {
@@ -2751,8 +2751,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_music_lib_music_node_music_node_availability_musicnodeavailability_setavailable",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": ".#setavailable()"
     },
     {
@@ -3482,6 +3482,17 @@
       "norm_label": "track()"
     },
     {
+      "label": "voice.test.ts",
+      "file_type": "code",
+      "source_file": "src/features/music/lib/voice.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_music_lib_voice_test",
+      "community": 7,
+      "community_name": "Join Play Search Select",
+      "norm_label": "voice.test.ts"
+    },
+    {
       "label": "voice.ts",
       "file_type": "code",
       "source_file": "src/features/music/lib/voice.ts",
@@ -3496,12 +3507,23 @@
       "label": "resolveRequesterVoiceChannel()",
       "file_type": "code",
       "source_file": "src/features/music/lib/voice.ts",
-      "source_location": "L7",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_music_lib_voice_resolverequestervoicechannel",
       "community": 7,
       "community_name": "Join Play Search Select",
       "norm_label": "resolverequestervoicechannel()"
+    },
+    {
+      "label": "isMemberInSessionVoice()",
+      "file_type": "code",
+      "source_file": "src/features/music/lib/voice.ts",
+      "source_location": "L20",
+      "_origin": "ast",
+      "id": "src_features_music_lib_voice_ismemberinsessionvoice",
+      "community": 7,
+      "community_name": "Join Play Search Select",
+      "norm_label": "ismemberinsessionvoice()"
     },
     {
       "label": "index.ts",
@@ -3532,8 +3554,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_index_client",
-      "community": 13,
-      "community_name": "MusicNodeAvailability",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "client"
     },
     {
@@ -3653,8 +3675,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_config_musicnodeconfig",
-      "community": 2,
-      "community_name": "Music Session Service",
+      "community": 3,
+      "community_name": "Music Node Attachment",
       "norm_label": "musicnodeconfig"
     },
     {
@@ -6130,7 +6152,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/commands/repeat.ts",
-      "source_location": "L71",
+      "source_location": "L74",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_commands_repeat",
@@ -6823,7 +6845,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L10",
+      "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls",
@@ -6891,10 +6913,46 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/music/interaction-handlers/session-controls.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_interaction_handlers_session_controls",
+      "target": "src_features_music_lib_voice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/music/interaction-handlers/session-controls.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_interaction_handlers_session_controls",
+      "target": "src_features_music_lib_voice_ismemberinsessionvoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/music/interaction-handlers/session-controls.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_interaction_handlers_session_controls",
+      "target": "src_features_music_lib_voice_resolverequestervoicechannel",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L79",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler",
@@ -6905,7 +6963,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L11",
+      "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler",
@@ -6916,7 +6974,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L21",
+      "source_location": "L26",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler",
@@ -6927,7 +6985,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L29",
+      "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler",
@@ -6940,7 +6998,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L22",
+      "source_location": "L27",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_parse",
@@ -6951,7 +7009,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L47",
+      "source_location": "L78",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_run",
@@ -6963,7 +7021,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L29",
+      "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_run",
@@ -6976,7 +7034,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L61",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_run",
@@ -6988,7 +7046,31 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L93",
+      "source_location": "L65",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_run",
+      "target": "src_features_music_lib_voice_ismemberinsessionvoice"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/music/interaction-handlers/session-controls.ts",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_run",
+      "target": "src_features_music_lib_voice_resolverequestervoicechannel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/music/interaction-handlers/session-controls.ts",
+      "source_location": "L124",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_applyaction",
@@ -6999,7 +7081,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/interaction-handlers/session-controls.ts",
-      "source_location": "L79",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_interaction_handlers_session_controls_sessioncontrolshandler_applyaction",
@@ -11276,10 +11358,45 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/music/lib/voice.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_lib_voice_test",
+      "target": "src_features_music_lib_voice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/music/lib/voice.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_lib_voice_test",
+      "target": "src_features_music_lib_voice_ismemberinsessionvoice",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/music/lib/voice.ts",
-      "source_location": "L7",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_features_music_lib_voice",
+      "target": "src_features_music_lib_voice_ismemberinsessionvoice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/music/lib/voice.ts",
+      "source_location": "L10",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_features_music_lib_voice",
@@ -12558,5 +12675,5 @@
       "source_file": "README.md"
     }
   ],
-  "built_at_commit": "2d1f56f06c6b8bba4d84b21d7124f268d1bff8f6"
+  "built_at_commit": "04dd72f6ffbddacf405521e79bed564617733ede"
 }
