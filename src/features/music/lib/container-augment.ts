@@ -4,7 +4,7 @@ import type { MusicSessionService } from './session/music-session-service.js';
 declare module '@sapphire/pieces' {
   interface Container {
     musicSessions: MusicSessionService;
-    /** Lifecycle binder: note sticky text channel + drive bump/edit. */
+    /** Lifecycle binder: sticky channel, bump/edit/delete, and resummon. */
     musicControlSurface: BoundControlSurface;
   }
 }

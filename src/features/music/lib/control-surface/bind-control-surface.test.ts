@@ -151,4 +151,93 @@ describe('bindControlSurface', () => {
     expect(messages.calls.map((call) => call.op)).toEqual(['edit']);
     expect(surface.liveMessageId('guild-1')).toBe('msg-2');
   });
+
+  it('deletes the live surface when the session ends via leave', async () => {
+    const { sessions, messages, surface, bound } = setup();
+    bound.noteTextChannel('guild-1', 'text-1');
+    await sessions.play('guild-1', 'first', 'voice-1');
+    await bound.whenIdle();
+    messages.calls.length = 0;
+
+    await sessions.leave('guild-1');
+    await bound.whenIdle();
+
+    expect(messages.calls.map((call) => call.op)).toEqual(['delete']);
+    expect(surface.stickyChannelId('guild-1')).toBeNull();
+    expect(surface.liveMessageId('guild-1')).toBeNull();
+  });
+
+  it('deletes the live surface when the music node is lost', async () => {
+    const { sessions, messages, surface, bound } = setup();
+    bound.noteTextChannel('guild-1', 'text-1');
+    await sessions.play('guild-1', 'first', 'voice-1');
+    await bound.whenIdle();
+    messages.calls.length = 0;
+
+    await sessions.handleMusicNodeLost();
+    await bound.whenIdle();
+
+    expect(messages.calls.map((call) => call.op)).toEqual(['delete']);
+    expect(surface.stickyChannelId('guild-1')).toBeNull();
+    expect(surface.liveMessageId('guild-1')).toBeNull();
+  });
+
+  it('resummon bumps in the sticky channel and deletes the previous live message', async () => {
+    const { sessions, messages, surface, bound } = setup();
+    bound.noteTextChannel('guild-1', 'text-1');
+    await sessions.play('guild-1', 'first', 'voice-1');
+    await bound.whenIdle();
+    messages.calls.length = 0;
+
+    const result = await bound.resummon('guild-1', 'text-1');
+
+    expect(result).toEqual({ stickyChannelId: 'text-1' });
+    expect(messages.calls.map((call) => call.op)).toEqual(['post', 'delete']);
+    expect(surface.liveMessageId('guild-1')).toBe('msg-3');
+    expect(messages.messages.get('msg-3')?.payload).toEqual(
+      sessionReplyPayload(sessions.snapshot('guild-1')),
+    );
+  });
+
+  it('resummon from another channel keeps the sticky home and reports it', async () => {
+    const { sessions, messages, surface, bound } = setup();
+    bound.noteTextChannel('guild-1', 'text-1');
+    await sessions.play('guild-1', 'first', 'voice-1');
+    await bound.whenIdle();
+    messages.calls.length = 0;
+
+    const result = await bound.resummon('guild-1', 'text-other');
+
+    expect(result).toEqual({ stickyChannelId: 'text-1' });
+    expect(surface.stickyChannelId('guild-1')).toBe('text-1');
+    expect(messages.calls.filter((call) => call.op === 'post')).toEqual([
+      {
+        op: 'post',
+        channelId: 'text-1',
+        payload: sessionReplyPayload(sessions.snapshot('guild-1')),
+        messageId: 'msg-3',
+      },
+    ]);
+  });
+
+  it('resummon rejects when there is no active music session', async () => {
+    const { bound } = setup();
+
+    await expect(bound.resummon('guild-1', 'text-1')).rejects.toThrow(
+      'No active music session',
+    );
+  });
+
+  it('resummon rejects when the bump post fails', async () => {
+    const { sessions, messages, bound } = setup();
+    bound.noteTextChannel('guild-1', 'text-1');
+    await sessions.play('guild-1', 'first', 'voice-1');
+    await bound.whenIdle();
+
+    messages.failNext.post = new Error('post failed');
+
+    await expect(bound.resummon('guild-1', 'text-1')).rejects.toThrow(
+      'Failed to re-summon the control surface.',
+    );
+  });
 });

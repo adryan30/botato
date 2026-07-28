@@ -77,13 +77,7 @@ export class SessionControlsHandler extends InteractionHandler {
     try {
       await this.#applyAction(guildId, action);
       if (action === 'leave') {
-        // Full sticky-surface delete lands in a later ticket; clear controls so
-        // Leave does not leave a dead interactive row after the session ends.
-        await interaction.editReply({
-          content: '\u200b',
-          embeds: [],
-          components: [],
-        });
+        // Session-end deletes the sticky surface; nothing left to edit.
         return;
       }
       const snapshot = sessions.snapshot(guildId);

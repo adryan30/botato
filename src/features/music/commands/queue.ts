@@ -1,11 +1,16 @@
 import { Command } from '@sapphire/framework';
-import { sessionReplyPayload } from '../lib/control-surface/session-ui.js';
+import { MessageFlags } from 'discord.js';
+import {
+  formatFullQueueList,
+  resummonEphemeralContent,
+} from '../lib/control-surface/session-ui.js';
 
 export class QueueCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, {
       ...options,
-      description: 'Show the music session (now playing, queue, and controls)',
+      description:
+        'Re-summon the control surface, or peek the full queue',
     });
   }
 
@@ -15,7 +20,15 @@ export class QueueCommand extends Command {
         builder
           .setName('queue')
           .setDescription(
-            'Show the music session (now playing, queue, and controls)',
+            'Re-summon the control surface, or peek the full queue',
+          )
+          .addBooleanOption((option) =>
+            option
+              .setName('full')
+              .setDescription(
+                'Show the full queue as an ephemeral list (does not bump)',
+              )
+              .setRequired(false),
           ),
       {
         idHints: ['1529493101410779310'],
@@ -30,20 +43,53 @@ export class QueueCommand extends Command {
     if (!guildId) {
       await interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
+    if (!interaction.channelId) {
+      await interaction.reply({
+        content: 'This command can only be used in a text channel.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const full = interaction.options.getBoolean('full') ?? false;
+
     try {
-      const snapshot = this.container.musicSessions.snapshot(guildId);
-      await interaction.reply(sessionReplyPayload(snapshot));
+      if (full) {
+        const snapshot = this.container.musicSessions.snapshot(guildId);
+        await interaction.reply({
+          content: formatFullQueueList(snapshot),
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
+      }
+
+      const { stickyChannelId } =
+        await this.container.musicControlSurface.resummon(
+          guildId,
+          interaction.channelId,
+        );
+
+      await interaction.reply({
+        content: resummonEphemeralContent(
+          stickyChannelId,
+          interaction.channelId,
+        ),
+        flags: MessageFlags.Ephemeral,
+      });
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : 'Failed to read the music session.';
-      await interaction.reply({ content: message, ephemeral: true });
+      await interaction.reply({
+        content: message,
+        flags: MessageFlags.Ephemeral,
+      });
     }
   }
 }
