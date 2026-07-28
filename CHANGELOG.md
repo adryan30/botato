@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/adryan30/botato/compare/v1.2.0...v1.2.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* **music:** confirm /play from added tracks, not snapshot ([#65](https://github.com/adryan30/botato/issues/65)) ([e7cdd59](https://github.com/adryan30/botato/commit/e7cdd59c13e877c2eed200b0df967a950c32b817))
+
 ## [1.2.0](https://github.com/adryan30/botato/compare/v1.1.2...v1.2.0) (2026-07-28)
 
 
