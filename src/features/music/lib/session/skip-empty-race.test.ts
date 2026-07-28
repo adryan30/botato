@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createFakeMusicNode } from './fake-music-node.js';
-import type { Track } from './music-node-port.js';
+import { createFakeMusicNode } from '../music-node/fake-music-node.js';
+import type { Track } from '../music-node/music-node-port.js';
 import { MusicSessionService } from './music-session-service.js';
 
 function track(id: string): Track {

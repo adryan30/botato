@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Track } from './music-node-port.js';
-import type { MusicSessionSnapshot } from './music-session-service.js';
+import type { Track } from '../music-node/music-node-port.js';
+import type { MusicSessionSnapshot } from '../session/music-session-service.js';
 import {
   buildSessionControlRows,
   buildSessionEmbed,

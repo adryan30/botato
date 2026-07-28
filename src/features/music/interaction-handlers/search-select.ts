@@ -5,7 +5,7 @@ import {
   peekSearchResults,
   takeSearchResults,
 } from '../lib/search-results-cache.js';
-import { sessionReplyPayload } from '../lib/session-ui.js';
+import { sessionReplyPayload } from '../lib/control-surface/session-ui.js';
 import { resolveRequesterVoiceChannel } from '../lib/voice.js';
 
 export class SearchSelectHandler extends InteractionHandler {

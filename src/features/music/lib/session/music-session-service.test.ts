@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createFakeMusicNode } from './fake-music-node.js';
-import { MusicNodeAvailability } from './music-node-availability.js';
-import type { Track } from './music-node-port.js';
+import { createFakeMusicNode } from '../music-node/fake-music-node.js';
+import { MusicNodeAvailability } from '../music-node/music-node-availability.js';
+import type { Track } from '../music-node/music-node-port.js';
 import { MUSIC_UNAVAILABLE } from './require-music-available.js';
-import { MusicSessionService } from './music-session-service.js';
+import {
+  type MusicSessionLifecycleEvent,
+  MusicSessionService,
+} from './music-session-service.js';
 
 const youtubeTrack: Track = {
   id: 'yt-1',
@@ -551,5 +554,95 @@ describe('MusicSessionService', () => {
     await expect(service.setRepeat('guild-1', 'track')).rejects.toThrow(
       'No active music session',
     );
+  });
+
+  describe('lifecycle notifications', () => {
+    it('notifies session birth and track start when playback begins', async () => {
+      const events: MusicSessionLifecycleEvent[] = [];
+      const service = new MusicSessionService(
+        createFakeMusicNode({
+          resolveImpl: async () => ({ kind: 'track', track: youtubeTrack }),
+        }),
+      );
+      service.onLifecycle((event) => events.push(event));
+
+      await service.play('guild-1', 'song', 'voice-1');
+
+      expect(events).toEqual([
+        { kind: 'session-birth', guildId: 'guild-1' },
+        { kind: 'track-start', guildId: 'guild-1' },
+      ]);
+    });
+
+    it('notifies track start on advance and state-change when enqueueing while playing', async () => {
+      const events: MusicSessionLifecycleEvent[] = [];
+      const second = track('yt-2');
+      const service = await playingService([youtubeTrack, second]);
+      service.onLifecycle((event) => events.push(event));
+
+      await service.play('guild-1', 'queued');
+      await service.skip('guild-1');
+
+      expect(events).toEqual([
+        { kind: 'state-change', guildId: 'guild-1' },
+        { kind: 'track-start', guildId: 'guild-1' },
+      ]);
+    });
+
+    it('notifies state-change for pause, resume, and repeat', async () => {
+      const events: MusicSessionLifecycleEvent[] = [];
+      const service = await playingService([youtubeTrack]);
+      service.onLifecycle((event) => events.push(event));
+
+      await service.pause('guild-1');
+      await service.resume('guild-1');
+      await service.setRepeat('guild-1', 'track');
+
+      expect(events).toEqual([
+        { kind: 'state-change', guildId: 'guild-1' },
+        { kind: 'state-change', guildId: 'guild-1' },
+        { kind: 'state-change', guildId: 'guild-1' },
+      ]);
+    });
+
+    it('distinguishes leave vs music-node loss on session end', async () => {
+      const leaveEvents: MusicSessionLifecycleEvent[] = [];
+      const leaveService = new MusicSessionService(createFakeMusicNode());
+      leaveService.onLifecycle((event) => leaveEvents.push(event));
+      await leaveService.join('guild-1', 'voice-1');
+      leaveEvents.length = 0;
+
+      await leaveService.leave('guild-1');
+      expect(leaveEvents).toEqual([
+        { kind: 'session-end', guildId: 'guild-1', reason: 'leave' },
+      ]);
+
+      const lossEvents: MusicSessionLifecycleEvent[] = [];
+      const node = createFakeMusicNode({
+        resolveImpl: async () => ({ kind: 'track', track: youtubeTrack }),
+      });
+      const lossService = new MusicSessionService(node);
+      lossService.onLifecycle((event) => lossEvents.push(event));
+      await lossService.play('guild-1', 'song', 'voice-1');
+      await lossService.join('guild-2', 'voice-2');
+      lossEvents.length = 0;
+
+      await lossService.handleMusicNodeLost();
+      expect(lossEvents).toEqual(
+        expect.arrayContaining([
+          {
+            kind: 'session-end',
+            guildId: 'guild-1',
+            reason: 'music-node-lost',
+          },
+          {
+            kind: 'session-end',
+            guildId: 'guild-2',
+            reason: 'music-node-lost',
+          },
+        ]),
+      );
+      expect(lossEvents).toHaveLength(2);
+    });
   });
 });

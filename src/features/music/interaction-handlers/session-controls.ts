@@ -5,7 +5,7 @@ import {
   parseSessionControlCustomId,
   sessionReplyPayload,
   type SessionControlAction,
-} from '../lib/session-ui.js';
+} from '../lib/control-surface/session-ui.js';
 
 export class SessionControlsHandler extends InteractionHandler {
   public constructor(
