@@ -15,13 +15,28 @@ on:
         required: false
         default: ''
 
+# One publish per ref; cancel superseded main pushes.
+concurrency:
+  group: publish-image-${{ github.workflow }}-${{ github.ref }}-${{ inputs.git_tag || '' }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  IMAGE: ghcr.io/adryan30/botato
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Release merges already publish via release-please → workflow_call (with
+    # semver). Skip the duplicate push-triggered qemu/arm64 rebuild.
+    if: >-
+      github.event_name != 'push'
+      || github.ref_type == 'tag'
+      || !startsWith(github.event.head_commit.message, 'chore(main): release')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,7 +58,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/adryan30/botato
+          images: ${{ env.IMAGE }}
           # Immutable pins only — never publish `latest` for the Argo story.
           flavor: |
             latest=false
@@ -63,5 +78,11 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # GHA cache for same-runner hits; registry cache survives across
+          # runners and after GHA cache eviction.
+          cache-from: |
+            type=gha,scope=botato-linux-arm64
+            type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: |
+            type=gha,mode=max,scope=botato-linux-arm64
+            type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max

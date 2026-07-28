@@ -5,7 +5,7 @@ Personal Discord bot for a private guild: modular capabilities with voice music 
 ## Stack
 
 - **Package manager:** [pnpm](https://pnpm.io/) (`packageManager` pinned in `package.json`)
-- **Runtime:** Node.js **≥ 22**
+- **Runtime:** Node.js **≥ 24**
 - **Framework:** TypeScript + discord.js + [@sapphire/framework](https://sapphirejs.dev/) 5.x
 
 Day-one Sapphire plugins: `@sapphire/plugin-logger`, `@sapphire/plugin-subcommands`, and `@sapphire/plugin-hmr` (enabled only when `NODE_ENV=development`). Deferred Sapphire plugins (i18next, scheduled-tasks, api, editable-commands, pattern-commands, utilities-store) stay out until a feature needs them.
@@ -19,7 +19,7 @@ Containerizing Botato is **not** the default for day-to-day development.
 ### Prerequisites
 
 - Docker with Compose v2
-- Node.js ≥ 22 and pnpm
+- Node.js ≥ 24 and pnpm
 
 ### 1. Configure secrets
 
