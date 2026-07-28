@@ -18,7 +18,11 @@ describe('play YouTube link (regression)', () => {
     const current = track('cur', 'Already Playing');
     const node = createFakeMusicNode({
       resolveImpl: async (query) => {
-        if (query.includes('youtu') || query === 'M7D2oz6Em48') {
+        if (
+          query.includes('youtu') ||
+          query === 'M7D2oz6Em48' ||
+          query.startsWith('ytsearch:')
+        ) {
           return { kind: 'playlist', tracks: [] };
         }
         return { kind: 'track', track: current };
@@ -81,6 +85,35 @@ describe('play YouTube link (regression)', () => {
     expect(seen).toEqual(['https://youtu.be/M7D2oz6Em48', 'M7D2oz6Em48']);
     expect(added).toEqual([target]);
     expect(playConfirmation(false, added)).toBe('Playing **lil vinicinho**');
+  });
+
+  it('falls back to ytsearch when URL and bare id resolve are empty', async () => {
+    const target = track('enc-1', 'lil vinicinho');
+    target.uri = 'https://www.youtube.com/watch?v=M7D2oz6Em48';
+    const seen: string[] = [];
+    const node = createFakeMusicNode({
+      resolveImpl: async (query) => {
+        seen.push(query);
+        if (query === 'ytsearch:M7D2oz6Em48') {
+          return { kind: 'track', track: target };
+        }
+        return { kind: 'playlist', tracks: [] };
+      },
+    });
+    const sessions = new MusicSessionService(node);
+
+    const added = await sessions.play(
+      'guild-1',
+      'https://youtu.be/M7D2oz6Em48',
+      'voice-1',
+    );
+
+    expect(seen).toEqual([
+      'https://youtu.be/M7D2oz6Em48',
+      'M7D2oz6Em48',
+      'ytsearch:M7D2oz6Em48',
+    ]);
+    expect(added).toEqual([target]);
   });
 
   it('while playing, a mix/playlist URL reports the linked (first) track', async () => {
