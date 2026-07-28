@@ -44,11 +44,12 @@ export class SkipToCommand extends Command {
     try {
       await this.container.musicSessions.skipTo(guildId, position);
       const track = this.container.musicSessions.nowPlaying(guildId);
-      await interaction.reply(
-        track
+      await interaction.reply({
+        content: track
           ? `Skipped to **${track.title}**.`
           : `Skipped to position ${position}.`,
-      );
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to skip to that position.';

@@ -42,7 +42,10 @@ export class JoinCommand extends Command {
 
     try {
       await this.container.musicSessions.join(guildId, voiceChannel.id);
-      await interaction.reply(`Joined **${voiceChannel.name}**.`);
+      await interaction.reply({
+        content: `Joined **${voiceChannel.name}**.`,
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to join voice.';

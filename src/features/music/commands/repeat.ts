@@ -57,7 +57,10 @@ export class RepeatCommand extends Command {
 
     try {
       await this.container.musicSessions.setRepeat(guildId, mode);
-      await interaction.reply(`Repeat mode set to **${mode}**.`);
+      await interaction.reply({
+        content: `Repeat mode set to **${mode}**.`,
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error

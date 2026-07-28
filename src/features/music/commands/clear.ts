@@ -34,7 +34,10 @@ export class ClearCommand extends Command {
 
     try {
       await this.container.musicSessions.clear(guildId);
-      await interaction.reply('Cleared the queue.');
+      await interaction.reply({
+        content: 'Cleared the queue.',
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to clear the queue.';

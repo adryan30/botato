@@ -53,11 +53,12 @@ export class MoveCommand extends Command {
       const before = this.container.musicSessions.queue(guildId);
       const moved = before[from - 1];
       await this.container.musicSessions.move(guildId, from, to);
-      await interaction.reply(
-        moved
+      await interaction.reply({
+        content: moved
           ? `Moved **${moved.title}** from ${from} to ${to}.`
           : `Moved queue position ${from} to ${to}.`,
-      );
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error

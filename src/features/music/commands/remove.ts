@@ -45,11 +45,12 @@ export class RemoveCommand extends Command {
       const before = this.container.musicSessions.queue(guildId);
       const removed = before[position - 1];
       await this.container.musicSessions.remove(guildId, position);
-      await interaction.reply(
-        removed
+      await interaction.reply({
+        content: removed
           ? `Removed **${removed.title}** from the queue.`
           : `Removed queue position ${position}.`,
-      );
+        ephemeral: true,
+      });
     } catch (error) {
       const message =
         error instanceof Error
