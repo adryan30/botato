@@ -1,16 +1,16 @@
 # Graph Report - botato  (2026-07-28)
 
 ## Corpus Check
-- 69 files · ~17,019 words
+- 69 files · ~17,709 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 421 nodes · 681 edges · 28 communities (16 shown, 12 thin omitted)
+- 424 nodes · 689 edges · 28 communities (16 shown, 12 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `04dd72f6`
+- Built from commit: `86e2a4a2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -46,12 +46,12 @@
 1. `MusicSessionService` - 43 edges
 2. `Track` - 18 edges
 3. `compilerOptions` - 15 edges
-4. `MusicControlSurface` - 13 edges
-5. `sessionReplyPayload()` - 13 edges
-6. `bindControlSurface()` - 12 edges
-7. `MusicNodeAvailability` - 11 edges
-8. `bindMusicNodeAvailability()` - 9 edges
-9. `ControlSurfacePayload` - 9 edges
+4. `bindControlSurface()` - 13 edges
+5. `MusicControlSurface` - 13 edges
+6. `MusicNodeAvailability` - 11 edges
+7. `bindMusicNodeAvailability()` - 9 edges
+8. `ControlSurfacePayload` - 9 edges
+9. `sessionReplyPayload()` - 9 edges
 10. `resolveRequesterVoiceChannel()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -81,16 +81,16 @@ Cohesion: 0.08
 Nodes (34): Publish Botato image workflow, publish-image workflow_call git_tag, release-please publish-image job, CI chain image publish after release-please, Keep Botato up when music node down, Compose music-node service, Compose tier-2 botato service, Botato (+26 more)
 
 ### Community 1 - "Queue & Session UI"
-Cohesion: 0.11
-Nodes (19): NowPlayingCommand, QueueCommand, SessionControlsHandler, buildSessionControlRows(), buildSessionEmbed(), formatDuration(), formatUpNext(), nextRepeatMode() (+11 more)
+Cohesion: 0.10
+Nodes (21): NowPlayingCommand, QueueCommand, SessionControlsHandler, buildSessionControlRows(), buildSessionEmbed(), formatDuration(), formatFullQueueList(), formatUpNext() (+13 more)
 
 ### Community 2 - "Music Session Service"
 Cohesion: 0.11
-Nodes (15): Container, @sapphire/pieces, bindControlSurface(), BoundControlSurface, ControlSurfacePayload, DiscordMessagePort, isMissingDiscordMessageError(), MissingDiscordMessageError (+7 more)
+Nodes (15): Container, @sapphire/pieces, bindControlSurface(), BoundControlSurface, ResummonResult, ControlSurfacePayload, DiscordMessagePort, isMissingDiscordMessageError() (+7 more)
 
 ### Community 3 - "Music Node Attachment"
 Cohesion: 0.10
-Nodes (21): attachMusicFeature(), bindMusicNodeAvailability(), bindSessionAdvanceOnTrackEnd(), syncMusicUnavailablePresence(), createDiscordMessagePort(), createKazagumoMusicNode(), KazagumoMusicNode, mapSource() (+13 more)
+Nodes (22): attachMusicFeature(), bindMusicNodeAvailability(), bindSessionAdvanceOnTrackEnd(), syncMusicUnavailablePresence(), createDiscordMessagePort(), payload(), createKazagumoMusicNode(), KazagumoMusicNode (+14 more)
 
 ### Community 4 - "Root Package Metadata"
 Cohesion: 0.07
@@ -133,24 +133,24 @@ Cohesion: 0.25
 Nodes (7): Adding a new concern inside an existing feature, Adding a new feature, Feature module layout, Feature root shape, `lib/` domain folders, Rules of thumb, What goes where
 
 ## Knowledge Gaps
-- **101 isolated node(s):** `name`, `version`, `private`, `description`, `type` (+96 more)
+- **102 isolated node(s):** `name`, `version`, `private`, `description`, `type` (+97 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `Runtime Dependencies` to `Root Package Metadata`?**
+- **Why does `createKazagumoMusicNode()` connect `Music Node Attachment` to `Runtime Dependencies`, `MusicSessionService`?**
   _High betweenness centrality (0.155) - this node is a cross-community bridge._
-- **Why does `createKazagumoMusicNode()` connect `Music Node Attachment` to `Runtime Dependencies`, `Music Session Service`, `MusicSessionService`?**
+- **Why does `dependencies` connect `Runtime Dependencies` to `Root Package Metadata`?**
   _High betweenness centrality (0.155) - this node is a cross-community bridge._
 - **Why does `kazagumo` connect `Runtime Dependencies` to `Music Node Attachment`?**
   _High betweenness centrality (0.151) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `private` to the rest of the system?**
-  _101 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _102 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Deploy & Domain Concepts` be split into smaller, more focused modules?**
   _Cohesion score 0.0766488413547237 - nodes in this community are weakly interconnected._
 - **Should `Queue & Session UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.10588235294117647 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1036036036036036 - nodes in this community are weakly interconnected._
 - **Should `Music Session Service` be split into smaller, more focused modules?**
   _Cohesion score 0.1140819964349376 - nodes in this community are weakly interconnected._

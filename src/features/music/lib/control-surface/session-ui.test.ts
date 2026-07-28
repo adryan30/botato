@@ -4,8 +4,10 @@ import type { MusicSessionSnapshot } from '../session/music-session-service.js';
 import {
   buildSessionControlRows,
   buildSessionEmbed,
+  formatFullQueueList,
   nextRepeatMode,
   parseSessionControlCustomId,
+  resummonEphemeralContent,
   sessionControlCustomId,
   sessionReplyPayload,
 } from './session-ui.js';
@@ -258,5 +260,45 @@ describe('session-ui', () => {
     expect(payload).not.toHaveProperty('content');
     expect(payload.embeds).toHaveLength(1);
     expect(payload.components).toHaveLength(1);
+  });
+
+  it('formats a full queue list with now playing and numbered tracks', () => {
+    expect(
+      formatFullQueueList(
+        snapshot({
+          nowPlaying: track('np', 'Now Playing'),
+          queue: [track('a', 'Alpha'), track('b', 'Beta'), track('c', 'Gamma')],
+        }),
+      ),
+    ).toBe(
+      [
+        '**Now playing:** Now Playing',
+        '**Queue:**',
+        '1. Alpha',
+        '2. Beta',
+        '3. Gamma',
+      ].join('\n'),
+    );
+  });
+
+  it('formats a full queue list when idle with an empty queue', () => {
+    expect(formatFullQueueList(snapshot())).toBe(
+      ['**Now playing:** Nothing playing', '**Queue:** *(empty)*'].join('\n'),
+    );
+  });
+
+  it('formats a full queue list when playing with an empty queue', () => {
+    expect(
+      formatFullQueueList(snapshot({ nowPlaying: track('np', 'Solo') })),
+    ).toBe(['**Now playing:** Solo', '**Queue:** *(empty)*'].join('\n'));
+  });
+
+  it('formats resummon ephemeral copy for same and cross-channel invokes', () => {
+    expect(resummonEphemeralContent('text-1', 'text-1')).toBe(
+      'Re-summoned the control surface.',
+    );
+    expect(resummonEphemeralContent('text-1', 'text-other')).toBe(
+      'Control surface is in <#text-1>.',
+    );
   });
 });

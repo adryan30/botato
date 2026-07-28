@@ -1,10 +1,12 @@
 import { Command } from '@sapphire/framework';
-import { sessionReplyPayload } from '../lib/control-surface/session-ui.js';
+import { MessageFlags } from 'discord.js';
+import { resummonEphemeralContent } from '../lib/control-surface/session-ui.js';
+
 export class NowPlayingCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
     super(context, {
       ...options,
-      description: 'Show the currently playing track',
+      description: 'Re-summon or point to the control surface',
     });
   }
 
@@ -13,7 +15,7 @@ export class NowPlayingCommand extends Command {
       (builder) =>
         builder
           .setName('nowplaying')
-          .setDescription('Show the currently playing track'),
+          .setDescription('Re-summon or point to the control surface'),
       {
         idHints: ['1529466509636669551'],
       },
@@ -27,18 +29,42 @@ export class NowPlayingCommand extends Command {
     if (!guildId) {
       await interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (!interaction.channelId) {
+      await interaction.reply({
+        content: 'This command can only be used in a text channel.',
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
     try {
-      const snapshot = this.container.musicSessions.snapshot(guildId);
-      await interaction.reply(sessionReplyPayload(snapshot));
+      const { stickyChannelId } =
+        await this.container.musicControlSurface.resummon(
+          guildId,
+          interaction.channelId,
+        );
+
+      await interaction.reply({
+        content: resummonEphemeralContent(
+          stickyChannelId,
+          interaction.channelId,
+        ),
+        flags: MessageFlags.Ephemeral,
+      });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to read now playing.';
-      await interaction.reply({ content: message, ephemeral: true });
+        error instanceof Error
+          ? error.message
+          : 'Failed to re-summon the control surface.';
+      await interaction.reply({
+        content: message,
+        flags: MessageFlags.Ephemeral,
+      });
     }
   }
 }

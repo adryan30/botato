@@ -202,3 +202,26 @@ export function sessionReplyPayload(snapshot: MusicSessionSnapshot) {
     components: buildSessionControlRows(snapshot),
   };
 }
+
+export function formatFullQueueList(snapshot: MusicSessionSnapshot): string {
+  const nowPlaying = snapshot.nowPlaying?.title ?? 'Nothing playing';
+  const lines = [`**Now playing:** ${nowPlaying}`];
+  if (snapshot.queue.length === 0) {
+    lines.push('**Queue:** *(empty)*');
+    return lines.join('\n');
+  }
+  lines.push('**Queue:**');
+  for (const [index, queued] of snapshot.queue.entries()) {
+    lines.push(`${index + 1}. ${queued.title}`);
+  }
+  return lines.join('\n');
+}
+
+export function resummonEphemeralContent(
+  stickyChannelId: string,
+  invokingChannelId: string,
+): string {
+  return stickyChannelId === invokingChannelId
+    ? 'Re-summoned the control surface.'
+    : `Control surface is in <#${stickyChannelId}>.`;
+}
