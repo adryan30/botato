@@ -1,5 +1,5 @@
 import { InteractionHandler, InteractionHandlerTypes } from '@sapphire/framework';
-import type { ButtonInteraction } from 'discord.js';
+import { MessageFlags, type ButtonInteraction } from 'discord.js';
 import {
   nextRepeatMode,
   parseSessionControlCustomId,
@@ -34,25 +34,29 @@ export class SessionControlsHandler extends InteractionHandler {
     if (!guildId) {
       await interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
+
+    // Acknowledge before voice/node work — leave/skip can exceed Discord's
+    // 3s interaction window and otherwise surface as Unknown interaction (10062).
+    await interaction.deferUpdate();
 
     try {
       await this.#applyAction(guildId, action);
       if (action === 'leave') {
         // Full sticky-surface delete lands in a later ticket; clear controls so
         // Leave does not leave a dead interactive row after the session ends.
-        await interaction.update({
-          content: null,
+        await interaction.editReply({
+          content: '\u200b',
           embeds: [],
           components: [],
         });
         return;
       }
       const snapshot = this.container.musicSessions.snapshot(guildId);
-      await interaction.update({
+      await interaction.editReply({
         content: null,
         ...sessionReplyPayload(snapshot),
       });
@@ -61,11 +65,14 @@ export class SessionControlsHandler extends InteractionHandler {
         error instanceof Error
           ? error.message
           : 'Failed to update the music session.';
-      if (interaction.deferred || interaction.replied) {
-        await interaction.followUp({ content: message, ephemeral: true });
-        return;
+      try {
+        await interaction.followUp({
+          content: message,
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch {
+        // Interaction token may already be dead (10062); nothing left to send.
       }
-      await interaction.reply({ content: message, ephemeral: true });
     }
   }
 
