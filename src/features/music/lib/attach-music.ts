@@ -2,6 +2,9 @@ import { container } from '@sapphire/framework';
 import { ActivityType, type Client } from 'discord.js';
 import type { BotatoConfig } from '../../../lib/config.js';
 import './container-augment.js';
+import { bindControlSurface } from './control-surface/bind-control-surface.js';
+import { createDiscordMessagePort } from './control-surface/discord-messages.js';
+import { MusicControlSurface } from './control-surface/music-control-surface.js';
 import {
   createKazagumoMusicNode,
   type KazagumoMusicNode,
@@ -21,7 +24,18 @@ export function attachMusicFeature(
   const musicSessions = new MusicSessionService(musicNode, { availability });
   bindSessionAdvanceOnTrackEnd(musicNode, musicSessions);
   bindMusicNodeAvailability(client, musicNode, availability, musicSessions);
+
+  const surface = new MusicControlSurface(createDiscordMessagePort(client), {
+    logError(message, error) {
+      client.logger.error(
+        `${message}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    },
+  });
+  const musicControlSurface = bindControlSurface(musicSessions, surface);
+
   container.musicSessions = musicSessions;
+  container.musicControlSurface = musicControlSurface;
   return musicSessions;
 }
 
