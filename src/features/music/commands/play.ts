@@ -1,5 +1,5 @@
 import { Command } from '@sapphire/framework';
-import { sessionReplyPayload } from '../lib/control-surface/session-ui.js';
+import { MessageFlags } from 'discord.js';
 import { resolveRequesterVoiceChannel } from '../lib/voice.js';
 
 export class PlayCommand extends Command {
@@ -37,7 +37,7 @@ export class PlayCommand extends Command {
     if (!guildId) {
       await interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -46,13 +46,21 @@ export class PlayCommand extends Command {
     if (!voiceChannel) {
       await interaction.reply({
         content: 'Join a voice channel first.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (!interaction.channelId) {
+      await interaction.reply({
+        content: 'This command can only be used in a text channel.',
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
     const query = interaction.options.getString('query', true);
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
       let wasPlaying = false;
@@ -62,6 +70,10 @@ export class PlayCommand extends Command {
         wasPlaying = false;
       }
 
+      this.container.musicControlSurface.noteTextChannel(
+        guildId,
+        interaction.channelId,
+      );
       await this.container.musicSessions.play(
         guildId,
         query,
@@ -74,28 +86,16 @@ export class PlayCommand extends Command {
       }
 
       if (!wasPlaying) {
-        await interaction.editReply({
-          content: null,
-          ...sessionReplyPayload(snapshot),
-        });
+        await interaction.editReply(`Playing **${snapshot.nowPlaying.title}**`);
         return;
       }
 
       const queued = snapshot.queue.at(-1);
-      const payload = sessionReplyPayload(snapshot);
-      if (queued) {
-        await interaction.editReply({
-          content: `Queued **${queued.title}**`,
-          embeds: payload.embeds,
-          components: payload.components,
-        });
-        return;
-      }
-
-      await interaction.editReply({
-        content: null,
-        ...payload,
-      });
+      await interaction.editReply(
+        queued
+          ? `Queued **${queued.title}**`
+          : `Playing **${snapshot.nowPlaying.title}**`,
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to play that query.';

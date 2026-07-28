@@ -1,11 +1,10 @@
 import { InteractionHandler, InteractionHandlerTypes } from '@sapphire/framework';
-import type { StringSelectMenuInteraction } from 'discord.js';
+import { MessageFlags, type StringSelectMenuInteraction } from 'discord.js';
 import {
   parseSearchSelectCustomId,
   peekSearchResults,
   takeSearchResults,
 } from '../lib/search-results-cache.js';
-import { sessionReplyPayload } from '../lib/control-surface/session-ui.js';
 import { resolveRequesterVoiceChannel } from '../lib/voice.js';
 
 export class SearchSelectHandler extends InteractionHandler {
@@ -35,7 +34,7 @@ export class SearchSelectHandler extends InteractionHandler {
     if (!guildId) {
       await interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -52,7 +51,7 @@ export class SearchSelectHandler extends InteractionHandler {
     if (cached.userId !== interaction.user.id) {
       await interaction.reply({
         content: 'Only the member who ran `/search` can pick a result.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -61,7 +60,15 @@ export class SearchSelectHandler extends InteractionHandler {
     if (!voiceChannel) {
       await interaction.reply({
         content: 'Join a voice channel first.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (!interaction.channelId) {
+      await interaction.reply({
+        content: 'This command can only be used in a text channel.',
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -89,27 +96,33 @@ export class SearchSelectHandler extends InteractionHandler {
         wasPlaying = false;
       }
 
+      this.container.musicControlSurface.noteTextChannel(
+        guildId,
+        interaction.channelId,
+      );
+
       await this.container.musicSessions.playTrack(
         guildId,
         selected,
         voiceChannel.id,
       );
       const snapshot = this.container.musicSessions.snapshot(guildId);
-
-      if (!wasPlaying) {
-        await interaction.editReply({
-          content: null,
-          ...sessionReplyPayload(snapshot),
-        });
-        return;
-      }
-
       const queued = snapshot.queue.at(-1);
-      const payload = sessionReplyPayload(snapshot);
+
+      const confirm =
+        !wasPlaying || !queued
+          ? `Playing **${selected.title}**`
+          : `Queued **${queued.title}**`;
+
+      // Select message stays disposable — never the sticky control surface.
       await interaction.editReply({
-        content: queued ? `Queued **${queued.title}**` : null,
-        embeds: payload.embeds,
-        components: payload.components,
+        content: 'Track selected.',
+        embeds: [],
+        components: [],
+      });
+      await interaction.followUp({
+        content: confirm,
+        flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
       const message =
