@@ -45,12 +45,19 @@ export function createKazagumoMusicNode(
   const toDomainTrack = (track: KazagumoTrack): Track => {
     track.setKazagumo(kazagumo);
     encodedTracks.set(track.track, track);
-    return {
+    const domain: Track = {
       id: track.track,
       title: track.title,
       uri: track.uri ?? track.realUri ?? '',
       source: mapSource(track.sourceName),
     };
+    if (track.thumbnail) {
+      domain.artworkUrl = track.thumbnail;
+    }
+    if (track.length != null && track.length > 0) {
+      domain.durationMs = track.length;
+    }
+    return domain;
   };
 
   const requirePlayer = (guildId: string) => {

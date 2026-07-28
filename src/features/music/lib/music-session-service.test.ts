@@ -157,6 +157,23 @@ describe('MusicSessionService', () => {
     });
   });
 
+  it('preserves optional artwork and duration from the music node on now playing', async () => {
+    const richTrack: Track = {
+      ...youtubeTrack,
+      artworkUrl: 'https://i.ytimg.com/vi/yt-1/hqdefault.jpg',
+      durationMs: 212_000,
+    };
+    const service = new MusicSessionService(
+      createFakeMusicNode({
+        resolveImpl: async () => ({ kind: 'track', track: richTrack }),
+      }),
+    );
+
+    await service.play('guild-1', 'https://youtube.com/watch?v=yt-1', 'voice-1');
+
+    expect(service.snapshot('guild-1').nowPlaying).toEqual(richTrack);
+  });
+
   it('refuses Spotify URLs with a clear unsupported error', async () => {
     const node = createFakeMusicNode({
       resolveImpl: async () => {

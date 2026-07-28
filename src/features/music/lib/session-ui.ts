@@ -2,7 +2,9 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  EmbedBuilder,
 } from 'discord.js';
+import type { Track } from './music-node-port.js';
 import type {
   MusicSessionSnapshot,
   RepeatMode,
@@ -15,9 +17,13 @@ export const SESSION_CONTROL_ACTIONS = [
   'resume',
   'skip',
   'repeat',
+  'shuffle',
+  'leave',
 ] as const;
 
 export type SessionControlAction = (typeof SESSION_CONTROL_ACTIONS)[number];
+
+const BOTATO_EMBED_COLOR = 0x011117;
 
 const REPEAT_CYCLE: Record<RepeatMode, RepeatMode> = {
   off: 'track',
@@ -31,36 +37,15 @@ const REPEAT_LABEL: Record<RepeatMode, string> = {
   queue: 'Repeat: Queue',
 };
 
+const SOURCE_LABEL: Record<Track['source'], string> = {
+  youtube: 'YouTube',
+  other: 'Other',
+};
+
+const UP_NEXT_PREVIEW = 3;
+
 export function nextRepeatMode(mode: RepeatMode): RepeatMode {
   return REPEAT_CYCLE[mode];
-}
-
-export function formatSessionMessage(snapshot: MusicSessionSnapshot): string {
-  const lines: string[] = [];
-
-  if (!snapshot.nowPlaying) {
-    lines.push('Nothing is playing right now.');
-  } else {
-    const paused = snapshot.paused ? ' *(paused)*' : '';
-    lines.push(`Now playing: **${snapshot.nowPlaying.title}**${paused}`);
-    if (snapshot.nowPlaying.uri) {
-      // Angle brackets suppress Discord's large link embeds.
-      lines.push(`<${snapshot.nowPlaying.uri}>`);
-    }
-    lines.push('');
-    if (snapshot.queue.length === 0) {
-      lines.push('Up next: *(empty)*');
-    } else {
-      lines.push('Up next:');
-      for (const [index, track] of snapshot.queue.entries()) {
-        lines.push(`${index + 1}. ${track.title}`);
-      }
-    }
-    lines.push('');
-  }
-
-  lines.push(`Repeat: ${snapshot.repeat}`);
-  return lines.join('\n');
 }
 
 export function sessionControlCustomId(action: SessionControlAction): string {
@@ -77,6 +62,89 @@ export function parseSessionControlCustomId(
   return SESSION_CONTROL_ACTIONS.includes(action as SessionControlAction)
     ? (action as SessionControlAction)
     : null;
+}
+
+function formatDuration(durationMs: number): string {
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const paddedSeconds = String(seconds).padStart(2, '0');
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${paddedSeconds}`;
+  }
+  return `${minutes}:${paddedSeconds}`;
+}
+
+function formatUpNext(queue: Track[]): string {
+  const preview = queue.slice(0, UP_NEXT_PREVIEW);
+  const lines = preview.map(
+    (queued, index) => `${index + 1}. ${queued.title}`,
+  );
+  const remaining = queue.length - preview.length;
+  if (remaining > 0) {
+    lines.push(`…and ${remaining} more`);
+  }
+  return lines.join('\n');
+}
+
+export function buildSessionEmbed(
+  snapshot: MusicSessionSnapshot,
+): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setAuthor({ name: 'Botato' })
+    .setColor(BOTATO_EMBED_COLOR);
+
+  const nowPlaying = snapshot.nowPlaying;
+  if (!nowPlaying) {
+    embed
+      .setTitle('Nothing playing')
+      .setDescription('Queue a track with /play or /search');
+    if (snapshot.queue.length > 0) {
+      embed.addFields({
+        name: 'Up next',
+        value: formatUpNext(snapshot.queue),
+        inline: false,
+      });
+    }
+    return embed;
+  }
+
+  embed
+    .setTitle(nowPlaying.title)
+    .setDescription(
+      `${snapshot.paused ? 'Paused' : 'Playing'} · ${REPEAT_LABEL[snapshot.repeat]}`,
+    );
+
+  if (nowPlaying.uri) {
+    embed.setURL(nowPlaying.uri);
+  }
+  if (nowPlaying.artworkUrl) {
+    embed.setThumbnail(nowPlaying.artworkUrl);
+  }
+
+  embed.addFields({
+    name: 'Source',
+    value: SOURCE_LABEL[nowPlaying.source],
+    inline: true,
+  });
+  if (nowPlaying.durationMs != null && nowPlaying.durationMs > 0) {
+    embed.addFields({
+      name: 'Duration',
+      value: formatDuration(nowPlaying.durationMs),
+      inline: true,
+    });
+  }
+  embed.addFields({
+    name: 'Up next',
+    value:
+      snapshot.queue.length === 0
+        ? '*(empty)*'
+        : formatUpNext(snapshot.queue),
+    inline: false,
+  });
+
+  return embed;
 }
 
 export function buildSessionControlRows(
@@ -107,18 +175,30 @@ export function buildSessionControlRows(
     .setLabel(REPEAT_LABEL[snapshot.repeat])
     .setStyle(ButtonStyle.Secondary);
 
+  const shuffle = new ButtonBuilder()
+    .setCustomId(sessionControlCustomId('shuffle'))
+    .setLabel('Shuffle')
+    .setStyle(ButtonStyle.Secondary);
+
+  const leave = new ButtonBuilder()
+    .setCustomId(sessionControlCustomId('leave'))
+    .setLabel('Leave')
+    .setStyle(ButtonStyle.Danger);
+
   return [
     new ActionRowBuilder<ButtonBuilder>().addComponents(
       pauseOrResume,
       skip,
       repeat,
+      shuffle,
+      leave,
     ),
   ];
 }
 
 export function sessionReplyPayload(snapshot: MusicSessionSnapshot) {
   return {
-    content: formatSessionMessage(snapshot),
+    embeds: [buildSessionEmbed(snapshot)],
     components: buildSessionControlRows(snapshot),
   };
 }
