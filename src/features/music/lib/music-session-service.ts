@@ -20,6 +20,20 @@ export type MusicSessionSnapshot = {
   paused: boolean;
 };
 
+export type MusicSessionLifecycleEvent =
+  | { kind: 'session-birth'; guildId: string }
+  | { kind: 'track-start'; guildId: string }
+  | { kind: 'state-change'; guildId: string }
+  | {
+      kind: 'session-end';
+      guildId: string;
+      reason: 'leave' | 'music-node-lost';
+    };
+
+export type MusicSessionLifecycleListener = (
+  event: MusicSessionLifecycleEvent,
+) => void;
+
 export type MusicSessionServiceOptions = {
   shuffle?: (items: Track[]) => Track[];
   availability?: MusicNodeAvailability;
@@ -49,6 +63,7 @@ export class MusicSessionService {
   readonly #shuffle: (items: Track[]) => Track[];
   readonly #availability: MusicNodeAvailability | null;
   readonly #advancing = new Set<string>();
+  readonly #lifecycleListeners = new Set<MusicSessionLifecycleListener>();
 
   constructor(
     musicNode: MusicNodePort,
@@ -57,6 +72,10 @@ export class MusicSessionService {
     this.#musicNode = musicNode;
     this.#shuffle = options.shuffle ?? defaultShuffle;
     this.#availability = options.availability ?? null;
+  }
+
+  onLifecycle(listener: MusicSessionLifecycleListener): void {
+    this.#lifecycleListeners.add(listener);
   }
 
   async ensure(guildId: string, voiceChannelId: string): Promise<void> {
@@ -76,6 +95,7 @@ export class MusicSessionService {
     this.#requireSession(guildId);
     await this.#musicNode.disconnect(guildId);
     this.#sessions.delete(guildId);
+    this.#emit({ kind: 'session-end', guildId, reason: 'leave' });
   }
 
   async handleMusicNodeLost(): Promise<void> {
@@ -91,6 +111,13 @@ export class MusicSessionService {
         }
       }),
     );
+    for (const guildId of guildIds) {
+      this.#emit({
+        kind: 'session-end',
+        guildId,
+        reason: 'music-node-lost',
+      });
+    }
   }
 
   async play(
@@ -147,6 +174,7 @@ export class MusicSessionService {
     const session = this.#requireSession(guildId);
     await this.#musicNode.pause(guildId);
     session.paused = true;
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async resume(guildId: string): Promise<void> {
@@ -154,6 +182,7 @@ export class MusicSessionService {
     const session = this.#requireSession(guildId);
     await this.#musicNode.resume(guildId);
     session.paused = false;
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async skip(guildId: string): Promise<void> {
@@ -206,6 +235,7 @@ export class MusicSessionService {
     const session = this.#requireSession(guildId);
     await this.#musicNode.setVolume(guildId, volume);
     session.volume = volume;
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   nowPlaying(guildId: string): Track | null {
@@ -234,12 +264,14 @@ export class MusicSessionService {
     this.#requireAvailable();
     const session = this.#requireSession(guildId);
     session.queue = [];
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async shuffle(guildId: string): Promise<void> {
     this.#requireAvailable();
     const session = this.#requireSession(guildId);
     session.queue = this.#shuffle(session.queue);
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async remove(guildId: string, index: number): Promise<void> {
@@ -247,6 +279,7 @@ export class MusicSessionService {
     const session = this.#requireSession(guildId);
     this.#requireQueueIndex(session, index);
     session.queue.splice(index - 1, 1);
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async move(guildId: string, from: number, to: number): Promise<void> {
@@ -256,12 +289,14 @@ export class MusicSessionService {
     this.#requireQueueIndex(session, to);
     const [item] = session.queue.splice(from - 1, 1);
     session.queue.splice(to - 1, 0, item);
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async setRepeat(guildId: string, mode: RepeatMode): Promise<void> {
     this.#requireAvailable();
     const session = this.#requireSession(guildId);
     session.repeat = mode;
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async #enqueueTracks(
@@ -278,14 +313,13 @@ export class MusicSessionService {
 
     if (!session.nowPlaying) {
       const [first, ...rest] = tracks;
-      await this.#musicNode.play(guildId, first);
-      session.nowPlaying = first;
+      await this.#playTrack(guildId, session, first);
       session.queue.push(...rest);
-      session.paused = false;
       return;
     }
 
     session.queue.push(...tracks);
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async #advance(guildId: string, session: MusicSession): Promise<void> {
@@ -315,6 +349,7 @@ export class MusicSessionService {
     session.nowPlaying = null;
     session.paused = false;
     await this.#musicNode.stop(guildId);
+    this.#emit({ kind: 'state-change', guildId });
   }
 
   async #playTrack(
@@ -325,6 +360,7 @@ export class MusicSessionService {
     session.nowPlaying = track;
     session.paused = false;
     await this.#musicNode.play(guildId, track);
+    this.#emit({ kind: 'track-start', guildId });
   }
 
   async #withAdvance(
@@ -346,7 +382,14 @@ export class MusicSessionService {
     }
     const session = createEmptySession();
     this.#sessions.set(guildId, session);
+    this.#emit({ kind: 'session-birth', guildId });
     return session;
+  }
+
+  #emit(event: MusicSessionLifecycleEvent): void {
+    for (const listener of this.#lifecycleListeners) {
+      listener(event);
+    }
   }
 
   #requireAvailable(): void {
