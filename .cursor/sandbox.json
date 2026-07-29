@@ -1,0 +1,10 @@
+{
+    "networkPolicy": {
+      "default": "deny",
+      "allow": [
+        "144.22.177.60",
+        "github.com",
+        "api.github.com"
+      ]
+    }
+  }
