@@ -16,6 +16,7 @@ describe('createBotatoClient', () => {
   function makeRoot(): string {
     const root = mkdtempSync(join(tmpdir(), 'botato-'));
     mkdirSync(join(root, 'features', 'music'), { recursive: true });
+    mkdirSync(join(root, 'features', 'afk'), { recursive: true });
     roots.push(root);
     return root;
   }
@@ -38,15 +39,17 @@ describe('createBotatoClient', () => {
     await Promise.all([devClient.destroy(), prodClient.destroy()]);
   });
 
-  it('registers the music feature module path', async () => {
+  it('registers the music and afk feature module paths', async () => {
     const rootDir = makeRoot();
     const musicCommandsPath = join(rootDir, 'features', 'music', 'commands');
+    const afkCommandsPath = join(rootDir, 'features', 'afk', 'commands');
 
     const client = createBotatoClient({ rootDir, nodeEnv: 'test' });
 
     expect(client.stores.get('commands').paths.has(musicCommandsPath)).toBe(
       true,
     );
+    expect(client.stores.get('commands').paths.has(afkCommandsPath)).toBe(true);
 
     await client.destroy();
   });

@@ -20,7 +20,11 @@ export function createBotatoClient(
 
   const client = new SapphireClient({
     baseUserDirectory: null,
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildVoiceStates,
+    ],
     loadMessageCommandListeners: false,
     logger: {
       level: LogLevel.Info,
@@ -31,6 +35,7 @@ export function createBotatoClient(
   });
 
   client.stores.registerPath(join(options.rootDir, 'features', 'music'));
+  client.stores.registerPath(join(options.rootDir, 'features', 'afk'));
 
   return client;
 }

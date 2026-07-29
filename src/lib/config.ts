@@ -7,6 +7,7 @@ export type MusicNodeConfig = {
 export type BotatoConfig = {
   discordToken: string;
   discordGuildIds: string[];
+  databaseUrl: string;
   musicNode: MusicNodeConfig;
 };
 
@@ -16,6 +17,11 @@ export function loadConfig(
   const discordToken = env.DISCORD_TOKEN?.trim();
   if (!discordToken) {
     throw new Error('DISCORD_TOKEN is required');
+  }
+
+  const databaseUrl = env.DATABASE_URL?.trim();
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is required');
   }
 
   const password = env.MUSIC_NODE_PASSWORD?.trim();
@@ -33,6 +39,7 @@ export function loadConfig(
   return {
     discordToken,
     discordGuildIds: parseGuildIds(env),
+    databaseUrl,
     musicNode: { host, port, password },
   };
 }
