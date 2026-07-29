@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/adryan30/botato/compare/v1.2.1...v1.3.0) (2026-07-29)
+
+
+### Features
+
+* **afk:** add /afk command with Sphere-backed marks ([#70](https://github.com/adryan30/botato/issues/70)) ([8ebcd8a](https://github.com/adryan30/botato/commit/8ebcd8a3f6c3b03b845247a6cdd2cc17a80909db))
+
 ## [1.2.1](https://github.com/adryan30/botato/compare/v1.2.0...v1.2.1) (2026-07-28)
 
 
