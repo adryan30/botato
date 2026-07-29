@@ -27,18 +27,18 @@ Containerizing Botato is **not** the default for day-to-day development.
 cp .env.example .env
 ```
 
-Set `DISCORD_TOKEN` and at least `MUSIC_NODE_PASSWORD`. Optional YouTube OAuth / poToken vars are documented in `.env.example`. Spotify is not supported in v1.
+Set `DISCORD_TOKEN`, `MUSIC_NODE_PASSWORD`, and `DATABASE_URL` (Compose Postgres defaults are in `.env.example`). Optional YouTube OAuth / poToken vars are documented in `.env.example`. Spotify is not supported in v1.
 
 **Single-token concurrency:** local and production share one Discord application token. Do not run host Botato and cluster Botato with that token at the same time.
 
-### 2. Start the music node
+### 2. Start the music node and Postgres
 
 ```bash
 docker compose up -d
 docker compose ps
 ```
 
-Compose brings up **only** the music node (official Lavalink ≥ 4.2 image `ghcr.io/lavalink-devs/lavalink:4.2.2-alpine`) with **youtube-source**, listening on `127.0.0.1:2333`. Plugins download into `music-node/plugins/` on first start (gitignored).
+Compose brings up the **music node** (official Lavalink ≥ 4.2 on `127.0.0.1:2333`) and **Postgres** (`botato` / `botato` on `127.0.0.1:5432`) for durable **AFK marks**. Plugins download into `music-node/plugins/` on first start (gitignored).
 
 Stop with `docker compose down`.
 
@@ -49,11 +49,13 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` runs TypeScript via `tsx` with HMR enabled (`NODE_ENV=development`). Production-style: `pnpm build && pnpm start`.
+`pnpm dev` runs TypeScript via `tsx` with HMR enabled (`NODE_ENV=development`). Production-style: `pnpm build && pnpm start`. Migrations apply on boot.
 
 Point Botato at the Compose music node with `MUSIC_NODE_HOST` / `MUSIC_NODE_PORT` / `MUSIC_NODE_PASSWORD` from `.env`.
 
 Set `DISCORD_GUILD_ID` (or `DISCORD_GUILD_IDS`) to your private guild so slash commands register instantly. Without it, Discord can take up to an hour to show globally registered commands.
+
+Enable the **Server Members Intent** for Botato in the Discord Developer Portal (needed to clear AFK marks when a member leaves). Grant the bot **Manage Nicknames** in the guild (and keep its role above members it should rename). The guild owner cannot be renamed by the bot — `/afk` still records the mark and tells them the nick to paste.
 
 ### Tier-1 music smoke checklist
 
@@ -67,7 +69,7 @@ With the music node healthy and Botato logged in to your private guild:
 
 ### Feature modules
 
-Botato expands by adding in-repo **feature modules** under `src/features/<name>/`, not runtime plugins. Each feature uses Sapphire piece folders (`commands`, `listeners`, `interaction-handlers`, `lib`, …). Core stays thin (client boot, plugin registration, explicit `stores.registerPath`, cross-feature utils) and registers **`features/music`** only for v1.
+Botato expands by adding in-repo **feature modules** under `src/features/<name>/`, not runtime plugins. Each feature uses Sapphire piece folders (`commands`, `listeners`, `interaction-handlers`, `lib`, …). Core stays thin (client boot, plugin registration, explicit `stores.registerPath`, cross-feature utils) and registers **`features/music`** and **`features/afk`**.
 
 Do **not** check in empty non-music feature folders. The stub shape for a future feature is:
 

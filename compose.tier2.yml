@@ -20,6 +20,9 @@ services:
       NODE_ENV: production
       MUSIC_NODE_HOST: music-node
       MUSIC_NODE_PORT: '2333'
+      DATABASE_URL: postgresql://botato:botato@postgres:5432/botato
     depends_on:
       music-node:
+        condition: service_healthy
+      postgres:
         condition: service_healthy

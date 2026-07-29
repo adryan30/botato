@@ -8,4 +8,4 @@ Wire one bjw-s **app-template** Argo CD Application named **`botato`** into name
 
 ## Consequences
 
-Redis/Postgres stay deferred until a feature needs durable state. Local development does not require Vault/ESO (see the architecture PRD local-dev tiers).
+Local development does not require Vault/ESO (see the architecture PRD local-dev tiers). Durable Postgres for **AFK marks** is decided in ADR-0006 (Sphere + Drizzle); Redis remains deferred until a feature needs it.

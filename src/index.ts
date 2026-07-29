@@ -1,11 +1,16 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ApplicationCommandRegistries } from '@sapphire/framework';
+import { attachAfkFeature } from './features/afk/lib/attach-afk.js';
 import { attachMusicFeature } from './features/music/lib/attach-music.js';
 import { createBotatoClient } from './lib/client.js';
 import { loadConfig } from './lib/config.js';
+import { createDb, migrateDb } from './lib/db/index.js';
 
 const config = loadConfig();
+await migrateDb(config.databaseUrl);
+const db = createDb(config.databaseUrl);
+
 const client = createBotatoClient({
   rootDir: dirname(fileURLToPath(import.meta.url)),
 });
@@ -23,6 +28,7 @@ if (config.discordGuildIds.length > 0) {
 }
 
 attachMusicFeature(client, config);
+attachAfkFeature(client, db);
 
 client.once('clientReady', () => {
   client.logger.info(`Logged in as ${client.user?.tag ?? 'unknown'}`);

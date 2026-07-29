@@ -19,3 +19,11 @@ _Avoid_: Lavalink (implementation), music bot, audio server
 **Music session**:
 The playback state for one guild's active voice listening (queue, now playing, control surface). It exists only while Botato can use a reachable **music node**; if the node is lost, the session ends.
 _Avoid_: queue (the queue is part of a session, not the whole), player (ambiguous with Discord player UI), paused-for-reconnect session
+
+**AFK mark**:
+Botato's record that a guild member is marked away: the prefix in use and the member's nickname before the mark. It is the source of truth for whether they are AFK; the server nickname is only the visible effect when Discord allows changing it.
+_Avoid_: AFK status (ambiguous with Discord presence), AFK mode, AFK state
+
+**AFK prefix**:
+The bracketed label prepended to a member's server nickname while an **AFK mark** is active (default `[AFK]`, or a custom label within Discord's nickname length limit).
+_Avoid_: AFK tag, AFK title, status text
