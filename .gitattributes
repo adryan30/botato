@@ -1,0 +1,2 @@
+# Exclude generated knowledge graph output from GitHub language stats
+graphify-out/** linguist-generated=true
