@@ -5,6 +5,14 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      git_tag:
+        description: >-
+          Optional v* tag for semver image tagging (escape hatch when a
+          release publish was skipped).
+        type: string
+        required: false
+        default: ''
   workflow_call:
     inputs:
       git_tag:
@@ -32,8 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     # Release merges already publish via release-please → workflow_call (with
     # semver). Skip the duplicate push-triggered qemu/arm64 rebuild.
+    # Reusable workflows inherit the caller's event (still `push` + the release
+    # commit message), so gate on `inputs.git_tag` — that is only set for the
+    # chained/manual release publish, never for the bare push trigger.
     if: >-
-      github.event_name != 'push'
+      inputs.git_tag != ''
+      || github.event_name != 'push'
       || github.ref_type == 'tag'
       || !startsWith(github.event.head_commit.message, 'chore(main): release')
     steps:
