@@ -27,6 +27,7 @@ Music domains today: `lib/session/`, `lib/music-node/`, `lib/control-surface/`.
 - Colocate `*.test.ts` and port+fake with the module they belong to
 - Keep commands/handlers thin; import from `lib/<domain>/`
 - Name folders with CONTEXT.md vocabulary
+- Put durable tables in `lib/<domain>/schema.ts` (Drizzle Kit globs `src/features/**/schema.ts`)
 
 ## Don't
 
@@ -34,3 +35,4 @@ Music domains today: `lib/session/`, `lib/music-node/`, `lib/control-surface/`.
 - Nest Sapphire piece folders under `lib/`
 - Put Kazagumo/Discord clients in core (`src/lib/`) — feature `lib/` only
 - Create `adapters/` / `domain/` / `ui/` trees unless a concern truly needs them
+- Put Drizzle table schemas outside `src/features/` or edit `drizzle.config.ts` per feature

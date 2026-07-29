@@ -5,7 +5,7 @@ import { attachAfkFeature } from './features/afk/lib/attach-afk.js';
 import { attachMusicFeature } from './features/music/lib/attach-music.js';
 import { createBotatoClient } from './lib/client.js';
 import { loadConfig } from './lib/config.js';
-import { createDb, migrateDb } from './lib/db.js';
+import { createDb, migrateDb } from './lib/db/index.js';
 
 const config = loadConfig();
 await migrateDb(config.databaseUrl);

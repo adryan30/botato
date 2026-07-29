@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import type { BotatoDb } from '../../../../lib/db.js';
+import type { BotatoDb } from '../../../../lib/db/index.js';
 import type { AfkMark, AfkMarkStore } from './afk-mark-store.js';
 import { afkMarks } from './schema.js';
 

@@ -52,6 +52,16 @@ src/features/music/lib/
 5. **Import across domains by relative path** (`../music-node/music-node-port.js`). Prefer depending inward on ports/types, not on adapters (commands depend on `session-ui`, not on `kazagumo-music-node`).
 6. **Use CONTEXT.md vocabulary** for folder and file names (`music-node`, `control-surface`, `session` — not “lavalink”, “player UI”, “queue service”).
 
+## Adding durable tables (Drizzle)
+
+Feature modules own their Postgres tables. Put definitions in:
+
+```text
+src/features/<name>/lib/<domain>/schema.ts
+```
+
+`drizzle.config.ts` globs `src/features/**/schema.ts`, so a new feature only adds that file and runs `pnpm db:generate` — no core or config edits. Shared connection/migration helpers live in `src/lib/db/`. Do **not** put table schemas outside `src/features/`.
+
 ## Adding a new feature
 
 Use the stub shape from the README / ADR-0003. Start with a flat `lib/` until there are roughly more than ~6 non-trivial modules, then introduce domain folders before the dump becomes hard to navigate.

@@ -11,3 +11,5 @@ Botato needs durable **AFK marks** (prefix + pre-mark nickname) that survive pro
 ## Consequences
 
 ADR-0004’s “Postgres deferred until a feature needs durable state” is superseded for this path: AFK is that feature. Botato now requires `DATABASE_URL` to boot.
+
+Feature modules own table definitions under `src/features/<name>/lib/**/schema.ts`. Drizzle Kit discovers them via glob — adding persistence to another feature does not require changing `drizzle.config.ts` or core. Connection and migration helpers stay in `src/lib/db/`; one Sphere database and one migration history remain shared.

@@ -1,6 +1,6 @@
 import { container } from '@sapphire/framework';
 import type { Client } from 'discord.js';
-import type { BotatoDb } from '../../../lib/db.js';
+import type { BotatoDb } from '../../../lib/db/index.js';
 import './container-augment.js';
 import { AfkService } from './mark/afk-service.js';
 import { DrizzleAfkMarkStore } from './mark/drizzle-afk-mark-store.js';
