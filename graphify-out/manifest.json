@@ -1,7 +1,7 @@
 {
   ".release-please-manifest.json": {
-    "mtime": 1785283743.8263197,
-    "ast_hash": "fb8855ce7911f724468fcecad2773885",
+    "mtime": 1785353498.5091944,
+    "ast_hash": "ffe94024eca6cf364aadcbcd4b64bef9",
     "semantic_hash": ""
   },
   "commitlint.config.js": {
@@ -10,8 +10,8 @@
     "semantic_hash": "1452fe5b54ad630b6901171d07312a2b"
   },
   "package.json": {
-    "mtime": 1785349524.7209961,
-    "ast_hash": "059ef9cf99ad65db3f5cdc288778d9ab",
+    "mtime": 1785353498.5205529,
+    "ast_hash": "293c10fa8e444a26f382178fe145d4bd",
     "semantic_hash": ""
   },
   "release-please-config.json": {
@@ -135,27 +135,27 @@
     "semantic_hash": ""
   },
   "src/index.ts": {
-    "mtime": 1785349504.5421548,
-    "ast_hash": "54532b60e5073f2bca34d5ab7231b817",
+    "mtime": 1785353498.5253541,
+    "ast_hash": "4401d8db195f73609c0afd272f773c35",
     "semantic_hash": ""
   },
   "src/lib/client.test.ts": {
-    "mtime": 1785349504.3552058,
-    "ast_hash": "ee6691e3391b96e556005efa2d60c9ad",
+    "mtime": 1785373945.5838938,
+    "ast_hash": "1d84914994b34823afcde926db5b090e",
     "semantic_hash": ""
   },
   "src/lib/client.ts": {
-    "mtime": 1785349496.9667895,
-    "ast_hash": "20f0a7cc1e658185371bc9859ce96385",
+    "mtime": 1785373940.7213762,
+    "ast_hash": "99951d88c1be1449851e92e38338e44f",
     "semantic_hash": ""
   },
   "src/lib/config.test.ts": {
-    "mtime": 1785349495.071034,
+    "mtime": 1785353498.5265539,
     "ast_hash": "a462c6f5348e952e8f55a769f762b256",
     "semantic_hash": ""
   },
   "src/lib/config.ts": {
-    "mtime": 1785349487.3780298,
+    "mtime": 1785353498.5267808,
     "ast_hash": "0356d4339056a23efaff223cc766ef16",
     "semantic_hash": ""
   },
@@ -175,8 +175,8 @@
     "semantic_hash": "993d0686793d619efae245bcfa20faea"
   },
   ".github/workflows/publish-image.yml": {
-    "mtime": 1785283743.8255284,
-    "ast_hash": "5ce92a460c09e3985554fc194b641988",
+    "mtime": 1785373879.8876605,
+    "ast_hash": "3175b9f6ce1f271a1ef052e0fadf5f8e",
     "semantic_hash": ""
   },
   ".github/workflows/release-please.yml": {
@@ -190,27 +190,27 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1785283743.8267472,
-    "ast_hash": "52cceeef9e711acafea1d782be878c6f",
+    "mtime": 1785353498.509864,
+    "ast_hash": "7637bc11522c945d1c460ad7bfdd2a2e",
     "semantic_hash": ""
   },
   "CONTEXT.md": {
-    "mtime": 1785348186.4255755,
-    "ast_hash": "ff65e949705da107096a45de30f48f5d",
+    "mtime": 1785371622.679395,
+    "ast_hash": "db2f47e15f2c5da0f6e1a10b5c9d488c",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1785349606.0235612,
+    "mtime": 1785353498.5113184,
     "ast_hash": "fbb06ee47f11075b88ffdddb66d964e9",
     "semantic_hash": ""
   },
   "compose.tier2.yml": {
-    "mtime": 1785349517.4435575,
+    "mtime": 1785353498.5116613,
     "ast_hash": "a07dd96a66d5249aa5edf7be4b203de9",
     "semantic_hash": ""
   },
   "compose.yml": {
-    "mtime": 1785349542.0277767,
+    "mtime": 1785353498.5120685,
     "ast_hash": "97bb47212c24a0e86908208ad63d6bd0",
     "semantic_hash": ""
   },
@@ -230,7 +230,7 @@
     "semantic_hash": ""
   },
   "docs/adr/0004-image-publish-argo-wiring.md": {
-    "mtime": 1785349353.2903984,
+    "mtime": 1785353498.5123584,
     "ast_hash": "e8412e764d1747025de378010811c133",
     "semantic_hash": ""
   },
@@ -365,8 +365,8 @@
     "semantic_hash": ""
   },
   "docs/agents/feature-layout.md": {
-    "mtime": 1785263606.5902395,
-    "ast_hash": "97840d2e1f09431f7139ea912768f23a",
+    "mtime": 1785353498.513059,
+    "ast_hash": "544a6f7ddd39d48eb290f5a16ab23fae",
     "semantic_hash": ""
   },
   "src/features/music/lib/voice.test.ts": {
@@ -405,108 +405,128 @@
     "semantic_hash": ""
   },
   "drizzle.config.ts": {
-    "mtime": 1785349439.345159,
-    "ast_hash": "e53729fc4e1961a15885d0783ff8d8f1",
+    "mtime": 1785353498.5138805,
+    "ast_hash": "a5415f8111b83c125d5b857c3c804d41",
     "semantic_hash": ""
   },
   "drizzle/0000_afk_marks.sql": {
-    "mtime": 1785349526.3453543,
-    "ast_hash": "622698faff140b5660531f3670acd9e5",
+    "mtime": 1785353498.5142813,
+    "ast_hash": "24a20c0771c01d06a2655e859f14df47",
     "semantic_hash": ""
   },
   "drizzle/meta/0000_snapshot.json": {
-    "mtime": 1785349526.3446083,
-    "ast_hash": "576bf2cf3044f3d1c1dff8b849d0a9ea",
+    "mtime": 1785353498.5145552,
+    "ast_hash": "a7ae8b2ebc114022177698549f796ee6",
     "semantic_hash": ""
   },
   "drizzle/meta/_journal.json": {
-    "mtime": 1785349526.3452668,
-    "ast_hash": "2688a35d6326834e2fddd4a069f17356",
+    "mtime": 1785353498.5149336,
+    "ast_hash": "249a4f8fb6242cc670fb55b7fb4d0d63",
     "semantic_hash": ""
   },
   "src/features/afk/commands/afk.ts": {
-    "mtime": 1785349469.3668382,
-    "ast_hash": "6c75578d8f91a909268e1e157ac2eeef",
-    "semantic_hash": ""
-  },
-  "src/features/afk/lib/afk-service.test.ts": {
-    "mtime": 1785349392.8120224,
-    "ast_hash": "0465b095946d7f5981b05a8bcb6a9c8b",
-    "semantic_hash": ""
-  },
-  "src/features/afk/lib/afk-service.ts": {
-    "mtime": 1785349410.795244,
-    "ast_hash": "feb2dc52cdf5159037d84c7079e0fa96",
+    "mtime": 1785353498.5221436,
+    "ast_hash": "3fa4eff42765a5d0d3dd8e8339443f9c",
     "semantic_hash": ""
   },
   "src/features/afk/lib/attach-afk.ts": {
-    "mtime": 1785349467.3715181,
-    "ast_hash": "0ee43941b8b8237613dc0382c8e1b01c",
+    "mtime": 1785353498.5223591,
+    "ast_hash": "f10242d1b810a011d227013695db3893",
     "semantic_hash": ""
   },
   "src/features/afk/lib/container-augment.ts": {
-    "mtime": 1785349513.811532,
-    "ast_hash": "bd05af30abe8bb88f6c8b4fabb271868",
+    "mtime": 1785353498.5226274,
+    "ast_hash": "3afcff548e49d8271e34ec0dc4cff7e9",
     "semantic_hash": ""
   },
   "src/features/afk/lib/mark/afk-mark-store.ts": {
-    "mtime": 1785349398.5709891,
-    "ast_hash": "20abfb61ca72a9b0fe46f030f8de906c",
+    "mtime": 1785353498.5229557,
+    "ast_hash": "912f94b038c8504f4ea17d5e31e88c1f",
     "semantic_hash": ""
   },
   "src/features/afk/lib/mark/drizzle-afk-mark-store.ts": {
-    "mtime": 1785349619.3678148,
-    "ast_hash": "d760bd4e58e8fa4bfde05941e1e13e5c",
+    "mtime": 1785353498.523621,
+    "ast_hash": "42237d6c201b3bbcc4e0cd5b923f53b0",
     "semantic_hash": ""
   },
   "src/features/afk/lib/mark/fake-afk-mark-store.ts": {
-    "mtime": 1785349399.9147792,
+    "mtime": 1785353498.5238018,
     "ast_hash": "854c6c1cbd068367843926e3692839d4",
     "semantic_hash": ""
   },
   "src/features/afk/lib/mark/schema.ts": {
-    "mtime": 1785349441.7354493,
-    "ast_hash": "2992fd61fa8dde0e4e6d2d4874bd6d60",
-    "semantic_hash": ""
-  },
-  "src/features/afk/lib/nick/afk-nick.test.ts": {
-    "mtime": 1785349364.5739653,
-    "ast_hash": "f54f3efe2d8cf56489da0ba4defe55f9",
-    "semantic_hash": ""
-  },
-  "src/features/afk/lib/nick/afk-nick.ts": {
-    "mtime": 1785349374.6663125,
-    "ast_hash": "c21c6bea1fa23e07f89f23f50a963449",
-    "semantic_hash": ""
-  },
-  "src/features/afk/lib/nick/discord-member-nick.ts": {
-    "mtime": 1785349459.3136013,
-    "ast_hash": "7cec890f38f48bfb1ace06a57c7ce5a1",
-    "semantic_hash": ""
-  },
-  "src/features/afk/lib/nick/fake-member-nick.ts": {
-    "mtime": 1785349410.4335277,
-    "ast_hash": "8d34d93010342b06c645d6eb09b8241b",
-    "semantic_hash": ""
-  },
-  "src/features/afk/lib/nick/member-nick-port.ts": {
-    "mtime": 1785349402.7599044,
-    "ast_hash": "0b4929a132d3e6ce1ed427ab722ad958",
+    "mtime": 1785353498.5239782,
+    "ast_hash": "d388f9cbacebd97a9a7b2c1772576894",
     "semantic_hash": ""
   },
   "src/features/afk/listeners/guild-member-remove.ts": {
-    "mtime": 1785349469.439212,
+    "mtime": 1785353498.5251517,
     "ast_hash": "05fcf289e7e1cef1d29dfe138b244ecf",
     "semantic_hash": ""
   },
-  "src/lib/db.ts": {
-    "mtime": 1785349455.5778327,
-    "ast_hash": "1b57174c07a05bcb08bc4dc7790aae9c",
+  "docs/adr/0006-sphere-drizzle-afk-marks.md": {
+    "mtime": 1785353498.5126932,
+    "ast_hash": "ae1df764dd063631107272a38991a52a",
     "semantic_hash": ""
   },
-  "docs/adr/0006-sphere-drizzle-afk-marks.md": {
-    "mtime": 1785349352.8615873,
-    "ast_hash": "4d58e73284eebd6ac67cdeda3b1a4292",
+  "src/features/afk/lib/mark/afk-service.test.ts": {
+    "mtime": 1785353498.523257,
+    "ast_hash": "daf7289a18a0521e826e3793b272efd1",
+    "semantic_hash": ""
+  },
+  "src/features/afk/lib/mark/afk-service.ts": {
+    "mtime": 1785353498.523436,
+    "ast_hash": "dfe11ae848b0b21fc825d45f83eca284",
+    "semantic_hash": ""
+  },
+  "src/features/afk/lib/nickname/afk-nick.test.ts": {
+    "mtime": 1785353498.5241947,
+    "ast_hash": "f54f3efe2d8cf56489da0ba4defe55f9",
+    "semantic_hash": ""
+  },
+  "src/features/afk/lib/nickname/afk-nick.ts": {
+    "mtime": 1785353498.5243654,
+    "ast_hash": "c21c6bea1fa23e07f89f23f50a963449",
+    "semantic_hash": ""
+  },
+  "src/features/afk/lib/nickname/discord-member-nick.ts": {
+    "mtime": 1785353498.5246005,
+    "ast_hash": "7cec890f38f48bfb1ace06a57c7ce5a1",
+    "semantic_hash": ""
+  },
+  "src/features/afk/lib/nickname/fake-member-nick.ts": {
+    "mtime": 1785353498.5247645,
+    "ast_hash": "8d34d93010342b06c645d6eb09b8241b",
+    "semantic_hash": ""
+  },
+  "src/features/afk/lib/nickname/member-nick-port.ts": {
+    "mtime": 1785353498.524936,
+    "ast_hash": "0b4929a132d3e6ce1ed427ab722ad958",
+    "semantic_hash": ""
+  },
+  "src/features/pick/commands/pick.ts": {
+    "mtime": 1785373936.089388,
+    "ast_hash": "72d471236b8e98fe79b7d74209bb5666",
+    "semantic_hash": ""
+  },
+  "src/features/pick/lib/voice-pick.test.ts": {
+    "mtime": 1785373936.0462449,
+    "ast_hash": "5748fc1a9c5aaf3a56e7390242607ec6",
+    "semantic_hash": ""
+  },
+  "src/features/pick/lib/voice-pick.ts": {
+    "mtime": 1785373928.820707,
+    "ast_hash": "52ef0b7b33c4f3a1fc4c5c7b9db874fe",
+    "semantic_hash": ""
+  },
+  "src/lib/db/index.ts": {
+    "mtime": 1785353498.527082,
+    "ast_hash": "50c994512810acab2dd1a811977e38c7",
+    "semantic_hash": ""
+  },
+  "docs/research/discord-bot-testing-pipelines.md": {
+    "mtime": 1785370164.2249086,
+    "ast_hash": "df976e327e87c9a39f324d3644956954",
     "semantic_hash": ""
   }
 }
