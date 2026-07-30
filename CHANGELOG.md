@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/adryan30/botato/compare/v1.3.0...v1.4.0) (2026-07-30)
+
+
+### Features
+
+* **pick:** add /pick voice channel random member command ([#74](https://github.com/adryan30/botato/issues/74)) ([41ef5cd](https://github.com/adryan30/botato/commit/41ef5cd96d2e5d8b08f32bf0200fdd3a78de9028))
+
+
+### Bug Fixes
+
+* **ci:** do not skip chained release image publishes ([#72](https://github.com/adryan30/botato/issues/72)) ([c38968f](https://github.com/adryan30/botato/commit/c38968fb5f3b5262b38b6b81b96b8f83d5cef8a9))
+
 ## [1.3.0](https://github.com/adryan30/botato/compare/v1.2.1...v1.3.0) (2026-07-29)
 
 
