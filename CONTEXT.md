@@ -1,6 +1,6 @@
 # Botato
 
-Personal Discord bot for a private guild: modular capabilities with voice music playback, deployed on a self-hosted Kubernetes cluster.
+Personal Discord bot for a private guild: modular capabilities including voice music playback and social voice picks, deployed on a self-hosted Kubernetes cluster.
 
 ## Language
 
@@ -27,3 +27,7 @@ _Avoid_: AFK status (ambiguous with Discord presence), AFK mode, AFK state
 **AFK prefix**:
 The bracketed label prepended to a member's server nickname while an **AFK mark** is active (default `[AFK]`, or a custom label within Discord's nickname length limit).
 _Avoid_: AFK tag, AFK title, status text
+
+**Voice pick**:
+One randomly chosen eligible member connected to a target voice channel (humans only, excluding the requester). Produced by `/pick`.
+_Avoid_: roulette, random user, spin, selection
