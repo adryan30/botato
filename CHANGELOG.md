@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/adryan30/botato/compare/v1.4.0...v1.4.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **music:** show playlist Up next and +N more on idle play ([#75](https://github.com/adryan30/botato/issues/75)) ([336bdff](https://github.com/adryan30/botato/commit/336bdff64774bdf54894b4d987f53f09690a48f0))
+
 ## [1.4.0](https://github.com/adryan30/botato/compare/v1.3.0...v1.4.0) (2026-07-30)
 
 
