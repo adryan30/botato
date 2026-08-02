@@ -23,11 +23,21 @@ describe('playConfirmation', () => {
     );
   });
 
-  it('reports Queued for the first added track while already playing', () => {
+  it('reports Playing with a +N more cue for multi-track starts', () => {
+    expect(
+      playConfirmation(false, [
+        track('a', 'Alpha'),
+        track('b', 'Beta'),
+        track('c', 'Gamma'),
+      ]),
+    ).toBe('Playing **Alpha** (+2 more)');
+  });
+
+  it('reports Queued with a +N more cue while already playing', () => {
     const linked = track('link', 'Linked Video From URL');
     const mixTail = track('tail', 'Mix Tail Last Track');
     expect(playConfirmation(true, [linked, track('m2', 'Mix 2'), mixTail])).toBe(
-      `Queued **${linked.title}**`,
+      `Queued **${linked.title}** (+2 more)`,
     );
   });
 });

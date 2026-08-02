@@ -21,6 +21,13 @@ const second: Track = {
   source: 'youtube',
 };
 
+const third: Track = {
+  id: 'yt-3',
+  title: 'Third Track',
+  uri: 'https://youtube.com/watch?v=yt-3',
+  source: 'youtube',
+};
+
 function setup() {
   let resolveCall = 0;
   const tracks = [first, second];
@@ -56,6 +63,29 @@ describe('bindControlSurface', () => {
     expect(messages.calls[1]?.channelId).toBe('text-1');
     expect(surface.liveMessageId('guild-1')).toBe('msg-2');
     expect(messages.messages.get('msg-2')?.payload).toEqual(
+      sessionReplyPayload(sessions.snapshot('guild-1')),
+    );
+  });
+
+  it('includes playlist remainder in Up next when starting from idle', async () => {
+    const playlist = [first, second, third];
+    const node = createFakeMusicNode({
+      resolveImpl: async () => ({ kind: 'playlist', tracks: playlist }),
+    });
+    const sessions = new MusicSessionService(node);
+    const messages = createFakeDiscordMessages();
+    const surface = new MusicControlSurface(messages);
+    const bound = bindControlSurface(sessions, surface);
+    bound.noteTextChannel('guild-1', 'text-1');
+
+    await sessions.play('guild-1', 'playlist-url', 'voice-1');
+    await bound.whenIdle();
+
+    expect(sessions.snapshot('guild-1')).toMatchObject({
+      nowPlaying: first,
+      queue: [second, third],
+    });
+    expect(messages.messages.get(surface.liveMessageId('guild-1')!)?.payload).toEqual(
       sessionReplyPayload(sessions.snapshot('guild-1')),
     );
   });

@@ -317,8 +317,10 @@ export class MusicSessionService {
 
     if (!session.nowPlaying) {
       const [first, ...rest] = tracks;
-      await this.#playTrack(guildId, session, first);
+      // Queue remainder before track-start so the control-surface bump
+      // snapshots Up next with the full playlist, not an empty queue.
       session.queue.push(...rest);
+      await this.#playTrack(guildId, session, first);
       return;
     }
 

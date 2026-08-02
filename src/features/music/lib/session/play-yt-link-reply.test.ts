@@ -83,7 +83,7 @@ describe('play YouTube link (regression)', () => {
     expect(playConfirmation(false, added)).toBe('Playing **lil vinicinho**');
   });
 
-  it('while playing, a mix/playlist URL reports the linked (first) track', async () => {
+  it('while playing, a mix/playlist URL names the linked track plus a +N more cue', async () => {
     const linked = track('link', 'Linked Video From URL');
     const mixTail = track('tail', 'Mix Tail Last Track');
     const current = track('cur', 'Already Playing');
@@ -107,9 +107,9 @@ describe('play YouTube link (regression)', () => {
       'voice-1',
     );
 
-    expect(playConfirmation(true, added)).toBe(`Queued **${linked.title}**`);
-    expect(playConfirmation(true, added)).not.toBe(
-      `Queued **${mixTail.title}**`,
+    expect(playConfirmation(true, added)).toBe(
+      `Queued **${linked.title}** (+2 more)`,
     );
+    expect(playConfirmation(true, added)).not.toContain(mixTail.title);
   });
 });
