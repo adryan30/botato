@@ -13,8 +13,10 @@ export function playConfirmation(
   if (!first) {
     return 'No tracks found for that query.';
   }
+  const more = added.length - 1;
+  const suffix = more > 0 ? ` (+${more} more)` : '';
   if (!wasPlaying) {
-    return `Playing **${first.title}**`;
+    return `Playing **${first.title}**${suffix}`;
   }
-  return `Queued **${first.title}**`;
+  return `Queued **${first.title}**${suffix}`;
 }
