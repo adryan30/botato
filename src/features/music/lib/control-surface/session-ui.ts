@@ -6,8 +6,10 @@ import {
 } from 'discord.js';
 import type { Track } from '../music-node/music-node-port.js';
 import type {
+  MusicSessionDj,
   MusicSessionSnapshot,
   RepeatMode,
+  SessionTrack,
 } from '../session/music-session-service.js';
 
 export const SESSION_CONTROL_CUSTOM_ID_PREFIX = 'music:session:';
@@ -24,6 +26,8 @@ export const SESSION_CONTROL_ACTIONS = [
 export type SessionControlAction = (typeof SESSION_CONTROL_ACTIONS)[number];
 
 const BOTATO_EMBED_COLOR = 0x011117;
+const DJ_VIBE_MAX = 60;
+const DJ_TRACK_PREFIX = 'DJ · ';
 
 const REPEAT_CYCLE: Record<RepeatMode, RepeatMode> = {
   off: 'track',
@@ -64,6 +68,13 @@ export function parseSessionControlCustomId(
     : null;
 }
 
+function truncate(value: string, max: number): string {
+  if (value.length <= max) {
+    return value;
+  }
+  return `${value.slice(0, max - 1)}…`;
+}
+
 function formatDuration(durationMs: number): string {
   const totalSeconds = Math.floor(durationMs / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -76,16 +87,40 @@ function formatDuration(durationMs: number): string {
   return `${minutes}:${paddedSeconds}`;
 }
 
-function formatUpNext(queue: Track[]): string {
+function formatQueuedTitle(queued: SessionTrack): string {
+  return queued.provenance === 'dj'
+    ? `${DJ_TRACK_PREFIX}${queued.title}`
+    : queued.title;
+}
+
+function formatUpNext(queue: SessionTrack[]): string {
   const preview = queue.slice(0, UP_NEXT_PREVIEW);
   const lines = preview.map(
-    (queued, index) => `${index + 1}. ${queued.title}`,
+    (queued, index) => `${index + 1}. ${formatQueuedTitle(queued)}`,
   );
   const remaining = queue.length - preview.length;
   if (remaining > 0) {
     lines.push(`…and ${remaining} more`);
   }
   return lines.join('\n');
+}
+
+function formatDjFieldValue(
+  dj: Extract<MusicSessionDj, { enabled: true }>,
+): string {
+  const vibe = truncate(dj.vibe, DJ_VIBE_MAX);
+  return dj.retrying ? `${vibe} · retrying…` : vibe;
+}
+
+function addDjField(embed: EmbedBuilder, dj: MusicSessionDj): void {
+  if (!dj.enabled) {
+    return;
+  }
+  embed.addFields({
+    name: 'DJ',
+    value: formatDjFieldValue(dj),
+    inline: true,
+  });
 }
 
 export function buildSessionEmbed(
@@ -100,6 +135,7 @@ export function buildSessionEmbed(
     embed
       .setTitle('Nothing playing')
       .setDescription('Queue a track with /play or /search');
+    addDjField(embed, snapshot.dj);
     if (snapshot.queue.length > 0) {
       embed.addFields({
         name: 'Up next',
@@ -135,6 +171,7 @@ export function buildSessionEmbed(
       inline: true,
     });
   }
+  addDjField(embed, snapshot.dj);
   embed.addFields({
     name: 'Up next',
     value:
@@ -204,7 +241,9 @@ export function sessionReplyPayload(snapshot: MusicSessionSnapshot) {
 }
 
 export function formatFullQueueList(snapshot: MusicSessionSnapshot): string {
-  const nowPlaying = snapshot.nowPlaying?.title ?? 'Nothing playing';
+  const nowPlaying = snapshot.nowPlaying
+    ? formatQueuedTitle(snapshot.nowPlaying)
+    : 'Nothing playing';
   const lines = [`**Now playing:** ${nowPlaying}`];
   if (snapshot.queue.length === 0) {
     lines.push('**Queue:** *(empty)*');
@@ -212,7 +251,7 @@ export function formatFullQueueList(snapshot: MusicSessionSnapshot): string {
   }
   lines.push('**Queue:**');
   for (const [index, queued] of snapshot.queue.entries()) {
-    lines.push(`${index + 1}. ${queued.title}`);
+    lines.push(`${index + 1}. ${formatQueuedTitle(queued)}`);
   }
   return lines.join('\n');
 }

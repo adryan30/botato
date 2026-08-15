@@ -4,8 +4,10 @@ import { MusicNodeAvailability } from '../music-node/music-node-availability.js'
 import type { Track } from '../music-node/music-node-port.js';
 import { MUSIC_UNAVAILABLE } from './require-music-available.js';
 import {
+  asSessionTrack,
   type MusicSessionLifecycleEvent,
   MusicSessionService,
+  type SessionTrack,
 } from './music-session-service.js';
 
 const youtubeTrack: Track = {
@@ -26,7 +28,7 @@ function track(id: string, title = id): Track {
 
 async function playingService(
   tracks: Track[],
-  options: { shuffle?: (items: Track[]) => Track[] } = {},
+  options: { shuffle?: (items: SessionTrack[]) => SessionTrack[] } = {},
 ) {
   let call = 0;
   const node = createFakeMusicNode({
@@ -66,6 +68,7 @@ describe('MusicSessionService', () => {
       volume: 100,
       repeat: 'off',
       paused: false,
+      dj: { enabled: false },
     });
   });
 
@@ -174,7 +177,9 @@ describe('MusicSessionService', () => {
 
     await service.play('guild-1', 'https://youtube.com/watch?v=yt-1', 'voice-1');
 
-    expect(service.snapshot('guild-1').nowPlaying).toEqual(richTrack);
+    expect(service.snapshot('guild-1').nowPlaying).toEqual(
+      asSessionTrack(richTrack),
+    );
   });
 
   it('refuses Spotify URLs with a clear unsupported error', async () => {
@@ -352,7 +357,9 @@ describe('MusicSessionService', () => {
     await service.restart('guild-1');
 
     expect(node.seekPositions.get('guild-1')).toBe(0);
-    expect(service.snapshot('guild-1').nowPlaying).toEqual(youtubeTrack);
+    expect(service.snapshot('guild-1').nowPlaying).toEqual(
+      asSessionTrack(youtubeTrack),
+    );
   });
 
   it('sets volume on the session', async () => {
@@ -367,8 +374,10 @@ describe('MusicSessionService', () => {
     const queued = track('yt-2');
     const service = await playingService([youtubeTrack, queued]);
 
-    expect(service.nowPlaying('guild-1')).toEqual(youtubeTrack);
-    expect(service.queue('guild-1')).toEqual([queued]);
+    expect(service.nowPlaying('guild-1')).toEqual(
+      asSessionTrack(youtubeTrack),
+    );
+    expect(service.queue('guild-1')).toEqual([asSessionTrack(queued)]);
   });
 
   it('ensure joins the requester voice channel like join', async () => {
@@ -425,7 +434,11 @@ describe('MusicSessionService', () => {
 
     await service.shuffle('guild-1');
 
-    expect(service.snapshot('guild-1').queue).toEqual([c, b, a]);
+    expect(service.snapshot('guild-1').queue).toEqual([
+      asSessionTrack(c),
+      asSessionTrack(b),
+      asSessionTrack(a),
+    ]);
   });
 
   it('removes a track at a 1-based queue index', async () => {
@@ -436,7 +449,10 @@ describe('MusicSessionService', () => {
 
     await service.remove('guild-1', 2);
 
-    expect(service.snapshot('guild-1').queue).toEqual([a, c]);
+    expect(service.snapshot('guild-1').queue).toEqual([
+      asSessionTrack(a),
+      asSessionTrack(c),
+    ]);
   });
 
   it('rejects remove outside the queue bounds', async () => {
@@ -458,7 +474,11 @@ describe('MusicSessionService', () => {
 
     await service.move('guild-1', 1, 3);
 
-    expect(service.snapshot('guild-1').queue).toEqual([b, c, a]);
+    expect(service.snapshot('guild-1').queue).toEqual([
+      asSessionTrack(b),
+      asSessionTrack(c),
+      asSessionTrack(a),
+    ]);
   });
 
   it('rejects move outside the queue bounds', async () => {
@@ -495,7 +515,9 @@ describe('MusicSessionService', () => {
 
     await service.skip('guild-1');
 
-    expect(service.snapshot('guild-1').nowPlaying).toEqual(youtubeTrack);
+    expect(service.snapshot('guild-1').nowPlaying).toEqual(
+      asSessionTrack(youtubeTrack),
+    );
     expect(node.playing.get('guild-1')).toEqual(youtubeTrack);
   });
 
