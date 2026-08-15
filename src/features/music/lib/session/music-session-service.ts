@@ -11,15 +11,40 @@ const SPOTIFY_UNSUPPORTED =
 
 export type RepeatMode = 'off' | 'track' | 'queue';
 
+/** Who enqueued the track into the music session (not the music-node Track). */
+export type TrackProvenance = 'user' | 'dj';
+
+export type SessionTrack = Track & {
+  provenance: TrackProvenance;
+};
+
+/** Session-scoped DJ mode state carried on the music session snapshot. */
+export type MusicSessionDj =
+  | { enabled: false }
+  | { enabled: true; vibe: string; retrying: boolean };
+
 export type MusicSessionSnapshot = {
   guildId: string;
   voiceChannelId: string | null;
-  nowPlaying: Track | null;
-  queue: Track[];
+  nowPlaying: SessionTrack | null;
+  queue: SessionTrack[];
   volume: number;
   repeat: RepeatMode;
   paused: boolean;
+  dj: MusicSessionDj;
 };
+
+export function asSessionTrack(
+  track: Track,
+  provenance: TrackProvenance = 'user',
+): SessionTrack {
+  return { ...track, provenance };
+}
+
+function toMusicNodeTrack(track: SessionTrack): Track {
+  const { provenance: _provenance, ...nodeTrack } = track;
+  return nodeTrack;
+}
 
 export type MusicSessionLifecycleEvent =
   | { kind: 'session-birth'; guildId: string }
@@ -36,17 +61,18 @@ export type MusicSessionLifecycleListener = (
 ) => void;
 
 export type MusicSessionServiceOptions = {
-  shuffle?: (items: Track[]) => Track[];
+  shuffle?: (items: SessionTrack[]) => SessionTrack[];
   availability?: MusicNodeAvailability;
 };
 
 type MusicSession = {
   voiceChannelId: string | null;
-  nowPlaying: Track | null;
-  queue: Track[];
+  nowPlaying: SessionTrack | null;
+  queue: SessionTrack[];
   volume: number;
   repeat: RepeatMode;
   paused: boolean;
+  dj: MusicSessionDj;
 };
 
 export function isSpotifyQuery(query: string): boolean {
@@ -61,7 +87,7 @@ export function isSpotifyQuery(query: string): boolean {
 export class MusicSessionService {
   readonly #musicNode: MusicNodePort;
   readonly #sessions = new Map<string, MusicSession>();
-  readonly #shuffle: (items: Track[]) => Track[];
+  readonly #shuffle: (items: SessionTrack[]) => SessionTrack[];
   readonly #availability: MusicNodeAvailability | null;
   readonly #advancing = new Set<string>();
   readonly #lifecycleListeners = new Set<MusicSessionLifecycleListener>();
@@ -242,11 +268,11 @@ export class MusicSessionService {
     this.#emit({ kind: 'state-change', guildId });
   }
 
-  nowPlaying(guildId: string): Track | null {
+  nowPlaying(guildId: string): SessionTrack | null {
     return this.snapshot(guildId).nowPlaying;
   }
 
-  queue(guildId: string): Track[] {
+  queue(guildId: string): SessionTrack[] {
     return this.snapshot(guildId).queue;
   }
 
@@ -261,6 +287,7 @@ export class MusicSessionService {
       volume: session.volume,
       repeat: session.repeat,
       paused: session.paused,
+      dj: session.dj,
     };
   }
 
@@ -309,6 +336,7 @@ export class MusicSessionService {
     channelId: string,
   ): Promise<void> {
     const session = this.#ensureSession(guildId);
+    const sessionTracks = tracks.map((track) => asSessionTrack(track));
 
     if (session.voiceChannelId !== channelId) {
       await this.#musicNode.connect(guildId, channelId);
@@ -316,7 +344,7 @@ export class MusicSessionService {
     }
 
     if (!session.nowPlaying) {
-      const [first, ...rest] = tracks;
+      const [first, ...rest] = sessionTracks;
       // Queue remainder before track-start so the control-surface bump
       // snapshots Up next with the full playlist, not an empty queue.
       session.queue.push(...rest);
@@ -324,7 +352,7 @@ export class MusicSessionService {
       return;
     }
 
-    session.queue.push(...tracks);
+    session.queue.push(...sessionTracks);
     this.#emit({ kind: 'state-change', guildId });
   }
 
@@ -373,11 +401,11 @@ export class MusicSessionService {
   async #playTrack(
     guildId: string,
     session: MusicSession,
-    track: Track,
+    track: SessionTrack,
   ): Promise<void> {
     session.nowPlaying = track;
     session.paused = false;
-    await this.#musicNode.play(guildId, track);
+    await this.#musicNode.play(guildId, toMusicNodeTrack(track));
     this.#emit({ kind: 'track-start', guildId });
   }
 
@@ -440,10 +468,11 @@ function createEmptySession(): MusicSession {
     volume: 100,
     repeat: 'off',
     paused: false,
+    dj: { enabled: false },
   };
 }
 
-function defaultShuffle(items: Track[]): Track[] {
+function defaultShuffle(items: SessionTrack[]): SessionTrack[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));

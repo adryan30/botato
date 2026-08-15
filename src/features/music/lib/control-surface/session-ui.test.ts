@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Track } from '../music-node/music-node-port.js';
-import type { MusicSessionSnapshot } from '../session/music-session-service.js';
+import {
+  asSessionTrack,
+  type MusicSessionSnapshot,
+  type SessionTrack,
+} from '../session/music-session-service.js';
 import {
   buildSessionControlRows,
   buildSessionEmbed,
@@ -26,6 +30,17 @@ function track(
   };
 }
 
+function sessionTrack(
+  id: string,
+  title = id,
+  extras: Partial<Pick<Track, 'artworkUrl' | 'durationMs' | 'source'>> & {
+    provenance?: SessionTrack['provenance'];
+  } = {},
+): SessionTrack {
+  const { provenance = 'user', ...trackExtras } = extras;
+  return asSessionTrack(track(id, title, trackExtras), provenance);
+}
+
 function snapshot(
   overrides: Partial<MusicSessionSnapshot> = {},
 ): MusicSessionSnapshot {
@@ -37,6 +52,7 @@ function snapshot(
     volume: 100,
     repeat: 'off',
     paused: false,
+    dj: { enabled: false },
     ...overrides,
   };
 }
@@ -79,11 +95,15 @@ describe('session-ui', () => {
   it('builds a playing embed with linked title, status, fields, and thumbnail', () => {
     const data = embedData(
       snapshot({
-        nowPlaying: track('np', 'Never Gonna Give You Up', {
+        nowPlaying: sessionTrack('np', 'Never Gonna Give You Up', {
           artworkUrl: 'https://i.ytimg.com/vi/np/hqdefault.jpg',
           durationMs: 212_000,
         }),
-        queue: [track('a', 'Alpha'), track('b', 'Beta'), track('c', 'Gamma')],
+        queue: [
+          sessionTrack('a', 'Alpha'),
+          sessionTrack('b', 'Beta'),
+          sessionTrack('c', 'Gamma'),
+        ],
         repeat: 'off',
       }),
     );
@@ -110,7 +130,7 @@ describe('session-ui', () => {
   it('builds a paused embed with empty up next and omits missing metadata', () => {
     const data = embedData(
       snapshot({
-        nowPlaying: track('np', 'Blue Monday'),
+        nowPlaying: sessionTrack('np', 'Blue Monday'),
         paused: true,
         repeat: 'track',
       }),
@@ -140,13 +160,13 @@ describe('session-ui', () => {
   it('truncates up next to three tracks plus an and-N-more cue', () => {
     const data = embedData(
       snapshot({
-        nowPlaying: track('np', 'Now'),
+        nowPlaying: sessionTrack('np', 'Now'),
         queue: [
-          track('1', 'One'),
-          track('2', 'Two'),
-          track('3', 'Three'),
-          track('4', 'Four'),
-          track('5', 'Five'),
+          sessionTrack('1', 'One'),
+          sessionTrack('2', 'Two'),
+          sessionTrack('3', 'Three'),
+          sessionTrack('4', 'Four'),
+          sessionTrack('5', 'Five'),
         ],
       }),
     );
@@ -165,7 +185,7 @@ describe('session-ui', () => {
   it('shows up next while idle when tracks are already queued', () => {
     const data = embedData(
       snapshot({
-        queue: [track('a', 'Alpha')],
+        queue: [sessionTrack('a', 'Alpha')],
       }),
     );
 
@@ -177,7 +197,7 @@ describe('session-ui', () => {
 
   it('builds the full transport row while playing', () => {
     const buttons = buttonData(
-      snapshot({ nowPlaying: track('np'), repeat: 'off' }),
+      snapshot({ nowPlaying: sessionTrack('np'), repeat: 'off' }),
     );
 
     expect(buttons.map((button) => button.custom_id)).toEqual([
@@ -205,7 +225,11 @@ describe('session-ui', () => {
 
   it('builds resume instead of pause when the session is paused', () => {
     const buttons = buttonData(
-      snapshot({ nowPlaying: track('np'), paused: true, repeat: 'track' }),
+      snapshot({
+        nowPlaying: sessionTrack('np'),
+        paused: true,
+        repeat: 'track',
+      }),
     );
 
     expect(buttons.map((button) => button.custom_id)).toEqual([
@@ -253,7 +277,7 @@ describe('session-ui', () => {
   it('returns embed and components only with no content body', () => {
     const payload = sessionReplyPayload(
       snapshot({
-        nowPlaying: track('np', 'Solo', { durationMs: 90_000 }),
+        nowPlaying: sessionTrack('np', 'Solo', { durationMs: 90_000 }),
       }),
     );
 
@@ -266,8 +290,12 @@ describe('session-ui', () => {
     expect(
       formatFullQueueList(
         snapshot({
-          nowPlaying: track('np', 'Now Playing'),
-          queue: [track('a', 'Alpha'), track('b', 'Beta'), track('c', 'Gamma')],
+          nowPlaying: sessionTrack('np', 'Now Playing'),
+          queue: [
+            sessionTrack('a', 'Alpha'),
+            sessionTrack('b', 'Beta'),
+            sessionTrack('c', 'Gamma'),
+          ],
         }),
       ),
     ).toBe(
@@ -289,8 +317,117 @@ describe('session-ui', () => {
 
   it('formats a full queue list when playing with an empty queue', () => {
     expect(
-      formatFullQueueList(snapshot({ nowPlaying: track('np', 'Solo') })),
+      formatFullQueueList(
+        snapshot({ nowPlaying: sessionTrack('np', 'Solo') }),
+      ),
     ).toBe(['**Now playing:** Solo', '**Queue:** *(empty)*'].join('\n'));
+  });
+
+  it('shows an inline DJ field with truncated vibe when DJ mode is on', () => {
+    const longVibe =
+      'late night jazz with soft piano and rainy city ambience for focus';
+    const data = embedData(
+      snapshot({
+        nowPlaying: sessionTrack('np', 'Blue in Green'),
+        dj: { enabled: true, vibe: longVibe, retrying: false },
+      }),
+    );
+
+    expect(data.fields).toEqual(
+      expect.arrayContaining([
+        {
+          name: 'DJ',
+          value: 'late night jazz with soft piano and rainy city ambience for…',
+          inline: true,
+        },
+      ]),
+    );
+  });
+
+  it('appends retrying to the DJ field when refill is retrying', () => {
+    const data = embedData(
+      snapshot({
+        nowPlaying: sessionTrack('np', 'Solo'),
+        dj: { enabled: true, vibe: 'lofi beats', retrying: true },
+      }),
+    );
+
+    expect(data.fields).toEqual(
+      expect.arrayContaining([
+        { name: 'DJ', value: 'lofi beats · retrying…', inline: true },
+      ]),
+    );
+  });
+
+  it('omits the DJ field when DJ mode is off', () => {
+    const data = embedData(
+      snapshot({
+        nowPlaying: sessionTrack('np', 'Solo'),
+        dj: { enabled: false },
+      }),
+    );
+
+    expect(data.fields).toEqual([
+      { name: 'Source', value: 'YouTube', inline: true },
+      { name: 'Up next', value: '*(empty)*', inline: false },
+    ]);
+  });
+
+  it('shows the DJ field while idle when DJ mode is on', () => {
+    const data = embedData(
+      snapshot({
+        dj: { enabled: true, vibe: 'synthwave', retrying: false },
+      }),
+    );
+
+    expect(data.title).toBe('Nothing playing');
+    expect(data.fields).toEqual([
+      { name: 'DJ', value: 'synthwave', inline: true },
+    ]);
+  });
+
+  it('prefixes DJ-added tracks in Up next', () => {
+    const data = embedData(
+      snapshot({
+        nowPlaying: sessionTrack('np', 'Now'),
+        queue: [
+          sessionTrack('a', 'Alpha', { provenance: 'dj' }),
+          sessionTrack('b', 'Beta'),
+          sessionTrack('c', 'Gamma', { provenance: 'dj' }),
+        ],
+      }),
+    );
+
+    expect(data.fields).toEqual(
+      expect.arrayContaining([
+        {
+          name: 'Up next',
+          value: '1. DJ · Alpha\n2. Beta\n3. DJ · Gamma',
+          inline: false,
+        },
+      ]),
+    );
+  });
+
+  it('prefixes DJ-added tracks in the full queue list', () => {
+    expect(
+      formatFullQueueList(
+        snapshot({
+          nowPlaying: sessionTrack('np', 'Now Playing', { provenance: 'dj' }),
+          queue: [
+            sessionTrack('a', 'Alpha'),
+            sessionTrack('b', 'Beta', { provenance: 'dj' }),
+          ],
+        }),
+      ),
+    ).toBe(
+      [
+        '**Now playing:** DJ · Now Playing',
+        '**Queue:**',
+        '1. Alpha',
+        '2. DJ · Beta',
+      ].join('\n'),
+    );
   });
 
   it('formats resummon ephemeral copy for same and cross-channel invokes', () => {
