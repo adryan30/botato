@@ -29,6 +29,8 @@ cp .env.example .env
 
 Set `DISCORD_TOKEN`, `MUSIC_NODE_PASSWORD`, and `DATABASE_URL` (Compose Postgres defaults are in `.env.example`). Optional YouTube OAuth / poToken vars are documented in `.env.example`. Spotify is not supported in v1.
 
+When **DJ mode** ships, set `OPENROUTER_API_KEY` (required for `/dj`). Optional `OPENROUTER_DJ_MODEL` defaults to `nvidia/nemotron-nano-9b-v2:free`. Product-level OpenRouter call caps are out of scope for v1 (provider 402/429 still apply at runtime).
+
 **Single-token concurrency:** local and production share one Discord application token. Do not run host Botato and cluster Botato with that token at the same time.
 
 ### 2. Start the music node and Postgres
@@ -135,10 +137,11 @@ In-repo contract for cluster wiring in `adryan30/infra` — **do not** apply Arg
 | Mesh | Istio injection enabled |
 | Bot image | `ghcr.io/adryan30/botato` pinned by digest or immutable tag (never `latest`) |
 | Music node image | Official Lavalink ≥ 4.2 (`youtube-source` via config / download-on-start) |
-| Secrets | ESO + Vault in cluster (Discord token, Lavalink password, optional YouTube OAuth/poToken; no Spotify secrets) |
+| Secrets | ESO + Vault → `botato-env` (Discord token, Lavalink password, optional YouTube OAuth/poToken; when **DJ mode** ships: `OPENROUTER_API_KEY` required, `OPENROUTER_DJ_MODEL` optional default `nvidia/nemotron-nano-9b-v2:free`; no Spotify secrets; never bake secrets into images) |
+| DJ mode quotas | No product-level OpenRouter call caps in v1; provider 402/429 still apply at runtime |
 
 See [docs/adr/0004-image-publish-argo-wiring.md](docs/adr/0004-image-publish-argo-wiring.md).
 
 ## Domain language
 
-See [CONTEXT.md](CONTEXT.md) for **Botato**, **feature module**, **music node**, and **music session**. Architecture decisions live under [docs/adr/](docs/adr/).
+See [CONTEXT.md](CONTEXT.md) for **Botato**, **feature module**, **music node**, **music session**, **DJ mode**, and **DJ vibe**. Architecture decisions live under [docs/adr/](docs/adr/).
