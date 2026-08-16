@@ -40,6 +40,19 @@ export function attachMusicFeature(
   const djMode = new DjModeService(
     musicSessions,
     createConfiguredOpenRouter(config),
+    {
+      modelId: config.openRouter.model,
+      logFailure(entry) {
+        client.logger.warn(`dj_failure ${JSON.stringify(entry)}`);
+      },
+      async notify(guildId, content) {
+        const channelId = musicControlSurface.notedChannelId(guildId);
+        if (!channelId) {
+          return;
+        }
+        await sendGuildTextNotice(client, channelId, content);
+      },
+    },
   );
 
   container.musicSessions = musicSessions;
@@ -64,6 +77,29 @@ function createConfiguredOpenRouter(config: BotatoConfig): OpenRouterPort {
     apiKey,
     model: config.openRouter.model,
   });
+}
+
+async function sendGuildTextNotice(
+  client: Client,
+  channelId: string,
+  content: string,
+): Promise<void> {
+  try {
+    const channel = await client.channels.fetch(channelId);
+    if (!channel || !channel.isTextBased() || channel.isDMBased()) {
+      return;
+    }
+    if (!channel.isSendable()) {
+      return;
+    }
+    await channel.send({ content });
+  } catch (error) {
+    client.logger.error(
+      `Failed to post DJ notice in channel ${channelId}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
 }
 
 function bindSessionAdvanceOnTrackEnd(

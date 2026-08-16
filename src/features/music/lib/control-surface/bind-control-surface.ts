@@ -13,6 +13,8 @@ export type ResummonResult = {
 export type BoundControlSurface = {
   /** Prefer this text channel when the sticky home is not yet set. */
   noteTextChannel(guildId: string, channelId: string): void;
+  /** Sticky home, else the last noted text channel for this guild. */
+  notedChannelId(guildId: string): string | null;
   /**
    * Re-summon the live surface via bump in the sticky channel.
    * Does not re-home when invoked from another channel.
@@ -93,6 +95,9 @@ export function bindControlSurface(
   return {
     noteTextChannel(guildId, channelId) {
       preferredChannels.set(guildId, channelId);
+    },
+    notedChannelId(guildId) {
+      return resolveChannelId(guildId);
     },
     resummon(guildId, invokingChannelId) {
       return new Promise((resolve, reject) => {

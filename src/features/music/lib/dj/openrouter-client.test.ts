@@ -82,6 +82,73 @@ describe('openrouter-client', () => {
     ).rejects.toBeInstanceOf(OpenRouterError);
   });
 
+  it('maps 429 Retry-After into retryAfterMs', async () => {
+    const client = createOpenRouterClient({
+      apiKey: 'sk-test',
+      fetchImpl: (async () =>
+        new Response('slow', {
+          status: 429,
+          headers: { 'Retry-After': '7' },
+        })) as unknown as typeof fetch,
+    });
+
+    const error = await client
+      .suggestTracks({
+        vibe: 'x',
+        historyTitles: [],
+        upcomingTitles: [],
+        count: 5,
+      })
+      .then(
+        () => null,
+        (err: unknown) => err,
+      );
+
+    expect(error).toBeInstanceOf(OpenRouterError);
+    expect(error).toMatchObject({
+      code: 'rate_limit',
+      status: 429,
+      retryAfterMs: 7_000,
+    });
+  });
+
+  it('maps unknown model responses to unknown_model', async () => {
+    const client = createOpenRouterClient({
+      apiKey: 'sk-test',
+      fetchImpl: (async () =>
+        Response.json(
+          { error: { message: 'Model not found' } },
+          { status: 400 },
+        )) as unknown as typeof fetch,
+    });
+
+    await expect(
+      client.suggestTracks({
+        vibe: 'x',
+        historyTitles: [],
+        upcomingTitles: [],
+        count: 5,
+      }),
+    ).rejects.toMatchObject({ code: 'unknown_model' });
+  });
+
+  it('does not treat a bare HTTP 404 as unknown_model', async () => {
+    const client = createOpenRouterClient({
+      apiKey: 'sk-test',
+      fetchImpl: (async () =>
+        new Response('missing', { status: 404 })) as unknown as typeof fetch,
+    });
+
+    await expect(
+      client.suggestTracks({
+        vibe: 'x',
+        historyTitles: [],
+        upcomingTitles: [],
+        count: 5,
+      }),
+    ).rejects.toMatchObject({ code: 'http_error', status: 404 });
+  });
+
   it('builds user content with vibe, history, and upcoming do-not-repeat lists', () => {
     expect(
       buildUserPrompt({

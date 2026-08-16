@@ -20,11 +20,17 @@ export type OpenRouterPort = {
 export class OpenRouterError extends Error {
   readonly status: number | null;
   readonly code: string;
+  /** Hint from Retry-After (ms). Only set for rate-limit responses. */
+  readonly retryAfterMs: number | null;
 
-  constructor(message: string, options: { status?: number; code: string }) {
+  constructor(
+    message: string,
+    options: { status?: number; code: string; retryAfterMs?: number | null },
+  ) {
     super(message);
     this.name = 'OpenRouterError';
     this.status = options.status ?? null;
     this.code = options.code;
+    this.retryAfterMs = options.retryAfterMs ?? null;
   }
 }

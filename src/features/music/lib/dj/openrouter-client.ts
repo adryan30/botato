@@ -76,7 +76,7 @@ export function createOpenRouterClient(
       });
 
       if (!response.ok) {
-        throw mapHttpError(response.status);
+        throw await mapHttpError(response);
       }
 
       const body = (await response.json()) as {
@@ -89,10 +89,7 @@ export function createOpenRouterClient(
       };
 
       if (body.error) {
-        throw new OpenRouterError(
-          body.error.message ?? 'OpenRouter generation failed',
-          { code: 'generation_error' },
-        );
+        throw mapBodyError(body.error);
       }
 
       const choice = body.choices?.[0];
@@ -192,7 +189,19 @@ function parseTrackSuggestions(
   return tracks;
 }
 
-function mapHttpError(status: number): OpenRouterError {
+async function mapHttpError(response: Response): Promise<OpenRouterError> {
+  const status = response.status;
+  const retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'));
+  let bodyMessage = '';
+  try {
+    const body = (await response.json()) as {
+      error?: { message?: string; code?: string | number };
+    };
+    bodyMessage = body.error?.message ?? '';
+  } catch {
+    // Non-JSON error bodies are fine — status mapping still applies.
+  }
+
   if (status === 401) {
     return new OpenRouterError('OpenRouter API key is missing or invalid', {
       status,
@@ -209,12 +218,57 @@ function mapHttpError(status: number): OpenRouterError {
     return new OpenRouterError('OpenRouter rate limit exceeded', {
       status,
       code: 'rate_limit',
+      retryAfterMs,
+    });
+  }
+  if (isUnknownModelMessage(bodyMessage)) {
+    return new OpenRouterError('OpenRouter model is unknown', {
+      status,
+      code: 'unknown_model',
     });
   }
   return new OpenRouterError(`OpenRouter HTTP ${status}`, {
     status,
     code: 'http_error',
   });
+}
+
+function mapBodyError(error: {
+  message?: string;
+  code?: string | number;
+}): OpenRouterError {
+  const message = error.message ?? 'OpenRouter generation failed';
+  if (isUnknownModelMessage(message)) {
+    return new OpenRouterError(message, { code: 'unknown_model' });
+  }
+  return new OpenRouterError(message, { code: 'generation_error' });
+}
+
+function isUnknownModelMessage(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('model') &&
+    (lower.includes('not found') ||
+      lower.includes('unknown') ||
+      lower.includes('does not exist') ||
+      lower.includes('invalid model'))
+  );
+}
+
+function parseRetryAfterMs(header: string | null): number | null {
+  if (!header) {
+    return null;
+  }
+  const trimmed = header.trim();
+  const seconds = Number(trimmed);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.round(seconds * 1_000);
+  }
+  const when = Date.parse(trimmed);
+  if (!Number.isFinite(when)) {
+    return null;
+  }
+  return Math.max(0, when - Date.now());
 }
 
 export const OPENROUTER_DEFAULT_MODEL = DEFAULT_MODEL;
