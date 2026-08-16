@@ -9,8 +9,14 @@ import {
 import { createFakeMusicNode } from '../music-node/fake-music-node.js';
 import type { Track } from '../music-node/music-node-port.js';
 import { MusicSessionService } from '../session/music-session-service.js';
-import { createFakeOpenRouter } from './fake-openrouter.js';
-import { DjModeService } from './dj-mode-service.js';
+import {
+  DjModeService,
+  type DjFailureLog,
+} from './dj-mode-service.js';
+import {
+  createFakeOpenRouter,
+  type FakeOpenRouter,
+} from './fake-openrouter.js';
 import type { DjTrackSuggestion } from './openrouter-port.js';
 import { OpenRouterError } from './openrouter-port.js';
 
@@ -576,6 +582,412 @@ describe('DjModeService', () => {
 
       expect(enqueuedAfterCancel).toBe(0);
       expect(() => sessions.snapshot('guild-1')).toThrow(/no active music session/i);
+    });
+  });
+
+  describe('background failure and degradation', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function createFailureHarness(suggestImpl: FakeOpenRouter['suggestImpl']) {
+      const notices: Array<{ guildId: string; content: string }> = [];
+      const logs: DjFailureLog[] = [];
+      const openRouter = createFakeOpenRouter({ suggestImpl });
+      const node = createFakeMusicNode({
+        searchImpl: async (query) => {
+          const title = query.replace(/^[A-Z] /, '');
+          if (title.startsWith('Miss')) {
+            return [];
+          }
+          return [track(title.toLowerCase(), title)];
+        },
+        resolveImpl: async () => ({
+          kind: 'track',
+          track: track('seed', 'Seed'),
+        }),
+      });
+      const sessions = new MusicSessionService(node);
+      const dj = new DjModeService(sessions, openRouter, {
+        modelId: 'test/model',
+        notify: async (guildId, content) => {
+          notices.push({ guildId, content });
+        },
+        logFailure: (entry) => {
+          logs.push(entry);
+        },
+      });
+      return { openRouter, node, sessions, dj, notices, logs };
+    }
+
+    it('keeps DJ on with retrying after a transient refill failure and retries next trigger', async () => {
+      let attempts = 0;
+      const { sessions, notices, logs, node, openRouter } =
+        createFailureHarness(async () => {
+          attempts += 1;
+          if (attempts === 1) {
+            throw new OpenRouterError('OpenRouter HTTP 503', {
+              status: 503,
+              code: 'http_error',
+            });
+          }
+          return [
+            { artist: 'R', title: 'RetryOne' },
+            { artist: 'R', title: 'RetryTwo' },
+            { artist: 'R', title: 'RetryThree' },
+            { artist: 'R', title: 'RetryFour' },
+            { artist: 'R', title: 'RetryFive' },
+          ];
+        });
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      await sessions.playTrack('guild-1', track('u1', 'User1'), 'voice-1');
+      await sessions.playTrack('guild-1', track('u2', 'User2'), 'voice-1');
+      // queue length 2 → below buffer of 3; setDj schedules refill
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      const queueBefore = sessions.snapshot('guild-1').queue.map((t) => t.id);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(sessions.snapshot('guild-1').dj).toEqual({
+        enabled: true,
+        vibe: 'lofi',
+        retrying: true,
+      });
+      expect(sessions.snapshot('guild-1').queue.map((t) => t.id)).toEqual(
+        queueBefore,
+      );
+      expect(node.connected.get('guild-1')).toBe('voice-1');
+      expect(notices).toHaveLength(0);
+      expect(logs[0]).toMatchObject({
+        guildId: 'guild-1',
+        phase: 'refill',
+        httpStatus: 503,
+        errorCode: 'http_error',
+        strikeCount: 1,
+        resolvedCount: 0,
+        modelId: 'test/model',
+      });
+      expect(JSON.stringify(logs[0])).not.toMatch(/lofi|vibe|sk-|api.?key/i);
+
+      // Next natural trigger: remove one track so buffer stays short.
+      await sessions.remove('guild-1', 1);
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(openRouter.calls.length).toBeGreaterThanOrEqual(2);
+      expect(sessions.snapshot('guild-1').dj).toEqual({
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      expect(sessions.snapshot('guild-1').queue.length).toBeGreaterThanOrEqual(
+        3,
+      );
+      expect(sessions.snapshot('guild-1').queue.map((t) => t.id)).toEqual(
+        expect.arrayContaining(['u2']),
+      );
+    });
+
+    it('turns DJ off with one channel message after three consecutive zero-enqueue failures', async () => {
+      const { sessions, notices, logs, node } = createFailureHarness(
+        async () => {
+          throw new OpenRouterError('OpenRouter returned invalid JSON', {
+            code: 'invalid_json',
+          });
+        },
+      );
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      await sessions.playTrack('guild-1', track('keep', 'Keep Me'), 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      const queueBefore = sessions.snapshot('guild-1').queue.map((t) => t.id);
+
+      // Three failed refill cycles via debounce re-checks while still short.
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(sessions.snapshot('guild-1').dj).toEqual({ enabled: false });
+      expect(notices).toEqual([
+        {
+          guildId: 'guild-1',
+          content: 'DJ mode turned off after repeated refill failures.',
+        },
+      ]);
+      expect(logs.map((l) => l.strikeCount)).toEqual([1, 2, 3]);
+      expect(sessions.snapshot('guild-1').nowPlaying?.id).toBe('seed');
+      expect(sessions.snapshot('guild-1').queue.map((t) => t.id)).toEqual(
+        queueBefore,
+      );
+      expect(node.connected.get('guild-1')).toBe('voice-1');
+    });
+
+    it('resets the strike counter after a successful refill', async () => {
+      let attempts = 0;
+      const { sessions, notices } = createFailureHarness(async () => {
+        attempts += 1;
+        if (attempts <= 2) {
+          throw new OpenRouterError('OpenRouter HTTP 503', {
+            status: 503,
+            code: 'http_error',
+          });
+        }
+        if (attempts === 3) {
+          return [
+            { artist: 'R', title: 'OkOne' },
+            { artist: 'R', title: 'OkTwo' },
+            { artist: 'R', title: 'OkThree' },
+            { artist: 'R', title: 'OkFour' },
+            { artist: 'R', title: 'OkFive' },
+          ];
+        }
+        throw new OpenRouterError('OpenRouter HTTP 503', {
+          status: 503,
+          code: 'http_error',
+        });
+      });
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      // Empty upcoming → refill attempts fire on each debounce while short /
+      // after success+clear-style drains.
+      await sessions.clear('guild-1');
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      // Third attempt succeeds and fills the buffer.
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(sessions.snapshot('guild-1').dj.enabled).toBe(true);
+      expect(notices).toHaveLength(0);
+
+      // Drain again; two failures must not disable (strikes were reset).
+      await sessions.clear('guild-1');
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(sessions.snapshot('guild-1').dj.enabled).toBe(true);
+      expect(notices).toHaveLength(0);
+    });
+
+    it('disables DJ immediately on 401 without burning the strike budget', async () => {
+      const { sessions, notices, logs, node } = createFailureHarness(
+        async () => {
+          throw new OpenRouterError('OpenRouter API key is missing or invalid', {
+            status: 401,
+            code: 'unauthorized',
+          });
+        },
+      );
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      await sessions.playTrack('guild-1', track('keep', 'Keep'), 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      const queueBefore = sessions.snapshot('guild-1').queue.map((t) => t.id);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(sessions.snapshot('guild-1').dj).toEqual({ enabled: false });
+      expect(notices).toEqual([
+        {
+          guildId: 'guild-1',
+          content:
+            'DJ mode turned off: OpenRouter API key is missing or invalid.',
+        },
+      ]);
+      expect(logs[0]?.strikeCount).toBe(0);
+      expect(logs[0]?.errorCode).toBe('unauthorized');
+      expect(node.connected.get('guild-1')).toBe('voice-1');
+      expect(sessions.snapshot('guild-1').queue.map((t) => t.id)).toEqual(
+        queueBefore,
+      );
+    });
+
+    it('disables DJ immediately on 402 and unknown-model', async () => {
+      for (const error of [
+        new OpenRouterError('OpenRouter account is out of credits', {
+          status: 402,
+          code: 'credits',
+        }),
+        new OpenRouterError('OpenRouter model is unknown', {
+          status: 404,
+          code: 'unknown_model',
+        }),
+      ]) {
+        const { sessions, notices, logs } = createFailureHarness(async () => {
+          throw error;
+        });
+        await sessions.play('guild-1', 'seed', 'voice-1');
+        await sessions.playTrack('guild-1', track('keep', 'Keep'), 'voice-1');
+        sessions.setDj('guild-1', {
+          enabled: true,
+          vibe: 'lofi',
+          retrying: false,
+        });
+        const queueBefore = sessions.snapshot('guild-1').queue.map((t) => t.id);
+        await vi.advanceTimersByTimeAsync(1_000);
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(sessions.snapshot('guild-1').dj).toEqual({ enabled: false });
+        expect(notices).toHaveLength(1);
+        expect(logs[0]?.strikeCount).toBe(0);
+        expect(logs[0]?.errorCode).toBe(error.code);
+        expect(sessions.snapshot('guild-1').queue.map((t) => t.id)).toEqual(
+          queueBefore,
+        );
+        await sessions.leave('guild-1');
+      }
+    });
+
+    it('enqueues partial resolves without counting a thin cycle as a strike', async () => {
+      const { sessions, notices, logs } = createFailureHarness(async () => [
+        { artist: 'R', title: 'HitOne' },
+        { artist: 'R', title: 'MissTwo' },
+        { artist: 'R', title: 'MissThree' },
+        { artist: 'R', title: 'MissFour' },
+        { artist: 'R', title: 'MissFive' },
+      ]);
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      await sessions.playTrack('guild-1', track('u1', 'User1'), 'voice-1');
+      await sessions.playTrack('guild-1', track('u2', 'User2'), 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const snap = sessions.snapshot('guild-1');
+      expect(snap.queue.map((t) => t.id)).toEqual(
+        expect.arrayContaining(['u1', 'u2', 'hitone']),
+      );
+      expect(snap.dj).toEqual({
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      expect(notices).toHaveLength(0);
+      expect(logs).toHaveLength(0);
+    });
+
+    it('honors Retry-After on 429 before the next OpenRouter call', async () => {
+      let now = 1_000_000;
+      let attempts = 0;
+      const notices: Array<{ guildId: string; content: string }> = [];
+      const openRouter = createFakeOpenRouter({
+        suggestImpl: async () => {
+          attempts += 1;
+          if (attempts === 1) {
+            throw new OpenRouterError('OpenRouter rate limit exceeded', {
+              status: 429,
+              code: 'rate_limit',
+              retryAfterMs: 5_000,
+            });
+          }
+          return [
+            { artist: 'R', title: 'AfterWait1' },
+            { artist: 'R', title: 'AfterWait2' },
+            { artist: 'R', title: 'AfterWait3' },
+            { artist: 'R', title: 'AfterWait4' },
+            { artist: 'R', title: 'AfterWait5' },
+          ];
+        },
+      });
+      const node = createFakeMusicNode({
+        searchImpl: async (query) => {
+          const title = query.replace(/^R /, '');
+          return [track(title.toLowerCase(), title)];
+        },
+        resolveImpl: async () => ({
+          kind: 'track',
+          track: track('seed', 'Seed'),
+        }),
+      });
+      const sessions = new MusicSessionService(node);
+      new DjModeService(sessions, openRouter, {
+        modelId: 'test/model',
+        nowMs: () => now,
+        notify: async (guildId, content) => {
+          notices.push({ guildId, content });
+        },
+      });
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      await sessions.playTrack('guild-1', track('u1', 'User1'), 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'lofi',
+        retrying: false,
+      });
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(attempts).toBe(1);
+      expect(sessions.snapshot('guild-1').dj).toEqual({
+        enabled: true,
+        vibe: 'lofi',
+        retrying: true,
+      });
+
+      // Still inside Retry-After window — natural trigger must not call again.
+      now += 1_000;
+      await sessions.remove('guild-1', 1);
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      expect(attempts).toBe(1);
+
+      now += 5_000;
+      await sessions.clear('guild-1');
+      await vi.advanceTimersByTimeAsync(1_000);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(attempts).toBe(2);
+      expect(notices).toHaveLength(0);
     });
   });
 });
