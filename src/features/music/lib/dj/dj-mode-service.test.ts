@@ -1,9 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { createFakeMusicNode } from '../music-node/fake-music-node.js';
 import type { Track } from '../music-node/music-node-port.js';
 import { MusicSessionService } from '../session/music-session-service.js';
 import { createFakeOpenRouter } from './fake-openrouter.js';
 import { DjModeService } from './dj-mode-service.js';
+import type { DjTrackSuggestion } from './openrouter-port.js';
 import { OpenRouterError } from './openrouter-port.js';
 
 function track(id: string, title = id): Track {
@@ -13,6 +21,33 @@ function track(id: string, title = id): Track {
     uri: `https://youtube.com/watch?v=${id}`,
     source: 'youtube',
   };
+}
+
+const DEFAULT_SUGGESTIONS: DjTrackSuggestion[] = [
+  { artist: 'A', title: 'One' },
+  { artist: 'B', title: 'Two' },
+  { artist: 'C', title: 'Three' },
+  { artist: 'D', title: 'Four' },
+  { artist: 'E', title: 'Five' },
+];
+
+function createDjHarness(
+  suggestions: DjTrackSuggestion[] = DEFAULT_SUGGESTIONS,
+) {
+  const openRouter = createFakeOpenRouter({
+    suggestImpl: async () => suggestions,
+  });
+  const node = createFakeMusicNode({
+    searchImpl: async (query) => {
+      const hit = suggestions.find((s) => query === `${s.artist} ${s.title}`);
+      return hit
+        ? [track(hit.title.toLowerCase(), `${hit.artist} - ${hit.title}`)]
+        : [];
+    },
+  });
+  const sessions = new MusicSessionService(node);
+  const dj = new DjModeService(sessions, openRouter);
+  return { openRouter, node, sessions, dj, suggestions };
 }
 
 describe('DjModeService', () => {
@@ -229,6 +264,318 @@ describe('DjModeService', () => {
       enabled: true,
       vibe: 'second',
       retrying: false,
+    });
+  });
+
+  describe('auto-refill', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('refills toward 3 after /clear once the debounce elapses', async () => {
+      const { openRouter, sessions, dj } = createDjHarness();
+      await dj.vibe('guild-1', 'vibe', 'voice-1');
+      const callsAfterVibe = openRouter.calls.length;
+
+      await sessions.clear('guild-1');
+      expect(sessions.snapshot('guild-1').queue).toHaveLength(0);
+      expect(openRouter.calls).toHaveLength(callsAfterVibe);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      expect(openRouter.calls.length).toBeGreaterThan(callsAfterVibe);
+      expect(sessions.snapshot('guild-1').queue.length).toBeGreaterThanOrEqual(
+        3,
+      );
+      expect(sessions.snapshot('guild-1').dj.enabled).toBe(true);
+    });
+
+    it('refills after skip drains upcoming below 3', async () => {
+      const { openRouter, sessions, dj } = createDjHarness();
+      await dj.vibe('guild-1', 'vibe', 'voice-1');
+      const callsAfterVibe = openRouter.calls.length;
+      expect(sessions.snapshot('guild-1').queue).toHaveLength(3);
+
+      await sessions.skip('guild-1');
+      expect(sessions.snapshot('guild-1').queue).toHaveLength(2);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      expect(openRouter.calls.length).toBe(callsAfterVibe + 1);
+      expect(sessions.snapshot('guild-1').queue.length).toBeGreaterThanOrEqual(
+        3,
+      );
+    });
+
+    it('coalesces a state-change burst into one OpenRouter call', async () => {
+      const { openRouter, sessions, dj } = createDjHarness();
+      await dj.vibe('guild-1', 'vibe', 'voice-1');
+      const callsAfterVibe = openRouter.calls.length;
+
+      await sessions.remove('guild-1', 1);
+      await sessions.remove('guild-1', 1);
+      await sessions.remove('guild-1', 1);
+      expect(sessions.snapshot('guild-1').queue).toHaveLength(0);
+
+      await vi.advanceTimersByTimeAsync(999);
+      expect(openRouter.calls).toHaveLength(callsAfterVibe);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(openRouter.calls).toHaveLength(callsAfterVibe + 1);
+    });
+
+    it('allows only one in-flight refill and re-checks after it settles', async () => {
+      let releaseSuggest!: () => void;
+      const suggestGate = new Promise<void>((resolve) => {
+        releaseSuggest = resolve;
+      });
+      let suggestStarts = 0;
+      const openRouter = createFakeOpenRouter({
+        suggestImpl: async () => {
+          suggestStarts += 1;
+          if (suggestStarts === 1) {
+            await suggestGate;
+          }
+          return [
+            { artist: 'R', title: `Wave${suggestStarts}a` },
+            { artist: 'R', title: `Wave${suggestStarts}b` },
+            { artist: 'R', title: `Wave${suggestStarts}c` },
+            { artist: 'R', title: `Wave${suggestStarts}d` },
+            { artist: 'R', title: `Wave${suggestStarts}e` },
+          ];
+        },
+      });
+      const node = createFakeMusicNode({
+        searchImpl: async (query) => {
+          const title = query.replace(/^R /, '');
+          return [track(title.toLowerCase(), title)];
+        },
+        resolveImpl: async () => ({
+          kind: 'track',
+          track: track('seed', 'Seed'),
+        }),
+      });
+      const sessions = new MusicSessionService(node);
+      new DjModeService(sessions, openRouter);
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      await sessions.playTrack(
+        'guild-1',
+        track('u1', 'User1'),
+        'voice-1',
+      );
+      await sessions.playTrack(
+        'guild-1',
+        track('u2', 'User2'),
+        'voice-1',
+      );
+      // queue length 2 → first refill only needs 1 track
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'gate',
+        retrying: false,
+      });
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(suggestStarts).toBe(1);
+
+      // Mid-flight clear leaves the original need=1 insufficient.
+      await sessions.clear('guild-1');
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(suggestStarts).toBe(1);
+
+      releaseSuggest();
+      await vi.advanceTimersByTimeAsync(0);
+      await Promise.resolve();
+      await Promise.resolve();
+      // Post-settle re-check schedules another refill for the empty queue.
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      expect(suggestStarts).toBe(2);
+      expect(sessions.snapshot('guild-1').queue.length).toBeGreaterThanOrEqual(
+        3,
+      );
+    });
+
+    it('treats the buffer as a floor: mid-flight user enqueues are not trimmed', async () => {
+      let releaseSuggest!: () => void;
+      const suggestGate = new Promise<void>((resolve) => {
+        releaseSuggest = resolve;
+      });
+      const djSuggestions: DjTrackSuggestion[] = [
+        { artist: 'D', title: 'DjOne' },
+        { artist: 'D', title: 'DjTwo' },
+        { artist: 'D', title: 'DjThree' },
+        { artist: 'D', title: 'DjFour' },
+        { artist: 'D', title: 'DjFive' },
+      ];
+      const openRouter = createFakeOpenRouter({
+        suggestImpl: async () => {
+          await suggestGate;
+          return djSuggestions;
+        },
+      });
+      const node = createFakeMusicNode({
+        searchImpl: async (query) => {
+          const title = query.replace(/^D /, '');
+          return [track(title.toLowerCase(), title)];
+        },
+        resolveImpl: async (query) => ({
+          kind: 'track',
+          track: track(query, query),
+        }),
+      });
+      const sessions = new MusicSessionService(node);
+      new DjModeService(sessions, openRouter);
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'floor',
+        retrying: false,
+      });
+      await sessions.clear('guild-1');
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await sessions.play('guild-1', 'user-a', 'voice-1');
+      await sessions.play('guild-1', 'user-b', 'voice-1');
+      await sessions.play('guild-1', 'user-c', 'voice-1');
+      await sessions.play('guild-1', 'user-d', 'voice-1');
+      expect(sessions.snapshot('guild-1').queue.length).toBeGreaterThanOrEqual(
+        3,
+      );
+      const queueBeforeDjResults = sessions
+        .snapshot('guild-1')
+        .queue.map((t) => t.id);
+
+      releaseSuggest();
+      await vi.advanceTimersByTimeAsync(0);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const after = sessions.snapshot('guild-1');
+      expect(after.queue.length).toBeGreaterThan(queueBeforeDjResults.length);
+      for (const id of queueBeforeDjResults) {
+        expect(after.queue.map((t) => t.id)).toContain(id);
+      }
+      expect(after.queue.some((t) => t.provenance === 'dj')).toBe(true);
+    });
+
+    it('does not refill after /dj off', async () => {
+      const { openRouter, sessions, dj } = createDjHarness();
+      await dj.vibe('guild-1', 'vibe', 'voice-1');
+      await dj.off('guild-1');
+      const callsAfterOff = openRouter.calls.length;
+
+      await sessions.clear('guild-1');
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      expect(openRouter.calls).toHaveLength(callsAfterOff);
+      expect(sessions.snapshot('guild-1').queue).toHaveLength(0);
+    });
+
+    it('abandons an in-flight refill when /dj off is used', async () => {
+      let releaseSuggest!: () => void;
+      const suggestGate = new Promise<void>((resolve) => {
+        releaseSuggest = resolve;
+      });
+      let searches = 0;
+      const openRouter = createFakeOpenRouter({
+        suggestImpl: async () => {
+          await suggestGate;
+          return [
+            { artist: 'X', title: 'Late1' },
+            { artist: 'X', title: 'Late2' },
+            { artist: 'X', title: 'Late3' },
+            { artist: 'X', title: 'Late4' },
+            { artist: 'X', title: 'Late5' },
+          ];
+        },
+      });
+      const node = createFakeMusicNode({
+        searchImpl: async (query) => {
+          searches += 1;
+          const title = query.replace(/^X /, '');
+          return [track(title.toLowerCase(), title)];
+        },
+        resolveImpl: async () => ({
+          kind: 'track',
+          track: track('seed', 'Seed'),
+        }),
+      });
+      const sessions = new MusicSessionService(node);
+      const dj = new DjModeService(sessions, openRouter);
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'off-mid',
+        retrying: false,
+      });
+      await sessions.clear('guild-1');
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await dj.off('guild-1');
+      releaseSuggest();
+      await vi.advanceTimersByTimeAsync(0);
+      await Promise.resolve();
+
+      expect(searches).toBe(0);
+      expect(sessions.snapshot('guild-1').queue).toHaveLength(0);
+      expect(sessions.snapshot('guild-1').dj).toEqual({ enabled: false });
+    });
+
+    it('cancels in-flight refill on session-end and drops DJ state', async () => {
+      let releaseSuggest!: () => void;
+      const suggestGate = new Promise<void>((resolve) => {
+        releaseSuggest = resolve;
+      });
+      let enqueuedAfterCancel = 0;
+      const openRouter = createFakeOpenRouter({
+        suggestImpl: async () => {
+          await suggestGate;
+          return [
+            { artist: 'X', title: 'AfterEnd1' },
+            { artist: 'X', title: 'AfterEnd2' },
+            { artist: 'X', title: 'AfterEnd3' },
+            { artist: 'X', title: 'AfterEnd4' },
+            { artist: 'X', title: 'AfterEnd5' },
+          ];
+        },
+      });
+      const node = createFakeMusicNode({
+        searchImpl: async (query) => {
+          enqueuedAfterCancel += 1;
+          const title = query.replace(/^X /, '');
+          return [track(title.toLowerCase(), title)];
+        },
+        resolveImpl: async () => ({
+          kind: 'track',
+          track: track('seed', 'Seed'),
+        }),
+      });
+      const sessions = new MusicSessionService(node);
+      new DjModeService(sessions, openRouter);
+
+      await sessions.play('guild-1', 'seed', 'voice-1');
+      sessions.setDj('guild-1', {
+        enabled: true,
+        vibe: 'end',
+        retrying: false,
+      });
+      await sessions.clear('guild-1');
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await sessions.leave('guild-1');
+      releaseSuggest();
+      await vi.advanceTimersByTimeAsync(0);
+      await Promise.resolve();
+
+      expect(enqueuedAfterCancel).toBe(0);
+      expect(() => sessions.snapshot('guild-1')).toThrow(/no active music session/i);
     });
   });
 });
