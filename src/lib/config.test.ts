@@ -24,6 +24,10 @@ describe('loadConfig', () => {
         port: 2334,
         password: 'node-password',
       },
+      openRouter: {
+        apiKey: null,
+        model: 'nvidia/nemotron-nano-9b-v2:free',
+      },
     });
   });
 
@@ -37,6 +41,23 @@ describe('loadConfig', () => {
         port: 2333,
         password: 'node-password',
       },
+      openRouter: {
+        apiKey: null,
+        model: 'nvidia/nemotron-nano-9b-v2:free',
+      },
+    });
+  });
+
+  it('loads optional OpenRouter key and model override', () => {
+    expect(
+      loadConfig({
+        ...validEnv,
+        OPENROUTER_API_KEY: 'sk-or',
+        OPENROUTER_DJ_MODEL: 'vendor/model:free',
+      }).openRouter,
+    ).toEqual({
+      apiKey: 'sk-or',
+      model: 'vendor/model:free',
     });
   });
 

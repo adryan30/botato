@@ -53,6 +53,7 @@ function snapshot(
     repeat: 'off',
     paused: false,
     dj: { enabled: false },
+    history: [],
     ...overrides,
   };
 }

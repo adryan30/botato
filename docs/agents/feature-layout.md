@@ -33,15 +33,16 @@ src/features/music/lib/
   session/                  # music session service + availability guards
   music-node/               # MusicNodePort, kazagumo adapter, fakes, availability
   control-surface/          # sticky surface lifecycle, Discord message port/fake, embed builders
+  dj/                       # DJ mode service, OpenRouter port/client/fake
 ```
 
 ### What goes where
 
 | Folder | Owns | Examples |
 | --- | --- | --- |
-| `lib/<domain>/` | Port, service, pure builders, fakes, and colocated `*.test.ts` for that concern | `music-node/music-node-port.ts`, `session/music-session-service.ts` |
+| `lib/<domain>/` | Port, service, pure builders, fakes, and colocated `*.test.ts` for that concern | `music-node/music-node-port.ts`, `session/music-session-service.ts`, `dj/dj-mode-service.ts` |
 | `lib/` root | Composition root, container augment, tiny helpers shared across domains | `attach-music.ts`, `voice.ts` |
-| `commands/`, `interaction-handlers/` | Thin Sapphire adapters that call into `lib/` | `/play`, session control buttons |
+| `commands/`, `interaction-handlers/` | Thin Sapphire adapters that call into `lib/` | `/play`, `/dj`, session control buttons |
 
 ### Rules of thumb
 

@@ -19,11 +19,11 @@ src/features/<name>/
     <tiny-helper>.ts                               # only until it earns a folder
 ```
 
-Music domains today: `lib/session/`, `lib/music-node/`, `lib/control-surface/`.
+Music domains today: `lib/session/`, `lib/music-node/`, `lib/control-surface/`, `lib/dj/`.
 
 ## Do
 
-- Split `lib/` by **domain concern** (session, music-node, control-surface), not by layer
+- Split `lib/` by **domain concern** (session, music-node, control-surface, dj), not by layer
 - Colocate `*.test.ts` and port+fake with the module they belong to
 - Keep commands/handlers thin; import from `lib/<domain>/`
 - Name folders with CONTEXT.md vocabulary
