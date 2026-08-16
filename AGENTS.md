@@ -18,4 +18,4 @@ Feature modules under `src/features/<name>/` use Sapphire piece folders plus dom
 
 ### Git workflow
 
-`main` is PR-only (direct pushes rejected). Conventional Commits (Commitizen) are required — see `docs/agents/git-workflow.md`.
+Commit, push, or land agent work: Conventional Commits; never push `main`; after committing, push the branch and open a PR — see `docs/agents/git-workflow.md`.
