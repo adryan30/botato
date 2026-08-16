@@ -24,9 +24,11 @@ Locally, `pnpm commit` runs Commitizen. Lefthook installs a `commit-msg` hook th
 
 ## Landing changes
 
+A commit on a feature branch is **not done** until the PR exists. After any agent commit meant to land:
+
 1. Commit on a feature branch (not `main`).
 2. `git push -u origin HEAD`
 3. Open a PR with `gh pr create` (base `main`).
 4. Merge via the PR; pull `main` locally after merge.
 
-Head branches are **deleted automatically on merge** — no manual remote branch cleanup.
+Do not stop after a local-only commit. Head branches are **deleted automatically on merge** — no manual remote branch cleanup.
