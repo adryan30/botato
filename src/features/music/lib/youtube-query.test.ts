@@ -37,10 +37,11 @@ describe('youtubeVideoIdFromQuery', () => {
 });
 
 describe('youtubeResolveCandidates', () => {
-  it('tries the raw query then the bare video id', () => {
+  it('tries URL, bare id, then ytsearch for the video id', () => {
     expect(youtubeResolveCandidates('https://youtu.be/M7D2oz6Em48')).toEqual([
       'https://youtu.be/M7D2oz6Em48',
       'M7D2oz6Em48',
+      'ytsearch:M7D2oz6Em48',
     ]);
   });
 
@@ -48,6 +49,14 @@ describe('youtubeResolveCandidates', () => {
     expect(youtubeResolveCandidates('<https://youtu.be/M7D2oz6Em48>')).toEqual([
       'https://youtu.be/M7D2oz6Em48',
       'M7D2oz6Em48',
+      'ytsearch:M7D2oz6Em48',
+    ]);
+  });
+
+  it('adds ytsearch when the query is already a bare video id', () => {
+    expect(youtubeResolveCandidates('M7D2oz6Em48')).toEqual([
+      'M7D2oz6Em48',
+      'ytsearch:M7D2oz6Em48',
     ]);
   });
 

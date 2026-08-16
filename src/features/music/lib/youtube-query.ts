@@ -10,6 +10,10 @@ export function youtubeVideoIdFromQuery(query: string): string | null {
     return null;
   }
 
+  if (VIDEO_ID.test(trimmed)) {
+    return trimmed;
+  }
+
   try {
     const withScheme = /^https?:\/\//i.test(trimmed)
       ? trimmed
@@ -46,14 +50,22 @@ export function youtubeVideoIdFromQuery(query: string): string | null {
   return null;
 }
 
-/** Queries to try with the music node, first match wins at the call site. */
+/**
+ * Queries to try with the music node, first match wins at the call site.
+ * Direct URL/id loads can fail on datacenter IPs ("requires login") while
+ * `ytsearch:<id>` still returns the same video — same path as a title search.
+ */
 export function youtubeResolveCandidates(query: string): string[] {
   const primary = unwrapDiscordUrl(query.trim());
   const candidates = [primary];
   const videoId = youtubeVideoIdFromQuery(primary);
-  if (videoId && videoId !== primary) {
+  if (!videoId) {
+    return candidates;
+  }
+  if (videoId !== primary) {
     candidates.push(videoId);
   }
+  candidates.push(`ytsearch:${videoId}`);
   return candidates;
 }
 
