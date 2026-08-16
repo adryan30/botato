@@ -1,10 +1,14 @@
 import type { Track } from '../music-node/music-node-port.js';
-import type { MusicSessionService } from '../session/music-session-service.js';
+import type {
+  MusicSessionLifecycleEvent,
+  MusicSessionService,
+} from '../session/music-session-service.js';
 import { normalizeDjText, suggestionKey } from './normalize.js';
 import type { DjTrackSuggestion, OpenRouterPort } from './openrouter-port.js';
 
 const SUGGESTION_COUNT = 5;
 const UPCOMING_BUFFER = 3;
+const DEFAULT_DEBOUNCE_MS = 1_000;
 
 export type DjVibeResult = {
   vibe: string;
@@ -15,13 +19,35 @@ export type DjOffResult = {
   alreadyOff: boolean;
 };
 
+export type DjModeServiceOptions = {
+  /** Per-guild debounce before evaluating the upcoming buffer. Default 1000ms. */
+  debounceMs?: number;
+};
+
+type GuildRefillState = {
+  debounceTimer: ReturnType<typeof setTimeout> | null;
+  inFlight: Promise<void> | null;
+  /** Bumped on session-end so in-flight work abandons results. */
+  generation: number;
+};
+
 export class DjModeService {
   readonly #sessions: MusicSessionService;
   readonly #openRouter: OpenRouterPort;
+  readonly #debounceMs: number;
+  readonly #guilds = new Map<string, GuildRefillState>();
 
-  constructor(sessions: MusicSessionService, openRouter: OpenRouterPort) {
+  constructor(
+    sessions: MusicSessionService,
+    openRouter: OpenRouterPort,
+    options: DjModeServiceOptions = {},
+  ) {
     this.#sessions = sessions;
     this.#openRouter = openRouter;
+    this.#debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS;
+    this.#sessions.onLifecycle((event) => {
+      this.#onLifecycle(event);
+    });
   }
 
   async vibe(
@@ -56,6 +82,7 @@ export class DjModeService {
       voiceChannelId,
       suggestions,
       need,
+      this.#guildState(guildId).generation,
     );
 
     if (need > 0 && enqueued === 0) {
@@ -84,7 +111,138 @@ export class DjModeService {
       return { alreadyOff: true };
     }
     this.#sessions.setDj(guildId, { enabled: false });
+    // Stop pending debounce and abandon in-flight enqueue work.
+    this.#cancelGuild(guildId);
     return { alreadyOff: false };
+  }
+
+  #onLifecycle(event: MusicSessionLifecycleEvent): void {
+    if (event.kind === 'session-end') {
+      this.#cancelGuild(event.guildId);
+      return;
+    }
+
+    if (event.kind !== 'state-change' && event.kind !== 'track-start') {
+      return;
+    }
+
+    this.#scheduleRefillCheck(event.guildId);
+  }
+
+  #scheduleRefillCheck(guildId: string): void {
+    let snap;
+    try {
+      snap = this.#sessions.snapshot(guildId);
+    } catch {
+      return;
+    }
+
+    const state = this.#guildState(guildId);
+    if (!snap.dj.enabled || snap.queue.length >= UPCOMING_BUFFER) {
+      if (state.debounceTimer !== null) {
+        clearTimeout(state.debounceTimer);
+        state.debounceTimer = null;
+      }
+      return;
+    }
+
+    if (state.debounceTimer !== null) {
+      clearTimeout(state.debounceTimer);
+    }
+    state.debounceTimer = setTimeout(() => {
+      state.debounceTimer = null;
+      void this.#refillIfNeeded(guildId);
+    }, this.#debounceMs);
+  }
+
+  async #refillIfNeeded(guildId: string): Promise<void> {
+    const state = this.#guildState(guildId);
+    if (state.inFlight) {
+      return;
+    }
+
+    let snap;
+    try {
+      snap = this.#sessions.snapshot(guildId);
+    } catch {
+      return;
+    }
+    if (!snap.dj.enabled || snap.queue.length >= UPCOMING_BUFFER) {
+      return;
+    }
+    if (!snap.voiceChannelId) {
+      return;
+    }
+
+    const generation = state.generation;
+    const vibe = snap.dj.vibe;
+    const voiceChannelId = snap.voiceChannelId;
+    const need = tracksNeeded(snap.nowPlaying !== null, snap.queue.length);
+
+    const run = (async () => {
+      try {
+        const suggestions = await this.#openRouter.suggestTracks({
+          vibe,
+          historyTitles: snap.history.map((t) => t.title),
+          upcomingTitles: [
+            ...(snap.nowPlaying ? [snap.nowPlaying.title] : []),
+            ...snap.queue.map((t) => t.title),
+          ],
+          count: SUGGESTION_COUNT,
+        });
+        if (generation !== this.#guildState(guildId).generation) {
+          return;
+        }
+        await this.#resolveAndEnqueue(
+          guildId,
+          voiceChannelId,
+          suggestions,
+          need,
+          generation,
+        );
+      } catch {
+        // Happy-path quiet refills only — failure UX is a later ticket.
+      }
+    })();
+
+    state.inFlight = run;
+    try {
+      await run;
+    } finally {
+      if (this.#guilds.get(guildId)?.inFlight === run) {
+        state.inFlight = null;
+      }
+    }
+
+    if (generation !== this.#guildState(guildId).generation) {
+      return;
+    }
+    // Post-settle re-check: clear mid-flight or another drain still converges.
+    this.#scheduleRefillCheck(guildId);
+  }
+
+  #cancelGuild(guildId: string): void {
+    const state = this.#guilds.get(guildId);
+    if (!state) {
+      return;
+    }
+    if (state.debounceTimer !== null) {
+      clearTimeout(state.debounceTimer);
+      state.debounceTimer = null;
+    }
+    // Keep the entry so generation stays elevated and abandoned work cannot
+    // enqueue into a later session that reused generation 0.
+    state.generation += 1;
+    state.inFlight = null;
+  }
+
+  #guildState(guildId: string): GuildRefillState {
+    let state = this.#guilds.get(guildId);
+    if (!state) {
+      state = { debounceTimer: null, inFlight: null, generation: 0 };
+      this.#guilds.set(guildId, state);
+    }
+    return state;
   }
 
   async #resolveAndEnqueue(
@@ -92,6 +250,7 @@ export class DjModeService {
     voiceChannelId: string,
     suggestions: DjTrackSuggestion[],
     need: number,
+    generation: number,
   ): Promise<number> {
     if (need <= 0) {
       return 0;
@@ -102,6 +261,9 @@ export class DjModeService {
     const seenSuggestionKeys = new Set<string>();
 
     for (const suggestion of suggestions) {
+      if (generation !== this.#guildState(guildId).generation) {
+        break;
+      }
       if (remaining <= 0) {
         break;
       }
@@ -120,6 +282,9 @@ export class DjModeService {
       const results = await this.#sessions.search(
         `${suggestion.artist} ${suggestion.title}`,
       );
+      if (generation !== this.#guildState(guildId).generation) {
+        break;
+      }
       const top = results.find((track) => track.source === 'youtube') ?? null;
       if (!top) {
         continue;
