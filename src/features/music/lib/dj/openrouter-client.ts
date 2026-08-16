@@ -221,7 +221,7 @@ async function mapHttpError(response: Response): Promise<OpenRouterError> {
       retryAfterMs,
     });
   }
-  if (status === 404 || isUnknownModelMessage(bodyMessage)) {
+  if (isUnknownModelMessage(bodyMessage)) {
     return new OpenRouterError('OpenRouter model is unknown', {
       status,
       code: 'unknown_model',
@@ -259,11 +259,16 @@ function parseRetryAfterMs(header: string | null): number | null {
   if (!header) {
     return null;
   }
-  const seconds = Number(header);
-  if (!Number.isFinite(seconds) || seconds < 0) {
+  const trimmed = header.trim();
+  const seconds = Number(trimmed);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.round(seconds * 1_000);
+  }
+  const when = Date.parse(trimmed);
+  if (!Number.isFinite(when)) {
     return null;
   }
-  return Math.round(seconds * 1_000);
+  return Math.max(0, when - Date.now());
 }
 
 export const OPENROUTER_DEFAULT_MODEL = DEFAULT_MODEL;

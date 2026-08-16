@@ -132,6 +132,23 @@ describe('openrouter-client', () => {
     ).rejects.toMatchObject({ code: 'unknown_model' });
   });
 
+  it('does not treat a bare HTTP 404 as unknown_model', async () => {
+    const client = createOpenRouterClient({
+      apiKey: 'sk-test',
+      fetchImpl: (async () =>
+        new Response('missing', { status: 404 })) as unknown as typeof fetch,
+    });
+
+    await expect(
+      client.suggestTracks({
+        vibe: 'x',
+        historyTitles: [],
+        upcomingTitles: [],
+        count: 5,
+      }),
+    ).rejects.toMatchObject({ code: 'http_error', status: 404 });
+  });
+
   it('builds user content with vibe, history, and upcoming do-not-repeat lists', () => {
     expect(
       buildUserPrompt({
