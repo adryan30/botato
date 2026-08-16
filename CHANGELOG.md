@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.5.0](https://github.com/adryan30/botato/compare/v1.4.0...v1.5.0) (2026-08-16)
+
+
+### Features
+
+* **music:** add DJ snapshot fields and queue provenance ([#87](https://github.com/adryan30/botato/issues/87)) ([#92](https://github.com/adryan30/botato/issues/92)) ([2e19ef7](https://github.com/adryan30/botato/commit/2e19ef7bc1dd4bf3d2c0c756a6706c6a5e5f9fc4))
+* **music:** add OpenRouter port and /dj vibe off first turn ([#89](https://github.com/adryan30/botato/issues/89)) ([#94](https://github.com/adryan30/botato/issues/94)) ([410abfb](https://github.com/adryan30/botato/commit/410abfb9def762d5e70a5048db4add876171d7e8))
+* **music:** auto-refill DJ upcoming queue on state-change ([#90](https://github.com/adryan30/botato/issues/90)) ([#96](https://github.com/adryan30/botato/issues/96)) ([1e18a33](https://github.com/adryan30/botato/commit/1e18a33692b54cbb12fde6ce5732c65cfffa6ece))
+* **music:** harden DJ background refill failure and degradation ([#91](https://github.com/adryan30/botato/issues/91)) ([#98](https://github.com/adryan30/botato/issues/98)) ([50d1a42](https://github.com/adryan30/botato/commit/50d1a42b84a5f77d56818808b670616e7801c5f7))
+
+
+### Bug Fixes
+
+* **music:** fall back to ytsearch when YouTube URL resolve fails ([#99](https://github.com/adryan30/botato/issues/99)) ([8e461c9](https://github.com/adryan30/botato/commit/8e461c99455a4396d23b9f71c78bb3539573f7e8))
+* **music:** show playlist Up next and +N more on idle play ([#75](https://github.com/adryan30/botato/issues/75)) ([336bdff](https://github.com/adryan30/botato/commit/336bdff64774bdf54894b4d987f53f09690a48f0))
+
 ## [1.4.0](https://github.com/adryan30/botato/compare/v1.3.0...v1.4.0) (2026-07-30)
 
 
