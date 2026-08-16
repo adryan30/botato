@@ -69,6 +69,7 @@ describe('MusicSessionService', () => {
       repeat: 'off',
       paused: false,
       dj: { enabled: false },
+      history: [],
     });
   });
 

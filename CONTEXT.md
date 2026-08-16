@@ -32,6 +32,10 @@ _Avoid_: prompt, mood string, genre tag (too narrow)
 Whether a music-session queue / now-playing entry was enqueued by a user or by **DJ mode**. Session-level metadata; not part of the music-node **Track** shape.
 _Avoid_: source (reserved for YouTube/other on Track), owner, requester
 
+**Play history**:
+The last ~20 tracks that left now-playing in the current **music session** (titles and ids). Used by **DJ mode** for do-not-repeat context; session-scoped only.
+_Avoid_: taste profile, cross-session memory
+
 **AFK mark**:
 Botato's record that a guild member is marked away: the prefix in use and the member's nickname before the mark. It is the source of truth for whether they are AFK; the server nickname is only the visible effect when Discord allows changing it.
 _Avoid_: AFK status (ambiguous with Discord presence), AFK mode, AFK state

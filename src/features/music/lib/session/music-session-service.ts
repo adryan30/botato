@@ -32,6 +32,8 @@ export type MusicSessionSnapshot = {
   repeat: RepeatMode;
   paused: boolean;
   dj: MusicSessionDj;
+  /** Last ~20 tracks that left now-playing in this session (oldest first). */
+  history: SessionTrack[];
 };
 
 export function asSessionTrack(
@@ -73,7 +75,10 @@ type MusicSession = {
   repeat: RepeatMode;
   paused: boolean;
   dj: MusicSessionDj;
+  history: SessionTrack[];
 };
+
+const HISTORY_LIMIT = 20;
 
 export function isSpotifyQuery(query: string): boolean {
   const trimmed = query.trim().toLowerCase();
@@ -288,7 +293,31 @@ export class MusicSessionService {
       repeat: session.repeat,
       paused: session.paused,
       dj: session.dj,
+      history: [...session.history],
     };
+  }
+
+  setDj(guildId: string, dj: MusicSessionDj): void {
+    this.#requireAvailable();
+    const session = this.#requireSession(guildId);
+    session.dj = dj;
+    this.#emit({ kind: 'state-change', guildId });
+  }
+
+  /**
+   * Enqueue already-resolved tracks with explicit provenance (e.g. DJ-added).
+   */
+  async enqueueTracks(
+    guildId: string,
+    tracks: Track[],
+    channelId: string,
+    provenance: TrackProvenance = 'user',
+  ): Promise<void> {
+    this.#requireAvailable();
+    if (tracks.length === 0) {
+      return;
+    }
+    await this.#enqueueTracks(guildId, tracks, channelId, provenance);
   }
 
   async clear(guildId: string): Promise<void> {
@@ -334,9 +363,12 @@ export class MusicSessionService {
     guildId: string,
     tracks: Track[],
     channelId: string,
+    provenance: TrackProvenance = 'user',
   ): Promise<void> {
     const session = this.#ensureSession(guildId);
-    const sessionTracks = tracks.map((track) => asSessionTrack(track));
+    const sessionTracks = tracks.map((track) =>
+      asSessionTrack(track, provenance),
+    );
 
     if (session.voiceChannelId !== channelId) {
       await this.#musicNode.connect(guildId, channelId);
@@ -364,6 +396,10 @@ export class MusicSessionService {
 
     const finished = session.nowPlaying;
     const next = session.queue.shift() ?? null;
+
+    if (finished) {
+      this.#recordHistory(session, finished);
+    }
 
     if (session.repeat === 'queue' && finished) {
       session.queue.push(finished);
@@ -458,6 +494,13 @@ export class MusicSessionService {
       throw new Error(INDEX_BOUNDS);
     }
   }
+
+  #recordHistory(session: MusicSession, track: SessionTrack): void {
+    session.history.push(track);
+    if (session.history.length > HISTORY_LIMIT) {
+      session.history.splice(0, session.history.length - HISTORY_LIMIT);
+    }
+  }
 }
 
 function createEmptySession(): MusicSession {
@@ -469,6 +512,7 @@ function createEmptySession(): MusicSession {
     repeat: 'off',
     paused: false,
     dj: { enabled: false },
+    history: [],
   };
 }
 

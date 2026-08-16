@@ -4,12 +4,20 @@ export type MusicNodeConfig = {
   password: string;
 };
 
+export type OpenRouterConfig = {
+  apiKey: string | null;
+  model: string;
+};
+
 export type BotatoConfig = {
   discordToken: string;
   discordGuildIds: string[];
   databaseUrl: string;
   musicNode: MusicNodeConfig;
+  openRouter: OpenRouterConfig;
 };
+
+const OPENROUTER_DEFAULT_MODEL = 'nvidia/nemotron-nano-9b-v2:free';
 
 export function loadConfig(
   env: NodeJS.ProcessEnv = process.env,
@@ -36,11 +44,19 @@ export function loadConfig(
     throw new Error('MUSIC_NODE_PORT must be an integer between 1 and 65535');
   }
 
+  const openRouterKey = env.OPENROUTER_API_KEY?.trim() || null;
+  const openRouterModel =
+    env.OPENROUTER_DJ_MODEL?.trim() || OPENROUTER_DEFAULT_MODEL;
+
   return {
     discordToken,
     discordGuildIds: parseGuildIds(env),
     databaseUrl,
     musicNode: { host, port, password },
+    openRouter: {
+      apiKey: openRouterKey,
+      model: openRouterModel,
+    },
   };
 }
 

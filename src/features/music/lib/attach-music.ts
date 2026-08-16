@@ -5,6 +5,10 @@ import './container-augment.js';
 import { bindControlSurface } from './control-surface/bind-control-surface.js';
 import { createDiscordMessagePort } from './control-surface/discord-messages.js';
 import { MusicControlSurface } from './control-surface/music-control-surface.js';
+import { DjModeService } from './dj/dj-mode-service.js';
+import { createOpenRouterClient } from './dj/openrouter-client.js';
+import type { OpenRouterPort } from './dj/openrouter-port.js';
+import { OpenRouterError } from './dj/openrouter-port.js';
 import {
   createKazagumoMusicNode,
   type KazagumoMusicNode,
@@ -33,10 +37,33 @@ export function attachMusicFeature(
     },
   });
   const musicControlSurface = bindControlSurface(musicSessions, surface);
+  const djMode = new DjModeService(
+    musicSessions,
+    createConfiguredOpenRouter(config),
+  );
 
   container.musicSessions = musicSessions;
   container.musicControlSurface = musicControlSurface;
+  container.djMode = djMode;
   return musicSessions;
+}
+
+function createConfiguredOpenRouter(config: BotatoConfig): OpenRouterPort {
+  const apiKey = config.openRouter.apiKey;
+  if (!apiKey) {
+    return {
+      async suggestTracks() {
+        throw new OpenRouterError(
+          'OPENROUTER_API_KEY is not configured. Set it to use /dj.',
+          { code: 'missing_key' },
+        );
+      },
+    };
+  }
+  return createOpenRouterClient({
+    apiKey,
+    model: config.openRouter.model,
+  });
 }
 
 function bindSessionAdvanceOnTrackEnd(
