@@ -42,7 +42,7 @@ function setup() {
   const messages = createFakeDiscordMessages();
   const surface = new MusicControlSurface(messages);
   const bound = bindControlSurface(sessions, surface);
-  return { sessions, messages, surface, bound };
+  return { node, sessions, messages, surface, bound };
 }
 
 describe('bindControlSurface', () => {
@@ -198,13 +198,13 @@ describe('bindControlSurface', () => {
   });
 
   it('deletes the live surface when the music node is lost', async () => {
-    const { sessions, messages, surface, bound } = setup();
+    const { node, messages, surface, bound, sessions } = setup();
     bound.noteTextChannel('guild-1', 'text-1');
     await sessions.play('guild-1', 'first', 'voice-1');
     await bound.whenIdle();
     messages.calls.length = 0;
 
-    await sessions.handleMusicNodeLost();
+    await node.setAvailable(false);
     await bound.whenIdle();
 
     expect(messages.calls.map((call) => call.op)).toEqual(['delete']);

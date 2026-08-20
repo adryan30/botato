@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createFakeMusicNode } from '../music-node/fake-music-node.js';
-import { MusicNodeAvailability } from '../music-node/music-node-availability.js';
 import type { Track } from '../music-node/music-node-port.js';
-import { MUSIC_UNAVAILABLE } from './require-music-available.js';
 import {
   asSessionTrack,
+  MUSIC_UNAVAILABLE,
   type MusicSessionLifecycleEvent,
   MusicSessionService,
   type SessionTrack,
@@ -98,26 +97,44 @@ describe('MusicSessionService', () => {
     await service.play('guild-1', 'song', 'voice-1');
     await service.join('guild-2', 'voice-2');
 
-    await service.handleMusicNodeLost();
+    await node.setAvailable(false);
 
-    expect(() => service.snapshot('guild-1')).toThrow('No active music session');
-    expect(() => service.snapshot('guild-2')).toThrow('No active music session');
     expect(node.connected.has('guild-1')).toBe(false);
     expect(node.connected.has('guild-2')).toBe(false);
+    await node.setAvailable(true);
+    expect(() => service.snapshot('guild-1')).toThrow('No active music session');
+    expect(() => service.snapshot('guild-2')).toThrow('No active music session');
   });
 
   it('rejects music actions when the music node is unavailable', async () => {
-    const availability = new MusicNodeAvailability();
     const service = new MusicSessionService(
       createFakeMusicNode({
+        available: false,
         resolveImpl: async () => ({ kind: 'track', track: youtubeTrack }),
       }),
-      { availability },
     );
 
     await expect(
       service.play('guild-1', 'song', 'voice-1'),
     ).rejects.toThrow(MUSIC_UNAVAILABLE);
+  });
+
+  it('does not emit a second session-end when availability stays false', async () => {
+    const node = createFakeMusicNode({
+      resolveImpl: async () => ({ kind: 'track', track: youtubeTrack }),
+    });
+    const service = new MusicSessionService(node);
+    const events: MusicSessionLifecycleEvent[] = [];
+    service.onLifecycle((event) => events.push(event));
+    await service.play('guild-1', 'song', 'voice-1');
+    events.length = 0;
+
+    await node.setAvailable(false);
+    await node.setAvailable(false);
+
+    expect(events).toEqual([
+      { kind: 'session-end', guildId: 'guild-1', reason: 'music-node-lost' },
+    ]);
   });
 
   it('rejects play when no voice channel is provided and none is joined', async () => {
@@ -650,7 +667,7 @@ describe('MusicSessionService', () => {
       await lossService.join('guild-2', 'voice-2');
       lossEvents.length = 0;
 
-      await lossService.handleMusicNodeLost();
+      await node.setAvailable(false);
       expect(lossEvents).toEqual(
         expect.arrayContaining([
           {
