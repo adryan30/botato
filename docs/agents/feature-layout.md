@@ -30,8 +30,8 @@ src/features/music/lib/
   container-augment.ts
   voice.ts                  # small shared helper
   search-results-cache.ts   # small shared helper
-  session/                  # music session service + availability guards
-  music-node/               # MusicNodePort, kazagumo adapter, fakes, availability
+  session/                  # music session (queue, playback policy, lifecycle)
+  music-node/               # MusicNodePort, kazagumo adapter, fakes, availability + track-finished
   control-surface/          # sticky surface lifecycle, Discord message port/fake, embed builders
   dj/                       # DJ mode service, OpenRouter port/client/fake
 ```

@@ -1,7 +1,7 @@
-import type { MusicNodeAvailability } from '../music-node/music-node-availability.js';
 import type { MusicNodePort, Track } from '../music-node/music-node-port.js';
 import { youtubeResolveCandidates } from '../youtube-query.js';
-import { requireMusicAvailable } from './require-music-available.js';
+
+export const MUSIC_UNAVAILABLE = 'Music is temporarily unavailable.';
 
 const NO_SESSION = 'No active music session';
 const NO_VOICE = 'No voice channel';
@@ -64,7 +64,6 @@ export type MusicSessionLifecycleListener = (
 
 export type MusicSessionServiceOptions = {
   shuffle?: (items: SessionTrack[]) => SessionTrack[];
-  availability?: MusicNodeAvailability;
 };
 
 type MusicSession = {
@@ -93,7 +92,6 @@ export class MusicSessionService {
   readonly #musicNode: MusicNodePort;
   readonly #sessions = new Map<string, MusicSession>();
   readonly #shuffle: (items: SessionTrack[]) => SessionTrack[];
-  readonly #availability: MusicNodeAvailability | null;
   readonly #advancing = new Set<string>();
   readonly #lifecycleListeners = new Set<MusicSessionLifecycleListener>();
 
@@ -103,7 +101,12 @@ export class MusicSessionService {
   ) {
     this.#musicNode = musicNode;
     this.#shuffle = options.shuffle ?? defaultShuffle;
-    this.#availability = options.availability ?? null;
+    this.#musicNode.onTrackFinished((guildId) => this.#onTrackFinished(guildId));
+    this.#musicNode.onAvailabilityChange((available) => {
+      if (!available) {
+        return this.#onMusicNodeLost();
+      }
+    });
   }
 
   onLifecycle(listener: MusicSessionLifecycleListener): void {
@@ -130,7 +133,7 @@ export class MusicSessionService {
     this.#emit({ kind: 'session-end', guildId, reason: 'leave' });
   }
 
-  async handleMusicNodeLost(): Promise<void> {
+  async #onMusicNodeLost(): Promise<void> {
     const guildIds = [...this.#sessions.keys()];
     this.#sessions.clear();
     this.#advancing.clear();
@@ -227,12 +230,12 @@ export class MusicSessionService {
   }
 
   /**
-   * Advance after the music node reports the current track ended.
-   * No-ops while a skip/advance is already in flight so node empty events
+   * Advance after the music node reports the current track finished.
+   * No-ops while a skip/advance is already in flight so finish events
    * from replace/stop do not double-advance the session.
    */
-  async handleTrackEnd(guildId: string): Promise<void> {
-    if (this.#availability && !this.#availability.isAvailable()) {
+  async #onTrackFinished(guildId: string): Promise<void> {
+    if (!this.#musicNode.isAvailable()) {
       return;
     }
     if (this.#advancing.has(guildId)) {
@@ -245,7 +248,11 @@ export class MusicSessionService {
     } catch {
       return;
     }
-    await this.skip(guildId);
+    try {
+      await this.skip(guildId);
+    } catch {
+      // Session went idle between the event and advance — ignore.
+    }
   }
 
   async skipTo(guildId: string, index: number): Promise<void> {
@@ -475,10 +482,9 @@ export class MusicSessionService {
   }
 
   #requireAvailable(): void {
-    if (!this.#availability) {
-      return;
+    if (!this.#musicNode.isAvailable()) {
+      throw new Error(MUSIC_UNAVAILABLE);
     }
-    requireMusicAvailable(this.#availability.isAvailable());
   }
 
   #requireSession(guildId: string): MusicSession {

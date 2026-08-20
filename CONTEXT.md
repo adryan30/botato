@@ -16,6 +16,10 @@ _Avoid_: plugin (reserved for runtime-loaded extensions, which Botato is not usi
 A separate process that resolves media sources and streams audio into Discord voice on Botato's behalf.
 _Avoid_: Lavalink (implementation), music bot, audio server
 
+**Music node availability**:
+Whether a **music node** is reachable for Botato to use.
+_Avoid_: Lavalink health, node status, degraded mode
+
 **Music session**:
 The playback state for one guild's active voice listening (queue, now playing, control surface). It exists only while Botato can use a reachable **music node**; if the node is lost, the session ends.
 _Avoid_: queue (the queue is part of a session, not the whole), player (ambiguous with Discord player UI), paused-for-reconnect session

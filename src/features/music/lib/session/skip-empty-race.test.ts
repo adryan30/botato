@@ -12,23 +12,22 @@ function track(id: string): Track {
   };
 }
 
-describe('MusicSessionService.handleTrackEnd', () => {
-  it('advances to the next queued track when the current track ends', async () => {
+describe('music node track finished', () => {
+  it('advances to the next queued track when the current track finishes', async () => {
     const a = track('a');
     const b = track('b');
     let call = 0;
-    const service = new MusicSessionService(
-      createFakeMusicNode({
-        resolveImpl: async () => {
-          call += 1;
-          return { kind: 'track', track: call === 1 ? a : b };
-        },
-      }),
-    );
+    const node = createFakeMusicNode({
+      resolveImpl: async () => {
+        call += 1;
+        return { kind: 'track', track: call === 1 ? a : b };
+      },
+    });
+    const service = new MusicSessionService(node);
     await service.play('guild-1', 'a', 'voice-1');
     await service.play('guild-1', 'b');
 
-    await service.handleTrackEnd('guild-1');
+    await node.finishTrack('guild-1');
 
     expect(service.snapshot('guild-1')).toMatchObject({
       nowPlaying: b,
@@ -36,15 +35,14 @@ describe('MusicSessionService.handleTrackEnd', () => {
     });
   });
 
-  it('clears now playing when the last track ends with repeat off', async () => {
-    const service = new MusicSessionService(
-      createFakeMusicNode({
-        resolveImpl: async () => ({ kind: 'track', track: track('only') }),
-      }),
-    );
+  it('clears now playing when the last track finishes with repeat off', async () => {
+    const node = createFakeMusicNode({
+      resolveImpl: async () => ({ kind: 'track', track: track('only') }),
+    });
+    const service = new MusicSessionService(node);
     await service.play('guild-1', 'only', 'voice-1');
 
-    await service.handleTrackEnd('guild-1');
+    await node.finishTrack('guild-1');
 
     expect(service.snapshot('guild-1')).toMatchObject({
       nowPlaying: null,
@@ -52,7 +50,7 @@ describe('MusicSessionService.handleTrackEnd', () => {
     });
   });
 
-  it('ignores track-end while a skip advance is already in flight', async () => {
+  it('ignores track-finished while a skip advance is already in flight', async () => {
     const a = track('a');
     const b = track('b');
     const c = track('c');
@@ -75,7 +73,7 @@ describe('MusicSessionService.handleTrackEnd', () => {
     node.play = async (guildId, next) => {
       playCalls += 1;
       if (playCalls === 2) {
-        // Second play is the skip → b transition; hold it so handleTrackEnd races.
+        // Second play is the skip → b transition; hold it so finishTrack races.
         await playGate;
       }
       await originalPlay(guildId, next);
@@ -88,8 +86,8 @@ describe('MusicSessionService.handleTrackEnd', () => {
 
     const skipPromise = service.skip('guild-1');
     await Promise.resolve();
-    // Node empty event during replace must not double-advance past b.
-    await service.handleTrackEnd('guild-1');
+    // Finish event during replace must not double-advance past b.
+    await node.finishTrack('guild-1');
     releasePlay();
     await skipPromise;
 

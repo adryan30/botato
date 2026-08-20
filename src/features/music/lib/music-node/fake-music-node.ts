@@ -1,4 +1,10 @@
-import type { MusicNodePort, ResolveResult, Track } from './music-node-port.js';
+import type {
+  MusicNodeAvailabilityListener,
+  MusicNodePort,
+  MusicNodeTrackFinishedListener,
+  ResolveResult,
+  Track,
+} from './music-node-port.js';
 
 export type FakeMusicNode = MusicNodePort & {
   connected: Map<string, string>;
@@ -8,18 +14,23 @@ export type FakeMusicNode = MusicNodePort & {
   seekPositions: Map<string, number>;
   resolveImpl: (query: string) => Promise<ResolveResult>;
   searchImpl: (query: string) => Promise<Track[]>;
+  setAvailable(available: boolean): Promise<void>;
+  finishTrack(guildId: string): Promise<void>;
 };
 
 export function createFakeMusicNode(
   overrides: Partial<
     Pick<FakeMusicNode, 'resolveImpl' | 'searchImpl'>
-  > = {},
+  > & { available?: boolean } = {},
 ): FakeMusicNode {
   const connected = new Map<string, string>();
   const playing = new Map<string, Track>();
   const paused = new Set<string>();
   const volumes = new Map<string, number>();
   const seekPositions = new Map<string, number>();
+  let available = overrides.available ?? true;
+  const availabilityListeners = new Set<MusicNodeAvailabilityListener>();
+  const trackFinishedListeners = new Set<MusicNodeTrackFinishedListener>();
 
   const fake: FakeMusicNode = {
     connected,
@@ -37,6 +48,33 @@ export function createFakeMusicNode(
       (async () => {
         throw new Error('searchImpl not configured');
       }),
+    isAvailable() {
+      return available;
+    },
+    onAvailabilityChange(listener) {
+      availabilityListeners.add(listener);
+    },
+    onTrackFinished(listener) {
+      trackFinishedListeners.add(listener);
+    },
+    async setAvailable(next) {
+      if (available === next) {
+        return;
+      }
+      available = next;
+      await Promise.all(
+        [...availabilityListeners].map((listener) =>
+          Promise.resolve(listener(next)),
+        ),
+      );
+    },
+    async finishTrack(guildId) {
+      await Promise.all(
+        [...trackFinishedListeners].map((listener) =>
+          Promise.resolve(listener(guildId)),
+        ),
+      );
+    },
     async connect(guildId, channelId) {
       connected.set(guildId, channelId);
     },

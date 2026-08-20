@@ -2,17 +2,19 @@ import type { Client } from 'discord.js';
 import { Kazagumo, type KazagumoTrack } from 'kazagumo';
 import { Connectors, type NodeOption } from 'shoukaku';
 import type { MusicNodeConfig } from '../../../../lib/config.js';
-import type { MusicNodePort, Track } from './music-node-port.js';
+import type {
+  MusicNodeAvailabilityListener,
+  MusicNodePort,
+  MusicNodeTrackFinishedListener,
+  Track,
+} from './music-node-port.js';
 
-export type KazagumoMusicNode = MusicNodePort & {
-  readonly kazagumo: Kazagumo;
-  readonly nodeOption: NodeOption;
-};
+const MUSIC_NODE_READD_DELAY_MS = 5_000;
 
 export function createKazagumoMusicNode(
   client: Client,
   connection: MusicNodeConfig,
-): KazagumoMusicNode {
+): MusicNodePort {
   const nodeOption: NodeOption = {
     name: 'main',
     url: `${connection.host}:${connection.port}`,
@@ -41,6 +43,80 @@ export function createKazagumoMusicNode(
   );
 
   const encodedTracks = new Map<string, KazagumoTrack>();
+  const availabilityListeners = new Set<MusicNodeAvailabilityListener>();
+  const trackFinishedListeners = new Set<MusicNodeTrackFinishedListener>();
+  let available = false;
+  let readdScheduled = false;
+
+  const setAvailable = (next: boolean): void => {
+    if (available === next) {
+      return;
+    }
+    available = next;
+    for (const listener of availabilityListeners) {
+      void Promise.resolve(listener(next)).catch((error) => {
+        client.logger.error(
+          `Music node availability listener failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      });
+    }
+  };
+
+  const scheduleNodeReadd = (): void => {
+    if (readdScheduled) {
+      return;
+    }
+    readdScheduled = true;
+    setTimeout(() => {
+      readdScheduled = false;
+      if (kazagumo.shoukaku.nodes.has(nodeOption.name)) {
+        return;
+      }
+      client.logger.warn(
+        `Music node "${nodeOption.name}" was removed; reconnecting`,
+      );
+      setAvailable(false);
+      kazagumo.shoukaku.addNode(nodeOption);
+    }, MUSIC_NODE_READD_DELAY_MS);
+  };
+
+  kazagumo.on('playerEmpty', (player) => {
+    for (const listener of trackFinishedListeners) {
+      void Promise.resolve(listener(player.guildId)).catch(() => {
+        // Session went idle between the event and advance — ignore.
+      });
+    }
+  });
+
+  const shoukaku = kazagumo.shoukaku;
+
+  shoukaku.on('ready', (name) => {
+    client.logger.info(`Music node "${name}" is available`);
+    setAvailable(true);
+  });
+
+  shoukaku.on('close', (name, code, reason) => {
+    client.logger.warn(
+      `Music node "${name}" closed (${code}): ${reason || 'no reason'}`,
+    );
+    setAvailable(false);
+  });
+
+  shoukaku.on('reconnecting', (name, triesLeft, interval) => {
+    client.logger.warn(
+      `Music node "${name}" reconnecting in ${interval}s (${triesLeft} tries left)`,
+    );
+  });
+
+  shoukaku.on('error', (name, error) => {
+    client.logger.error(
+      `Music node "${name}" error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    setAvailable(false);
+    scheduleNodeReadd();
+  });
 
   const toDomainTrack = (track: KazagumoTrack): Track => {
     track.setKazagumo(kazagumo);
@@ -76,9 +152,16 @@ export function createKazagumoMusicNode(
     return encoded;
   };
 
-  const node: KazagumoMusicNode = {
-    kazagumo,
-    nodeOption,
+  return {
+    isAvailable() {
+      return available;
+    },
+    onAvailabilityChange(listener) {
+      availabilityListeners.add(listener);
+    },
+    onTrackFinished(listener) {
+      trackFinishedListeners.add(listener);
+    },
 
     async connect(guildId, channelId) {
       const existing = kazagumo.getPlayer(guildId);
@@ -162,8 +245,6 @@ export function createKazagumoMusicNode(
       await requirePlayer(guildId).setVolume(volume);
     },
   };
-
-  return node;
 }
 
 function mapSource(sourceName: string): Track['source'] {
