@@ -1,0 +1,34 @@
+# Graphify
+
+This project has a knowledge graph at `graphify-out/` (`graph.json`). Use it as a **map when the target area is unclear**, not as a gate before every file read.
+
+## When to use it
+
+Prefer `graphify` first when:
+
+- You don't know which feature/module owns the behavior
+- You're tracing cross-file dependencies or "what touches X?"
+- A concept spans multiple packages and grep would thrash
+
+Commands:
+
+- `graphify query "<question>"` — scoped subgraph for an architecture/codebase question
+- `graphify path "<A>" "<B>"` — dependency path between two symbols
+- `graphify explain "<concept>"` — nodes related to a concept
+
+If `graphify-out/wiki/index.md` exists, prefer navigating that over raw files for overview questions. Use `GRAPH_REPORT.md` only for broad architecture review when query/path/explain are not enough.
+
+## When to skip it
+
+Go straight to Read/Grep/Glob/Bash when:
+
+- The issue, path, or prior context already names the files/symbols
+- You're editing, typechecking, testing, or debugging a known seam
+- Graphify already oriented you earlier in the session
+- `graphify-out/graph.json` is missing
+
+Do **not** require graphify in every subagent prompt. Pass it only when that subagent must discover unfamiliar structure.
+
+## Keeping it current
+
+After landing architecture-relevant code changes (new modules, renames, public API moves), run `graphify update .` (AST-only, no API cost). Skip for pure test/copy tweaks when the topology did not change.
