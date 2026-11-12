@@ -71,7 +71,7 @@ With the music node healthy and Botato logged in to your private guild:
 
 ### Feature modules
 
-Botato expands by adding in-repo **feature modules** under `src/features/<name>/`, not runtime plugins. Each feature uses Sapphire piece folders (`commands`, `listeners`, `interaction-handlers`, `lib`, …). Core stays thin (client boot, plugin registration, explicit `stores.registerPath`, cross-feature utils) and registers **`features/music`**, **`features/afk`**, **`features/pick`**, and **`features/tga`**.
+Botato expands by adding in-repo **feature modules** under `src/features/<name>/`, not runtime plugins. Each feature uses Sapphire piece folders (`commands`, `listeners`, `interaction-handlers`, `lib`, …). Core stays thin (client boot, plugin registration, explicit `stores.registerPath`, cross-feature utils) and registers **`features/music`**, **`features/afk`**, **`features/pick`**, **`features/tga`**, and **`features/dm`**.
 
 Do **not** check in empty non-music feature folders. The stub shape for a future feature is:
 

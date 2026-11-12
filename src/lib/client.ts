@@ -38,6 +38,7 @@ export function createBotatoClient(
   client.stores.registerPath(join(options.rootDir, 'features', 'afk'));
   client.stores.registerPath(join(options.rootDir, 'features', 'pick'));
   client.stores.registerPath(join(options.rootDir, 'features', 'tga'));
+  client.stores.registerPath(join(options.rootDir, 'features', 'dm'));
 
   return client;
 }

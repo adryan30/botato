@@ -19,6 +19,7 @@ describe('createBotatoClient', () => {
     mkdirSync(join(root, 'features', 'afk'), { recursive: true });
     mkdirSync(join(root, 'features', 'pick'), { recursive: true });
     mkdirSync(join(root, 'features', 'tga'), { recursive: true });
+    mkdirSync(join(root, 'features', 'dm'), { recursive: true });
     roots.push(root);
     return root;
   }
@@ -41,12 +42,13 @@ describe('createBotatoClient', () => {
     await Promise.all([devClient.destroy(), prodClient.destroy()]);
   });
 
-  it('registers the music, afk, pick, and tga feature module paths', async () => {
+  it('registers the music, afk, pick, tga, and dm feature module paths', async () => {
     const rootDir = makeRoot();
     const musicCommandsPath = join(rootDir, 'features', 'music', 'commands');
     const afkCommandsPath = join(rootDir, 'features', 'afk', 'commands');
     const pickCommandsPath = join(rootDir, 'features', 'pick', 'commands');
     const tgaCommandsPath = join(rootDir, 'features', 'tga', 'commands');
+    const dmCommandsPath = join(rootDir, 'features', 'dm', 'commands');
 
     const client = createBotatoClient({ rootDir, nodeEnv: 'test' });
 
@@ -58,6 +60,7 @@ describe('createBotatoClient', () => {
       true,
     );
     expect(client.stores.get('commands').paths.has(tgaCommandsPath)).toBe(true);
+    expect(client.stores.get('commands').paths.has(dmCommandsPath)).toBe(true);
 
     await client.destroy();
   });

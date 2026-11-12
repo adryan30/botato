@@ -61,7 +61,7 @@ A guild member in a TGA event, stored by Discord user id, plus the SteamID64 who
 _Avoid_: access code, participant code
 
 **TGA draw**:
-The organizer-only assignment of each signup to exactly one other signup, as a single cycle. Each person learns their match from a DM or `/tga show`, along with a short Brazilian-store price list for that wishlist. An optional budget on the event prefers games within it. Organizer status lists signups, whether the DM was delivered, and whether the giver marked the gift bought. It does not include matches. If someone leaves after the draw, their giver is pointed at the next person in the cycle and only that giver is told.
+The organizer-only assignment of each signup to exactly one other signup, as a single cycle. Each person learns their match from a DM or `/tga show`, along with a short Brazilian-store price list for that wishlist. An optional budget on the event prefers games within it. Organizer status lists signups, whether the DM was delivered, and whether the giver marked the gift bought. It does not include matches. `/tga ping` DMs only the people who have not marked the gift bought, again with their match and wishlist. If someone leaves after the draw, their giver is pointed at the next person in the cycle and only that giver is told.
 _Avoid_: reveal code
 
 **Wishlist link**:

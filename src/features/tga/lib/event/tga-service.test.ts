@@ -250,6 +250,44 @@ describe('TgaService', () => {
     });
   });
 
+  it('pings only the people who have not marked the gift bought', async () => {
+    const { service, steam, dms } = setup();
+    await create(service);
+    allow(steam, steamA);
+    allow(steam, steamB);
+    allow(steam, steamC);
+    await join(service, 'a', steamA);
+    await join(service, 'b', steamB);
+    await join(service, 'c', steamC);
+    await service.draw({ guildId, organizerId });
+    await service.toggleBought({ guildId, userId: 'c' });
+    dms.fail.add('b');
+    dms.sent.length = 0;
+
+    await expect(
+      service.ping({ guildId, organizerId: 'someone-else' }),
+    ).rejects.toMatchObject({ code: 'not-organizer' });
+
+    await expect(service.ping({ guildId, organizerId })).resolves.toEqual({
+      notified: ['a'],
+      failed: ['b'],
+    });
+    expect(dms.sent).toHaveLength(1);
+    expect(dms.sent[0]).toMatchObject({ userId: 'a' });
+    expect(dms.sent[0]?.content).toContain('Você ainda não comprou o presente.');
+    expect(dms.sent[0]?.content).toContain(`Wishlist: ${wishlist(steamB)}`);
+    expect(dms.sent.some((entry) => entry.userId === 'c')).toBe(false);
+  });
+
+  it('refuses to ping before the draw', async () => {
+    const { service } = setup();
+    await create(service);
+
+    await expect(service.ping({ guildId, organizerId })).rejects.toMatchObject({
+      code: 'draw-not-done',
+    });
+  });
+
   it('refuses to end an event that has not been drawn', async () => {
     const { service } = setup();
     await create(service);

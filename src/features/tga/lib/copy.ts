@@ -160,6 +160,50 @@ export function formatDrawDm(input: {
   ].join('\n');
 }
 
+export function formatPingDm(input: {
+  eventName: string;
+  targetUserId: string;
+  wishlistUrl: string;
+  budgetCents: number | null;
+  ideas: GiftIdeaList;
+}): string {
+  return [
+    `🎁 **${input.eventName}**`,
+    '',
+    'Você ainda não comprou o presente.',
+    '',
+    `Você tirou <@${input.targetUserId}>.`,
+    `Wishlist: ${input.wishlistUrl}`,
+    '',
+    formatGiftIdeas(input.budgetCents, input.ideas),
+    '',
+    'Quando comprar, use `/tga comprei`.',
+  ].join('\n');
+}
+
+export function formatPingResult(result: {
+  notified: readonly string[];
+  failed: readonly string[];
+}): string {
+  if (result.notified.length === 0 && result.failed.length === 0) {
+    return 'Todo mundo já marcou o presente como comprado.';
+  }
+  const lines: string[] = [];
+  if (result.notified.length > 0) {
+    lines.push(
+      `Avisei ${mentions(result.notified)} para comprar o presente.`,
+    );
+  }
+  if (result.failed.length > 0) {
+    lines.push(`Não consegui avisar ${mentions(result.failed)}.`);
+  }
+  return lines.join('\n');
+}
+
+function mentions(userIds: readonly string[]): string {
+  return userIds.map((userId) => `<@${userId}>`).join(', ');
+}
+
 export function formatGiftIdeas(
   budgetCents: number | null,
   list: GiftIdeaList,
