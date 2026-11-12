@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/adryan30/botato/compare/v1.6.0...v1.6.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **tga:** keep event tables out of the public schema ([1f04589](https://github.com/adryan30/botato/commit/1f04589b53dba9ae02ec48180ac80b6c18f6f222))
+
 ## [1.6.0](https://github.com/adryan30/botato/compare/v1.5.0...v1.6.0) (2026-11-12)
 
 
