@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/adryan30/botato/compare/v1.8.0...v1.9.0) (2026-11-12)
+
+
+### Features
+
+* **tga:** show status as a wishlist table ([9cf7f43](https://github.com/adryan30/botato/commit/9cf7f43999ad2a972eb9117b05c2c6db6030c6cc))
+
 ## [1.8.0](https://github.com/adryan30/botato/compare/v1.7.0...v1.8.0) (2026-11-12)
 
 
