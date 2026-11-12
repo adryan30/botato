@@ -51,3 +51,19 @@ _Avoid_: AFK tag, AFK title, status text
 **Voice pick**:
 One randomly chosen eligible member connected to a target voice channel (humans only, excluding the requester). Produced by `/pick`.
 _Avoid_: roulette, random user, spin, selection
+
+**TGA event**:
+One Troca Generosa de Ativos exchange in a guild, run with `/tga`. At most one event is open for signups. After the draw it stays the current event until another is created, so `/tga show` can repeat a match.
+_Avoid_: secret santa, group (the old website's word)
+
+**TGA signup**:
+A guild member in a TGA event, stored by Discord user id, plus the SteamID64 whose wishlist Steam returned as public and non-empty.
+_Avoid_: access code, participant code
+
+**TGA draw**:
+The organizer-only assignment of each signup to exactly one other signup, as a single cycle. Each person learns their match from a DM or `/tga show`. Organizer status lists signups and whether the DM was delivered, and does not include matches.
+_Avoid_: reveal code
+
+**Wishlist link**:
+`https://store.steampowered.com/wishlist/profiles/<steamid64>`, stored only after the public-wishlist check succeeds. The giver opens it on Steam.
+_Avoid_: app id list

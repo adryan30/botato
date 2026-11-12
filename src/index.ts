@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { ApplicationCommandRegistries } from '@sapphire/framework';
 import { attachAfkFeature } from './features/afk/lib/attach-afk.js';
 import { attachMusicFeature } from './features/music/lib/attach-music.js';
+import { attachTgaFeature } from './features/tga/lib/attach-tga.js';
 import { createBotatoClient } from './lib/client.js';
 import { loadConfig } from './lib/config.js';
 import { createDb, migrateDb } from './lib/db/index.js';
@@ -29,6 +30,7 @@ if (config.discordGuildIds.length > 0) {
 
 attachMusicFeature(client, config);
 attachAfkFeature(client, db);
+attachTgaFeature(client, db);
 
 client.once('clientReady', () => {
   client.logger.info(`Logged in as ${client.user?.tag ?? 'unknown'}`);
