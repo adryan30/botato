@@ -214,32 +214,81 @@ export function formatShow(show: TgaShow): string {
   ].join('\n');
 }
 
-export function formatStatus(status: TgaStatus): string {
+const STATUS_FIELD_LIMIT = 1024;
+
+export type TgaStatusColumn = {
+  name: string;
+  value: string;
+};
+
+export type TgaStatusTable = {
+  title: string;
+  description: string | null;
+  columns: TgaStatusColumn[];
+};
+
+export function formatStatus(status: TgaStatus): TgaStatusTable {
   const phase = status.status === 'open' ? 'aberta' : 'sorteada';
-  const header = `**${status.eventName}** — ${phase}`;
+  const title = `${status.eventName} — ${phase}`;
   if (status.entries.length === 0) {
-    return `${header}\nNinguém entrou ainda.`;
+    return { title, description: 'Ninguém entrou ainda.', columns: [] };
   }
 
-  const lines = status.entries.map((entry) => {
-    const delivery =
-      status.status === 'drawn'
-        ? entry.dmDelivered
-          ? 'DM enviada'
-          : 'DM não chegou'
-        : 'na lista';
-    const bought =
-      status.status === 'drawn'
-        ? entry.giftBought
-          ? 'comprou'
-          : 'não comprou'
-        : null;
-    const detail = bought ? `${delivery} — ${bought}` : delivery;
-    return `• <@${entry.userId}> — \`${entry.steamId64}\` — ${detail}`;
-  });
-  const text = [header, ...lines].join('\n');
-  if (text.length <= 1900) {
-    return text;
+  const columns = [
+    {
+      name: 'Pessoa',
+      lines: status.entries.map((entry) => `<@${entry.userId}>`),
+    },
+    {
+      name: 'Wishlist',
+      lines: status.entries.map((entry) => `[wishlist](${entry.wishlistUrl})`),
+    },
+  ];
+  if (status.status === 'drawn') {
+    columns.push({
+      name: 'Situação',
+      lines: status.entries.map((entry) => {
+        const delivery = entry.dmDelivered ? 'DM enviada' : 'DM não chegou';
+        const bought = entry.giftBought ? 'comprou' : 'não comprou';
+        return `${delivery} · ${bought}`;
+      }),
+    });
   }
-  return `${text.slice(0, 1900)}\n…`;
+
+  return {
+    title,
+    description: null,
+    columns: alignStatusColumns(columns),
+  };
+}
+
+function alignStatusColumns(
+  columns: { name: string; lines: string[] }[],
+): TgaStatusColumn[] {
+  const total = columns[0]?.lines.length ?? 0;
+  let count = total;
+  while (count > 0 && columnsOverflow(columns, count)) {
+    count -= 1;
+  }
+
+  const truncated = count < total;
+  return columns.map((column) => {
+    const lines = column.lines.slice(0, count);
+    if (truncated) {
+      const withMark = [...lines, '…'];
+      if (withMark.join('\n').length <= STATUS_FIELD_LIMIT) {
+        lines.push('…');
+      }
+    }
+    return { name: column.name, value: lines.join('\n') || '…' };
+  });
+}
+
+function columnsOverflow(
+  columns: { lines: string[] }[],
+  count: number,
+): boolean {
+  return columns.some(
+    (column) => column.lines.slice(0, count).join('\n').length > STATUS_FIELD_LIMIT,
+  );
 }

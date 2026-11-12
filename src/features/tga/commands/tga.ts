@@ -1,5 +1,5 @@
 import { Subcommand } from '@sapphire/plugin-subcommands';
-import { MessageFlags, type Client } from 'discord.js';
+import { EmbedBuilder, MessageFlags, type Client } from 'discord.js';
 import {
   formatBought,
   formatCancelled,
@@ -12,6 +12,7 @@ import {
   formatRemoved,
   formatShow,
   formatStatus,
+  type TgaStatusTable,
 } from '../lib/copy.js';
 import { replyTga, tgaFailureContent } from '../lib/reply.js';
 import { joinButtonRow } from '../lib/signup-post.js';
@@ -315,7 +316,7 @@ export class TgaCommand extends Subcommand {
         guildId,
         organizerId: interaction.user.id,
       });
-      await replyTga(interaction, formatStatus(status), true);
+      await replyStatus(interaction, formatStatus(status));
     } catch (error) {
       await replyTga(
         interaction,
@@ -421,6 +422,38 @@ export class TgaCommand extends Subcommand {
       error instanceof Error ? (error.stack ?? error.message) : String(error);
     this.container.logger.error(message);
   }
+}
+
+const TGA_EMBED_COLOR = 0x011117;
+
+async function replyStatus(
+  interaction: Subcommand.ChatInputCommandInteraction,
+  table: TgaStatusTable,
+): Promise<void> {
+  const embed = new EmbedBuilder()
+    .setColor(TGA_EMBED_COLOR)
+    .setTitle(table.title);
+  if (table.description) {
+    embed.setDescription(table.description);
+  }
+  if (table.columns.length > 0) {
+    embed.addFields(
+      table.columns.map((column) => ({
+        name: column.name,
+        value: column.value,
+        inline: true,
+      })),
+    );
+  }
+
+  if (interaction.deferred || interaction.replied) {
+    await interaction.editReply({ embeds: [embed] });
+    return;
+  }
+  await interaction.reply({
+    embeds: [embed],
+    flags: MessageFlags.Ephemeral,
+  });
 }
 
 async function closeSignupPost(
