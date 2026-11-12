@@ -4,6 +4,7 @@ import {
   type TgaEventRecord,
   type TgaEventStatus,
   type TgaParticipantRecord,
+  type TgaRepair,
   type TgaSignupWrite,
   type TgaStore,
 } from './tga-store.js';
@@ -82,6 +83,8 @@ export class FakeTgaStore implements TgaStore {
       wishlistUrl: signup.wishlistUrl,
       targetUserId: null,
       dmDelivered: false,
+      giftBought: false,
+      giftIdeas: null,
       joinedAt: new Date((this.#joinedAt += 1)),
     });
     return 'inserted';
@@ -144,19 +147,84 @@ export class FakeTgaStore implements TgaStore {
     for (const signup of signups) {
       signup.targetUserId = targets.get(signup.userId) ?? null;
       signup.dmDelivered = false;
+      signup.giftBought = false;
+      signup.giftIdeas = null;
     }
 
     event.status = 'drawn';
     return true;
   }
 
-  async markDmDelivered(eventId: string, userId: string): Promise<void> {
-    const signup = this.participants.find(
-      (participant) =>
-        participant.eventId === eventId && participant.userId === userId,
+  async applyRepair(eventId: string, repair: TgaRepair): Promise<boolean> {
+    const event = this.events.find(
+      (candidate) => candidate.id === eventId && candidate.status === 'drawn',
     );
+    if (!event) {
+      return false;
+    }
+
+    const signups = this.participants.filter(
+      (participant) => participant.eventId === eventId,
+    );
+    const removed = signups.find(
+      (participant) => participant.userId === repair.removedUserId,
+    );
+    const giver = signups.find(
+      (participant) => participant.userId === repair.giverUserId,
+    );
+    if (!removed || !giver || signups.length - 1 < 2) {
+      return false;
+    }
+    if (
+      removed.targetUserId !== repair.newTargetUserId ||
+      giver.targetUserId !== repair.removedUserId
+    ) {
+      return false;
+    }
+
+    giver.targetUserId = repair.newTargetUserId;
+    giver.giftBought = false;
+    giver.dmDelivered = false;
+    const index = this.participants.indexOf(removed);
+    this.participants.splice(index, 1);
+    return true;
+  }
+
+  async setGiftIdeas(
+    eventId: string,
+    userId: string,
+    giftIdeas: string | null,
+  ): Promise<void> {
+    const signup = this.#find(eventId, userId);
+    if (signup) {
+      signup.giftIdeas = giftIdeas;
+    }
+  }
+
+  async setGiftBought(
+    eventId: string,
+    userId: string,
+    bought: boolean,
+  ): Promise<boolean> {
+    const signup = this.#find(eventId, userId);
+    if (!signup) {
+      return false;
+    }
+    signup.giftBought = bought;
+    return true;
+  }
+
+  async markDmDelivered(eventId: string, userId: string): Promise<void> {
+    const signup = this.#find(eventId, userId);
     if (signup) {
       signup.dmDelivered = true;
     }
+  }
+
+  #find(eventId: string, userId: string): TgaParticipantRecord | undefined {
+    return this.participants.find(
+      (participant) =>
+        participant.eventId === eventId && participant.userId === userId,
+    );
   }
 }

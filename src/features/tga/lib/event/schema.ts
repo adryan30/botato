@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  integer,
   pgTable,
   primaryKey,
   text,
@@ -18,6 +19,7 @@ export const tgaEvents = pgTable(
     status: text('status').notNull(),
     channelId: text('channel_id').notNull(),
     messageId: text('message_id'),
+    budgetCents: integer('budget_cents'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
   },
   (table) => [
@@ -38,6 +40,8 @@ export const tgaParticipants = pgTable(
     wishlistUrl: text('wishlist_url').notNull(),
     targetUserId: text('target_user_id'),
     dmDelivered: boolean('dm_delivered').notNull().default(false),
+    giftBought: boolean('gift_bought').notNull().default(false),
+    giftIdeas: text('gift_ideas'),
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.eventId, table.userId] })],

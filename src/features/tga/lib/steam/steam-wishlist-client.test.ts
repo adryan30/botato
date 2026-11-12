@@ -65,4 +65,59 @@ describe('SteamWishlistClient', () => {
       reason: 'unreachable',
     });
   });
+
+  it('reads wishlist priority and Brazilian store prices', async () => {
+    const fetchImpl = vi.fn(async (url: string) => {
+      if (url.includes('GetWishlist')) {
+        return Response.json({
+          response: {
+            items: [{ appid: 620, priority: 1, date_added: 20 }],
+          },
+        });
+      }
+      return Response.json({
+        response: {
+          store_items: [
+            {
+              appid: 620,
+              name: 'Portal 2',
+              best_purchase_option: {
+                final_price_in_cents: '3399',
+                formatted_final_price: 'R$ 33,99',
+                discount_pct: 25,
+              },
+            },
+            { appid: 570, name: 'Dota 2', is_free: true },
+          ],
+        },
+      });
+    });
+    const client = new SteamWishlistClient(
+      fetchImpl as unknown as typeof fetch,
+    );
+
+    await expect(client.readWishlist(steamId)).resolves.toEqual({
+      ok: true,
+      items: [{ appId: 620, priority: 1, dateAdded: 20 }],
+    });
+    await expect(client.lookupPrices([620, 570])).resolves.toEqual({
+      ok: true,
+      prices: [
+        {
+          appId: 620,
+          name: 'Portal 2',
+          priceCents: 3399,
+          formattedPrice: 'R$ 33,99',
+          discountPercent: 25,
+        },
+        {
+          appId: 570,
+          name: 'Dota 2',
+          priceCents: 0,
+          formattedPrice: 'Grátis',
+          discountPercent: 0,
+        },
+      ],
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import { Subcommand } from '@sapphire/plugin-subcommands';
 import { MessageFlags, type Client } from 'discord.js';
 import {
+  formatBought,
   formatCancelled,
   formatClosedPost,
   formatEnded,
@@ -29,6 +30,7 @@ export class TgaCommand extends Subcommand {
         { name: 'leave', chatInputRun: 'chatInputLeave' },
         { name: 'draw', chatInputRun: 'chatInputDraw' },
         { name: 'show', chatInputRun: 'chatInputShow' },
+        { name: 'comprei', chatInputRun: 'chatInputComprei' },
         { name: 'status', chatInputRun: 'chatInputStatus' },
         { name: 'remove', chatInputRun: 'chatInputRemove' },
         { name: 'cancel', chatInputRun: 'chatInputCancel' },
@@ -53,6 +55,14 @@ export class TgaCommand extends Subcommand {
                 .setRequired(true)
                 .setMinLength(1)
                 .setMaxLength(80),
+            )
+            .addIntegerOption((option) =>
+              option
+                .setName('orcamento')
+                .setDescription('Teto opcional em reais')
+                .setRequired(false)
+                .setMinValue(1)
+                .setMaxValue(10_000),
             ),
         )
         .addSubcommand((sub) =>
@@ -68,7 +78,7 @@ export class TgaCommand extends Subcommand {
             ),
         )
         .addSubcommand((sub) =>
-          sub.setName('leave').setDescription('Sair da troca antes do sorteio'),
+          sub.setName('leave').setDescription('Sair da troca'),
         )
         .addSubcommand((sub) =>
           sub
@@ -78,17 +88,22 @@ export class TgaCommand extends Subcommand {
         .addSubcommand((sub) =>
           sub
             .setName('show')
-            .setDescription('Ver o seu match e a wishlist, só para você'),
+            .setDescription('Ver o seu match, a wishlist e os preços'),
+        )
+        .addSubcommand((sub) =>
+          sub
+            .setName('comprei')
+            .setDescription('Marcar ou desmarcar que você já comprou o presente'),
         )
         .addSubcommand((sub) =>
           sub
             .setName('status')
-            .setDescription('Ver quem entrou e se a DM chegou'),
+            .setDescription('Ver quem entrou, a DM e se já comprou'),
         )
         .addSubcommand((sub) =>
           sub
             .setName('remove')
-            .setDescription('Tirar alguém da troca antes do sorteio')
+            .setDescription('Tirar alguém da troca')
             .addUserOption((option) =>
               option
                 .setName('pessoa')
@@ -124,14 +139,17 @@ export class TgaCommand extends Subcommand {
     }
 
     try {
+      const reais = interaction.options.getInteger('orcamento');
+      const budgetCents = reais === null ? null : reais * 100;
       const event = await this.container.tga.createEvent({
         guildId,
         organizerId: interaction.user.id,
         name: interaction.options.getString('nome', true),
         channelId,
+        budgetCents,
       });
       await interaction.reply({
-        content: formatCreatePost(event.name),
+        content: formatCreatePost(event.name, budgetCents),
         components: [joinButtonRow(event.id)],
       });
       try {
@@ -182,12 +200,13 @@ export class TgaCommand extends Subcommand {
       return;
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     try {
-      const eventName = await this.container.tga.leave({
+      const result = await this.container.tga.leave({
         guildId,
         userId: interaction.user.id,
       });
-      await replyTga(interaction, formatLeft(eventName), true);
+      await replyTga(interaction, formatLeft(result), true);
     } catch (error) {
       await replyTga(
         interaction,
@@ -260,6 +279,29 @@ export class TgaCommand extends Subcommand {
     }
   }
 
+  public async chatInputComprei(
+    interaction: Subcommand.ChatInputCommandInteraction,
+  ) {
+    const guildId = await this.#guildId(interaction);
+    if (!guildId) {
+      return;
+    }
+
+    try {
+      const result = await this.container.tga.toggleBought({
+        guildId,
+        userId: interaction.user.id,
+      });
+      await replyTga(interaction, formatBought(result.bought), true);
+    } catch (error) {
+      await replyTga(
+        interaction,
+        tgaFailureContent(error, (cause) => this.#log(cause)),
+        true,
+      );
+    }
+  }
+
   public async chatInputStatus(
     interaction: Subcommand.ChatInputCommandInteraction,
   ) {
@@ -291,13 +333,14 @@ export class TgaCommand extends Subcommand {
       return;
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     try {
-      const eventName = await this.container.tga.remove({
+      const result = await this.container.tga.remove({
         guildId,
         organizerId: interaction.user.id,
         userId: interaction.options.getUser('pessoa', true).id,
       });
-      await replyTga(interaction, formatRemoved(eventName), true);
+      await replyTga(interaction, formatRemoved(result), true);
     } catch (error) {
       await replyTga(
         interaction,

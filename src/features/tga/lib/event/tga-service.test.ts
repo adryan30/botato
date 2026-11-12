@@ -110,6 +110,8 @@ describe('TgaService', () => {
         'Você tirou <@c>.',
         `Wishlist: ${wishlist(steamC)}`,
         '',
+        'Não consegui listar os preços agora.',
+        '',
         'Se perder esta mensagem, use `/tga show`.',
       ].join('\n'),
     );
@@ -119,6 +121,8 @@ describe('TgaService', () => {
       eventName: 'Natal',
       targetUserId: 'c',
       wishlistUrl: wishlist(steamC),
+      budgetCents: null,
+      ideas: { budgetMiss: false, ideas: [] },
     });
     await expect(service.show({ guildId, userId: 'a' })).resolves.toMatchObject({
       kind: 'drawn',
@@ -127,19 +131,21 @@ describe('TgaService', () => {
 
     const status = await service.status({ guildId, organizerId });
     expect(status.entries.map((entry) => Object.keys(entry).sort())).toEqual([
-      ['dmDelivered', 'steamId64', 'userId', 'wishlistUrl'],
-      ['dmDelivered', 'steamId64', 'userId', 'wishlistUrl'],
-      ['dmDelivered', 'steamId64', 'userId', 'wishlistUrl'],
+      ['dmDelivered', 'giftBought', 'steamId64', 'userId', 'wishlistUrl'],
+      ['dmDelivered', 'giftBought', 'steamId64', 'userId', 'wishlistUrl'],
+      ['dmDelivered', 'giftBought', 'steamId64', 'userId', 'wishlistUrl'],
     ]);
-    expect(status.entries.map((entry) => [entry.userId, entry.dmDelivered])).toEqual([
-      ['a', false],
-      ['b', true],
-      ['c', true],
+    expect(
+      status.entries.map((entry) => [entry.userId, entry.dmDelivered, entry.giftBought]),
+    ).toEqual([
+      ['a', false, false],
+      ['b', true, false],
+      ['c', true, false],
     ]);
     expect(JSON.stringify(status).includes('targetUserId')).toBe(false);
   });
 
-  it('locks the roster after the draw and lets show explain the wait before it', async () => {
+  it('keeps new signups closed after the draw and repairs a leave', async () => {
     const { service, steam } = setup();
     await create(service);
     allow(steam, steamA);
@@ -161,8 +167,9 @@ describe('TgaService', () => {
     await join(service, 'c', steamC);
     await service.draw({ guildId, organizerId });
 
-    await expect(service.leave({ guildId, userId: 'a' })).rejects.toMatchObject({
-      code: 'roster-locked',
+    await expect(service.leave({ guildId, userId: 'a' })).resolves.toMatchObject({
+      eventName: 'Natal',
+      repaired: true,
     });
     await expect(
       service.join({
@@ -270,6 +277,106 @@ describe('TgaService', () => {
     await expect(
       service.status({ guildId, organizerId: 'someone-else' }),
     ).rejects.toMatchObject({ code: 'not-organizer' });
+  });
+
+  it('lists prices under the budget and lets the giver mark the gift bought', async () => {
+    const { service, steam, dms } = setup();
+    await service.createEvent({
+      guildId,
+      organizerId,
+      name: 'Natal',
+      channelId: 'channel-1',
+      budgetCents: 5000,
+    });
+    allow(steam, steamA);
+    allow(steam, steamB);
+    allow(steam, steamC);
+    steam.lists.set(steamC, [
+      { appId: 1, priority: 1, dateAdded: 1 },
+      { appId: 2, priority: 2, dateAdded: 1 },
+    ]);
+    steam.prices.set(1, {
+      appId: 1,
+      name: 'Caro',
+      priceCents: 8000,
+      formattedPrice: 'R$ 80,00',
+      discountPercent: 0,
+    });
+    steam.prices.set(2, {
+      appId: 2,
+      name: 'Barato',
+      priceCents: 2000,
+      formattedPrice: 'R$ 20,00',
+      discountPercent: 40,
+    });
+    await join(service, 'a', steamA);
+    await join(service, 'b', steamB);
+    await join(service, 'c', steamC);
+
+    await service.draw({ guildId, organizerId });
+    const message = dms.sent.find((entry) => entry.userId === 'b');
+    expect(message?.content).toContain('Até R$ 50:');
+    expect(message?.content).toContain('• Barato — R$ 20,00 — em promoção (-40%)');
+    expect(message?.content).not.toContain('Caro');
+
+    await expect(service.toggleBought({ guildId, userId: 'b' })).resolves.toEqual({
+      eventName: 'Natal',
+      bought: true,
+    });
+    const status = await service.status({ guildId, organizerId });
+    expect(status.entries.find((entry) => entry.userId === 'b')?.giftBought).toBe(
+      true,
+    );
+    expect(JSON.stringify(status)).not.toContain('targetUserId');
+    await expect(service.toggleBought({ guildId, userId: 'b' })).resolves.toMatchObject({
+      bought: false,
+    });
+  });
+
+  it('repairs the cycle when someone leaves after the draw and clears the old purchase', async () => {
+    const { service, steam, dms } = setup();
+    await create(service);
+    allow(steam, steamA);
+    allow(steam, steamB);
+    allow(steam, steamC);
+    steam.lists.set(steamB, [{ appId: 9, priority: 1, dateAdded: 1 }]);
+    steam.prices.set(9, {
+      appId: 9,
+      name: 'Portal 2',
+      priceCents: 3399,
+      formattedPrice: 'R$ 33,99',
+      discountPercent: 0,
+    });
+    await join(service, 'a', steamA);
+    await join(service, 'b', steamB);
+    await join(service, 'c', steamC);
+    await service.draw({ guildId, organizerId });
+    await service.toggleBought({ guildId, userId: 'c' });
+
+    const left = await service.leave({ guildId, userId: 'a' });
+    expect(left).toMatchObject({ repaired: true, dmDelivered: true });
+    const repair = dms.sent.find(
+      (entry) => entry.userId === 'c' && entry.content.includes('Seu sorteio mudou.'),
+    );
+    expect(repair?.content).toContain('Você tirou <@b>.');
+    expect(repair?.content).toContain('• Portal 2 — R$ 33,99');
+
+    await expect(service.show({ guildId, userId: 'c' })).resolves.toMatchObject({
+      targetUserId: 'b',
+    });
+    await expect(service.show({ guildId, userId: 'a' })).rejects.toMatchObject({
+      code: 'not-participant',
+    });
+    const status = await service.status({ guildId, organizerId });
+    expect(status.entries.find((entry) => entry.userId === 'c')).toMatchObject({
+      giftBought: false,
+      dmDelivered: true,
+    });
+    expect(JSON.stringify(status)).not.toContain('targetUserId');
+
+    await expect(service.leave({ guildId, userId: 'b' })).rejects.toMatchObject({
+      code: 'too-few-after-drop',
+    });
   });
 });
 

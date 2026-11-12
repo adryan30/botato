@@ -1,9 +1,11 @@
 import type {
   TgaDrawResult,
   TgaErrorCode,
+  TgaRosterChange,
   TgaShow,
   TgaStatus,
 } from './event/tga-service.js';
+import type { GiftIdeaList } from './steam/gift-ideas.js';
 
 export function formatTgaError(code: TgaErrorCode): string {
   switch (code) {
@@ -27,6 +29,14 @@ export function formatTgaError(code: TgaErrorCode): string {
       return 'O sorteio já foi feito. A lista está fechada.';
     case 'too-few-participants':
       return 'Precisa de pelo menos 3 participantes para sortear.';
+    case 'too-few-after-drop':
+      return 'Com menos de 2 pessoas não dá para refazer o sorteio.';
+    case 'draw-not-done':
+      return 'O sorteio ainda não foi feito.';
+    case 'no-drawn-event':
+      return 'Não há uma troca sorteada para encerrar.';
+    case 'budget-invalid':
+      return 'O teto precisa ser um valor em reais, de 1 a 10000.';
     case 'steam-unrecognized':
       return 'Não reconheci esse Steam. Manda o link do perfil, o link da wishlist ou o SteamID64.';
     case 'steam-not-found':
@@ -39,19 +49,23 @@ export function formatTgaError(code: TgaErrorCode): string {
       return 'A Steam não respondeu agora. Tente de novo em instantes.';
     case 'match-missing':
       return 'Não achei o seu sorteio. Avisa quem organizou.';
-    case 'no-drawn-event':
-      return 'Não há uma troca sorteada para encerrar.';
   }
 }
 
-export function formatCreatePost(eventName: string): string {
+export function formatCreatePost(
+  eventName: string,
+  budgetCents: number | null,
+): string {
+  const budget =
+    budgetCents === null ? [] : [`Teto de ${formatReais(budgetCents)}.`];
   return [
     `✨ **${eventName}**`,
     '',
     'Troca Generosa de Ativos. Entre com o link do seu perfil Steam ou da sua wishlist.',
     'A wishlist precisa estar pública e ter pelo menos um jogo.',
+    ...budget,
     '',
-    'No sorteio, o Botato manda no privado quem você tirou e o link da wishlist.',
+    'No sorteio, o Botato manda no privado quem você tirou, o link da wishlist e alguns preços.',
   ].join('\n');
 }
 
@@ -79,12 +93,30 @@ export function formatJoined(result: {
   return `${lead}\nWishlist: ${result.wishlistUrl}`;
 }
 
-export function formatLeft(eventName: string): string {
-  return `Você saiu de **${eventName}**.`;
+export function formatLeft(result: TgaRosterChange): string {
+  if (!result.repaired) {
+    return `Você saiu de **${result.eventName}**.`;
+  }
+  const followup = result.dmDelivered
+    ? 'Quem tinha você recebeu outro match.'
+    : 'Quem tinha você recebeu outro match, mas a DM não chegou.';
+  return `Você saiu de **${result.eventName}**. ${followup}`;
 }
 
-export function formatRemoved(eventName: string): string {
-  return `Pessoa removida de **${eventName}**.`;
+export function formatRemoved(result: TgaRosterChange): string {
+  if (!result.repaired) {
+    return `Pessoa removida de **${result.eventName}**.`;
+  }
+  const followup = result.dmDelivered
+    ? 'Quem tinha essa pessoa recebeu outro match.'
+    : 'Quem tinha essa pessoa recebeu outro match, mas a DM não chegou.';
+  return `Pessoa removida de **${result.eventName}**. ${followup}`;
+}
+
+export function formatBought(bought: boolean): string {
+  return bought
+    ? 'Marcado: você já comprou o presente.'
+    : 'Desmarcado. O presente ainda não foi comprado.';
 }
 
 export function formatCancelled(eventName: string): string {
@@ -106,19 +138,61 @@ export function formatDrawAnnouncement(result: TgaDrawResult): string {
   return `Sorteio de **${result.eventName}** feito. Olhem o privado. ${people} — usem \`/tga show\`.`;
 }
 
-export function formatDrawDm(
-  eventName: string,
-  targetUserId: string,
-  wishlistUrl: string,
-): string {
+export function formatDrawDm(input: {
+  eventName: string;
+  targetUserId: string;
+  wishlistUrl: string;
+  budgetCents: number | null;
+  ideas: GiftIdeaList;
+  repaired?: boolean;
+}): string {
+  const changed = input.repaired ? ['Seu sorteio mudou.', ''] : [];
   return [
-    `🎁 **${eventName}**`,
+    `🎁 **${input.eventName}**`,
     '',
-    `Você tirou <@${targetUserId}>.`,
-    `Wishlist: ${wishlistUrl}`,
+    ...changed,
+    `Você tirou <@${input.targetUserId}>.`,
+    `Wishlist: ${input.wishlistUrl}`,
+    '',
+    formatGiftIdeas(input.budgetCents, input.ideas),
     '',
     'Se perder esta mensagem, use `/tga show`.',
   ].join('\n');
+}
+
+export function formatGiftIdeas(
+  budgetCents: number | null,
+  list: GiftIdeaList,
+): string {
+  if (list.ideas.length === 0) {
+    return 'Não consegui listar os preços agora.';
+  }
+
+  const lines = list.ideas.map((idea) => {
+    const sale =
+      idea.discountPercent > 0
+        ? ` — em promoção (-${idea.discountPercent}%)`
+        : '';
+    return `• ${idea.name} — ${idea.formattedPrice}${sale}`;
+  });
+  if (list.budgetMiss && budgetCents !== null) {
+    return [
+      `Nada da wishlist cabe em ${formatReais(budgetCents)}. As mais desejadas:`,
+      ...lines,
+    ].join('\n');
+  }
+  const header =
+    budgetCents === null ? 'Ideias:' : `Até ${formatReais(budgetCents)}:`;
+  return [header, ...lines].join('\n');
+}
+
+export function formatReais(cents: number): string {
+  const whole = Math.floor(cents / 100);
+  const fraction = Math.abs(cents % 100);
+  if (fraction === 0) {
+    return `R$ ${whole}`;
+  }
+  return `R$ ${whole},${String(fraction).padStart(2, '0')}`;
 }
 
 export function formatShow(show: TgaShow): string {
@@ -135,6 +209,8 @@ export function formatShow(show: TgaShow): string {
     `**${show.eventName}**`,
     `Você tirou <@${show.targetUserId}>.`,
     `Wishlist: ${show.wishlistUrl}`,
+    '',
+    formatGiftIdeas(show.budgetCents, show.ideas),
   ].join('\n');
 }
 
@@ -152,7 +228,14 @@ export function formatStatus(status: TgaStatus): string {
           ? 'DM enviada'
           : 'DM não chegou'
         : 'na lista';
-    return `• <@${entry.userId}> — \`${entry.steamId64}\` — ${delivery}`;
+    const bought =
+      status.status === 'drawn'
+        ? entry.giftBought
+          ? 'comprou'
+          : 'não comprou'
+        : null;
+    const detail = bought ? `${delivery} — ${bought}` : delivery;
+    return `• <@${entry.userId}> — \`${entry.steamId64}\` — ${detail}`;
   });
   const text = [header, ...lines].join('\n');
   if (text.length <= 1900) {
