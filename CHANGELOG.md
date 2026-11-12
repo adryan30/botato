@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/adryan30/botato/compare/v1.7.0...v1.8.0) (2026-11-12)
+
+
+### Features
+
+* **tga:** repair the draw when someone drops ([4c5b57a](https://github.com/adryan30/botato/commit/4c5b57ab1056f3b47583abc1b249483b27088683))
+
 ## [1.7.0](https://github.com/adryan30/botato/compare/v1.6.1...v1.7.0) (2026-11-12)
 
 
