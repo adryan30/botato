@@ -20,5 +20,5 @@ CREATE TABLE "tga_participants" (
 	CONSTRAINT "tga_participants_event_id_user_id_pk" PRIMARY KEY("event_id","user_id")
 );
 --> statement-breakpoint
-ALTER TABLE "tga_participants" ADD CONSTRAINT "tga_participants_event_id_tga_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."tga_events"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tga_participants" ADD CONSTRAINT "tga_participants_event_id_tga_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "tga_events"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "tga_events_one_open_per_guild" ON "tga_events" USING btree ("guild_id") WHERE "tga_events"."status" = 'open';
