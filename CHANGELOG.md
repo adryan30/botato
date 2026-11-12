@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/adryan30/botato/compare/v1.5.0...v1.6.0) (2026-11-12)
+
+
+### Features
+
+* **tga:** run Troca Generosa de Ativos draws in Discord ([#104](https://github.com/adryan30/botato/issues/104)) ([656c255](https://github.com/adryan30/botato/commit/656c255c60573f69591ff2422d4753258e764d33))
+
 ## [1.5.0](https://github.com/adryan30/botato/compare/v1.4.0...v1.5.0) (2026-08-16)
 
 
