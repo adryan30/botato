@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/adryan30/botato/compare/v1.6.1...v1.7.0) (2026-11-12)
+
+
+### Features
+
+* **tga:** add end command for a drawn event ([e999641](https://github.com/adryan30/botato/commit/e99964122eafa11eed46f3202143cfad3bd295f6))
+
 ## [1.6.1](https://github.com/adryan30/botato/compare/v1.6.0...v1.6.1) (2026-11-12)
 
 
