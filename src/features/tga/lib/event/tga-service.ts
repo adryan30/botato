@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DirectMessagePort } from '../delivery/direct-message-port.js';
-import { formatDrawDm } from '../copy.js';
+import { formatDrawDm, formatPingDm } from '../copy.js';
 import { repairCycle } from './repair-cycle.js';
 import {
   parseGiftIdeas,
@@ -431,6 +431,49 @@ export class TgaService {
     const bought = !signup.giftBought;
     await this.#store.setGiftBought(event.id, input.userId, bought);
     return { eventName: event.name, bought };
+  }
+
+  async ping(input: {
+    guildId: string;
+    organizerId: string;
+  }): Promise<{ notified: string[]; failed: string[] }> {
+    const event = await this.#requireCurrent(input.guildId);
+    this.#requireOrganizer(event, input.organizerId);
+    if (event.status !== 'drawn') {
+      throw new TgaError('draw-not-done');
+    }
+
+    const signups = await this.#store.listParticipants(event.id);
+    const notified: string[] = [];
+    const failed: string[] = [];
+    for (const giver of signups) {
+      if (giver.giftBought || !giver.targetUserId) {
+        continue;
+      }
+      const target = signups.find(
+        (signup) => signup.userId === giver.targetUserId,
+      );
+      if (!target) {
+        failed.push(giver.userId);
+        continue;
+      }
+      const sent = await this.#dms.send(
+        giver.userId,
+        formatPingDm({
+          eventName: event.name,
+          targetUserId: target.userId,
+          wishlistUrl: target.wishlistUrl,
+          budgetCents: event.budgetCents,
+          ideas: parseGiftIdeas(target.giftIdeas),
+        }),
+      );
+      if (sent) {
+        notified.push(giver.userId);
+      } else {
+        failed.push(giver.userId);
+      }
+    }
+    return { notified, failed };
   }
 
   async status(input: {

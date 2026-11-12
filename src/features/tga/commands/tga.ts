@@ -9,6 +9,7 @@ import {
   formatDrawAnnouncement,
   formatJoined,
   formatLeft,
+  formatPingResult,
   formatRemoved,
   formatShow,
   formatStatus,
@@ -32,6 +33,7 @@ export class TgaCommand extends Subcommand {
         { name: 'draw', chatInputRun: 'chatInputDraw' },
         { name: 'show', chatInputRun: 'chatInputShow' },
         { name: 'comprei', chatInputRun: 'chatInputComprei' },
+        { name: 'ping', chatInputRun: 'chatInputPing' },
         { name: 'status', chatInputRun: 'chatInputStatus' },
         { name: 'remove', chatInputRun: 'chatInputRemove' },
         { name: 'cancel', chatInputRun: 'chatInputCancel' },
@@ -95,6 +97,11 @@ export class TgaCommand extends Subcommand {
           sub
             .setName('comprei')
             .setDescription('Marcar ou desmarcar que você já comprou o presente'),
+        )
+        .addSubcommand((sub) =>
+          sub
+            .setName('ping')
+            .setDescription('Cobrar quem ainda não comprou o presente'),
         )
         .addSubcommand((sub) =>
           sub
@@ -294,6 +301,30 @@ export class TgaCommand extends Subcommand {
         userId: interaction.user.id,
       });
       await replyTga(interaction, formatBought(result.bought), true);
+    } catch (error) {
+      await replyTga(
+        interaction,
+        tgaFailureContent(error, (cause) => this.#log(cause)),
+        true,
+      );
+    }
+  }
+
+  public async chatInputPing(
+    interaction: Subcommand.ChatInputCommandInteraction,
+  ) {
+    const guildId = await this.#guildId(interaction);
+    if (!guildId) {
+      return;
+    }
+
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    try {
+      const result = await this.container.tga.ping({
+        guildId,
+        organizerId: interaction.user.id,
+      });
+      await replyTga(interaction, formatPingResult(result), true);
     } catch (error) {
       await replyTga(
         interaction,
