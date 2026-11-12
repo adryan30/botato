@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/adryan30/botato/compare/v1.9.0...v1.10.0) (2026-11-12)
+
+
+### Features
+
+* **tga:** ping people who have not bought and add dm-clear ([23434f7](https://github.com/adryan30/botato/commit/23434f70247c7fdaa48766206d521ea2c955e0f6))
+
 ## [1.9.0](https://github.com/adryan30/botato/compare/v1.8.0...v1.9.0) (2026-11-12)
 
 
