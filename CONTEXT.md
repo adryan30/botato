@@ -53,7 +53,7 @@ One randomly chosen eligible member connected to a target voice channel (humans 
 _Avoid_: roulette, random user, spin, selection
 
 **TGA event**:
-One Troca Generosa de Ativos exchange in a guild, run with `/tga`. At most one event is open for signups. After the draw it stays the current event until another is created, so `/tga show` can repeat a match.
+One Troca Generosa de Ativos exchange in a guild, run with `/tga`. At most one event is open for signups. After the draw it stays the current event until the organizer runs `/tga end` or another event is created, so `/tga show` can repeat a match. Ending it stops that repeat.
 _Avoid_: secret santa, group (the old website's word)
 
 **TGA signup**:

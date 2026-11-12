@@ -3,6 +3,7 @@ import { MessageFlags, type Client } from 'discord.js';
 import {
   formatCancelled,
   formatClosedPost,
+  formatEnded,
   formatCreatePost,
   formatDrawAnnouncement,
   formatJoined,
@@ -31,6 +32,7 @@ export class TgaCommand extends Subcommand {
         { name: 'status', chatInputRun: 'chatInputStatus' },
         { name: 'remove', chatInputRun: 'chatInputRemove' },
         { name: 'cancel', chatInputRun: 'chatInputCancel' },
+        { name: 'end', chatInputRun: 'chatInputEnd' },
       ],
     });
   }
@@ -98,6 +100,11 @@ export class TgaCommand extends Subcommand {
           sub
             .setName('cancel')
             .setDescription('Cancelar a troca antes do sorteio'),
+        )
+        .addSubcommand((sub) =>
+          sub
+            .setName('end')
+            .setDescription('Encerrar a troca depois do sorteio'),
         ),
     );
   }
@@ -319,6 +326,34 @@ export class TgaCommand extends Subcommand {
         formatClosedPost(event.name, 'cancelled'),
       );
       await replyTga(interaction, formatCancelled(event.name), true);
+    } catch (error) {
+      await replyTga(
+        interaction,
+        tgaFailureContent(error, (cause) => this.#log(cause)),
+        true,
+      );
+    }
+  }
+
+  public async chatInputEnd(
+    interaction: Subcommand.ChatInputCommandInteraction,
+  ) {
+    const guildId = await this.#guildId(interaction);
+    if (!guildId) {
+      return;
+    }
+
+    try {
+      const event = await this.container.tga.end({
+        guildId,
+        organizerId: interaction.user.id,
+      });
+      await closeSignupPost(
+        interaction.client,
+        event,
+        formatClosedPost(event.name, 'ended'),
+      );
+      await replyTga(interaction, formatEnded(event.name), true);
     } catch (error) {
       await replyTga(
         interaction,
