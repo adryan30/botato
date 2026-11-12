@@ -238,7 +238,12 @@ function toParticipant(
 }
 
 function asStatus(value: string): TgaEventStatus {
-  if (value === 'open' || value === 'drawn' || value === 'cancelled') {
+  if (
+    value === 'open' ||
+    value === 'drawn' ||
+    value === 'cancelled' ||
+    value === 'ended'
+  ) {
     return value;
   }
   throw new Error(`Unknown TGA event status: ${value}`);

@@ -29,7 +29,8 @@ export type TgaErrorCode =
   | 'steam-taken'
   | 'wishlist-not-public'
   | 'wishlist-unreachable'
-  | 'match-missing';
+  | 'match-missing'
+  | 'no-drawn-event';
 
 export class TgaError extends Error {
   readonly code: TgaErrorCode;
@@ -224,6 +225,22 @@ export class TgaService {
       throw new TgaError('no-open-event');
     }
     return summarize({ ...open, status: 'cancelled' });
+  }
+
+  async end(input: {
+    guildId: string;
+    organizerId: string;
+  }): Promise<TgaEventSummary> {
+    const drawn = await this.#store.getLatestDrawnEvent(input.guildId);
+    if (!drawn) {
+      throw new TgaError('no-drawn-event');
+    }
+    this.#requireOrganizer(drawn, input.organizerId);
+    const ended = await this.#store.setStatus(drawn.id, 'drawn', 'ended');
+    if (!ended) {
+      throw new TgaError('no-drawn-event');
+    }
+    return summarize({ ...drawn, status: 'ended' });
   }
 
   async draw(input: {

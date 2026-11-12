@@ -207,6 +207,51 @@ describe('TgaService', () => {
     ).rejects.toMatchObject({ code: 'signup-closed' });
   });
 
+  it('ends a drawn event so show and status stop following it', async () => {
+    const { service, steam } = setup();
+    await create(service);
+    allow(steam, steamA);
+    allow(steam, steamB);
+    allow(steam, steamC);
+    await join(service, 'a', steamA);
+    await join(service, 'b', steamB);
+    await join(service, 'c', steamC);
+    await service.draw({ guildId, organizerId });
+
+    await expect(
+      service.end({ guildId, organizerId: 'someone-else' }),
+    ).rejects.toMatchObject({ code: 'not-organizer' });
+    await expect(service.show({ guildId, userId: 'a' })).resolves.toMatchObject({
+      kind: 'drawn',
+      eventName: 'Natal',
+    });
+
+    await expect(service.end({ guildId, organizerId })).resolves.toMatchObject({
+      name: 'Natal',
+    });
+    await expect(service.show({ guildId, userId: 'a' })).rejects.toMatchObject({
+      code: 'no-current-event',
+    });
+    await expect(service.status({ guildId, organizerId })).rejects.toMatchObject({
+      code: 'no-current-event',
+    });
+    await expect(service.end({ guildId, organizerId })).rejects.toMatchObject({
+      code: 'no-drawn-event',
+    });
+    await expect(create(service, 'Natal 2')).resolves.toMatchObject({
+      name: 'Natal 2',
+    });
+  });
+
+  it('refuses to end an event that has not been drawn', async () => {
+    const { service } = setup();
+    await create(service);
+
+    await expect(service.end({ guildId, organizerId })).rejects.toMatchObject({
+      code: 'no-drawn-event',
+    });
+  });
+
   it('rejects steam input that is not a profile or wishlist', async () => {
     const { service, steam } = setup();
     await create(service);

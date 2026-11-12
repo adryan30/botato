@@ -1,4 +1,4 @@
-export type TgaEventStatus = 'open' | 'drawn' | 'cancelled';
+export type TgaEventStatus = 'open' | 'drawn' | 'cancelled' | 'ended';
 
 export type TgaEventRecord = {
   id: string;

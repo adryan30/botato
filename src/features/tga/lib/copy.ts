@@ -39,6 +39,8 @@ export function formatTgaError(code: TgaErrorCode): string {
       return 'A Steam não respondeu agora. Tente de novo em instantes.';
     case 'match-missing':
       return 'Não achei o seu sorteio. Avisa quem organizou.';
+    case 'no-drawn-event':
+      return 'Não há uma troca sorteada para encerrar.';
   }
 }
 
@@ -55,10 +57,13 @@ export function formatCreatePost(eventName: string): string {
 
 export function formatClosedPost(
   eventName: string,
-  reason: 'drawn' | 'cancelled',
+  reason: 'drawn' | 'cancelled' | 'ended',
 ): string {
   if (reason === 'cancelled') {
     return `✨ **${eventName}**\nEsta troca foi cancelada.`;
+  }
+  if (reason === 'ended') {
+    return `✨ **${eventName}**\nEsta troca foi encerrada.`;
   }
   return `✨ **${eventName}**\nSorteio feito. Olhem o privado — ou usem \`/tga show\`.`;
 }
@@ -84,6 +89,10 @@ export function formatRemoved(eventName: string): string {
 
 export function formatCancelled(eventName: string): string {
   return `**${eventName}** foi cancelada.`;
+}
+
+export function formatEnded(eventName: string): string {
+  return `**${eventName}** foi encerrada.`;
 }
 
 export function formatDrawAnnouncement(result: TgaDrawResult): string {
