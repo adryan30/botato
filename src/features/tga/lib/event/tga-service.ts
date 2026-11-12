@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { DirectMessagePort } from '../delivery/direct-message-port.js';
 import { formatDrawDm } from '../copy.js';
+import { repairCycle } from './repair-cycle.js';
+import {
+  parseGiftIdeas,
+  priceLookupLimit,
+  selectGiftIdeas,
+  wishlistRank,
+  type GiftIdeaList,
+} from '../steam/gift-ideas.js';
 import {
   parseSteamInput,
   wishlistUrlFor,
@@ -24,13 +32,16 @@ export type TgaErrorCode =
   | 'participant-missing'
   | 'roster-locked'
   | 'too-few-participants'
+  | 'too-few-after-drop'
+  | 'draw-not-done'
+  | 'no-drawn-event'
+  | 'budget-invalid'
   | 'steam-unrecognized'
   | 'steam-not-found'
   | 'steam-taken'
   | 'wishlist-not-public'
   | 'wishlist-unreachable'
-  | 'match-missing'
-  | 'no-drawn-event';
+  | 'match-missing';
 
 export class TgaError extends Error {
   readonly code: TgaErrorCode;
@@ -56,6 +67,17 @@ export type TgaJoinResult = {
   updated: boolean;
 };
 
+export type TgaRosterChange = {
+  eventName: string;
+  repaired: boolean;
+  dmDelivered: boolean | null;
+};
+
+export type TgaBoughtResult = {
+  eventName: string;
+  bought: boolean;
+};
+
 export type TgaShow =
   | {
       kind: 'waiting';
@@ -68,6 +90,8 @@ export type TgaShow =
       eventName: string;
       targetUserId: string;
       wishlistUrl: string;
+      budgetCents: number | null;
+      ideas: GiftIdeaList;
     };
 
 export type TgaStatusEntry = {
@@ -75,6 +99,7 @@ export type TgaStatusEntry = {
   steamId64: string;
   wishlistUrl: string;
   dmDelivered: boolean;
+  giftBought: boolean;
 };
 
 export type TgaStatus = {
@@ -92,6 +117,7 @@ export type TgaDrawResult = {
 };
 
 const MINIMUM_SIGNUPS = 3;
+const EMPTY_IDEAS: GiftIdeaList = { budgetMiss: false, ideas: [] };
 
 export class TgaService {
   readonly #store: TgaStore;
@@ -116,10 +142,20 @@ export class TgaService {
     organizerId: string;
     name: string;
     channelId: string;
+    budgetCents?: number | null;
   }): Promise<TgaEventSummary> {
     const name = input.name.trim();
     if (!name) {
       throw new TgaError('name-required');
+    }
+    const budgetCents = input.budgetCents ?? null;
+    if (
+      budgetCents !== null &&
+      (!Number.isInteger(budgetCents) ||
+        budgetCents < 100 ||
+        budgetCents > 1_000_000)
+    ) {
+      throw new TgaError('budget-invalid');
     }
 
     const open = await this.#store.getOpenEvent(input.guildId);
@@ -135,6 +171,7 @@ export class TgaService {
       status: 'open',
       channelId: input.channelId,
       messageId: null,
+      budgetCents,
       createdAt: new Date(),
     };
 
@@ -191,27 +228,47 @@ export class TgaService {
     };
   }
 
-  async leave(input: { guildId: string; userId: string }): Promise<string> {
-    const open = await this.#requireOpen(input.guildId);
-    const removed = await this.#store.deleteParticipant(open.id, input.userId);
-    if (!removed) {
-      throw new TgaError('not-participant');
+  async leave(input: {
+    guildId: string;
+    userId: string;
+  }): Promise<TgaRosterChange> {
+    const open = await this.#store.getOpenEvent(input.guildId);
+    if (open) {
+      const removed = await this.#store.deleteParticipant(open.id, input.userId);
+      if (!removed) {
+        throw new TgaError('not-participant');
+      }
+      return { eventName: open.name, repaired: false, dmDelivered: null };
     }
-    return open.name;
+
+    const drawn = await this.#store.getLatestDrawnEvent(input.guildId);
+    if (!drawn) {
+      throw new TgaError('no-open-event');
+    }
+    return this.#dropFromDraw(drawn, input.userId, 'not-participant');
   }
 
   async remove(input: {
     guildId: string;
     organizerId: string;
     userId: string;
-  }): Promise<string> {
-    const open = await this.#requireOpen(input.guildId);
-    this.#requireOrganizer(open, input.organizerId);
-    const removed = await this.#store.deleteParticipant(open.id, input.userId);
-    if (!removed) {
-      throw new TgaError('participant-missing');
+  }): Promise<TgaRosterChange> {
+    const open = await this.#store.getOpenEvent(input.guildId);
+    if (open) {
+      this.#requireOrganizer(open, input.organizerId);
+      const removed = await this.#store.deleteParticipant(open.id, input.userId);
+      if (!removed) {
+        throw new TgaError('participant-missing');
+      }
+      return { eventName: open.name, repaired: false, dmDelivered: null };
     }
-    return open.name;
+
+    const drawn = await this.#store.getLatestDrawnEvent(input.guildId);
+    if (!drawn) {
+      throw new TgaError('no-open-event');
+    }
+    this.#requireOrganizer(drawn, input.organizerId);
+    return this.#dropFromDraw(drawn, input.userId, 'participant-missing');
   }
 
   async cancel(input: {
@@ -272,12 +329,34 @@ export class TgaService {
       throw new TgaError('no-open-event');
     }
 
+    const ideasByUser = new Map<string, GiftIdeaList>();
+    await Promise.all(
+      signups.map(async (signup) => {
+        const ideas = await this.#snapshotIdeas(
+          signup.steamId64,
+          open.budgetCents,
+        );
+        ideasByUser.set(signup.userId, ideas);
+        await this.#store.setGiftIdeas(
+          open.id,
+          signup.userId,
+          JSON.stringify(ideas),
+        );
+      }),
+    );
+
     let delivered = 0;
     let failed = 0;
     for (const pair of pairs) {
       const sent = await this.#dms.send(
         pair.userId,
-        formatDrawDm(open.name, pair.targetUserId, pair.wishlistUrl),
+        formatDrawDm({
+          eventName: open.name,
+          targetUserId: pair.targetUserId,
+          wishlistUrl: pair.wishlistUrl,
+          budgetCents: open.budgetCents,
+          ideas: ideasByUser.get(pair.targetUserId) ?? EMPTY_IDEAS,
+        }),
       );
       if (!sent) {
         failed += 1;
@@ -329,7 +408,29 @@ export class TgaService {
       eventName: event.name,
       targetUserId: target.userId,
       wishlistUrl: target.wishlistUrl,
+      budgetCents: event.budgetCents,
+      ideas: parseGiftIdeas(target.giftIdeas),
     };
+  }
+
+  async toggleBought(input: {
+    guildId: string;
+    userId: string;
+  }): Promise<TgaBoughtResult> {
+    const event = await this.#requireCurrent(input.guildId);
+    if (event.status !== 'drawn') {
+      throw new TgaError('draw-not-done');
+    }
+    const signup = await this.#store.getParticipant(event.id, input.userId);
+    if (!signup) {
+      throw new TgaError('not-participant');
+    }
+    if (!signup.targetUserId) {
+      throw new TgaError('match-missing');
+    }
+    const bought = !signup.giftBought;
+    await this.#store.setGiftBought(event.id, input.userId, bought);
+    return { eventName: event.name, bought };
   }
 
   async status(input: {
@@ -347,8 +448,90 @@ export class TgaService {
         steamId64: signup.steamId64,
         wishlistUrl: signup.wishlistUrl,
         dmDelivered: signup.dmDelivered,
+        giftBought: signup.giftBought,
       })),
     };
+  }
+
+  async #dropFromDraw(
+    event: TgaEventRecord,
+    userId: string,
+    missing: 'not-participant' | 'participant-missing',
+  ): Promise<TgaRosterChange> {
+    const signups = await this.#store.listParticipants(event.id);
+    const repair = repairCycle(signups, userId);
+    if (!repair.ok) {
+      const present = signups.some((signup) => signup.userId === userId);
+      if (!present) {
+        throw new TgaError(missing);
+      }
+      throw new TgaError(
+        repair.reason === 'too-small' ? 'too-few-after-drop' : 'match-missing',
+      );
+    }
+
+    const applied = await this.#store.applyRepair(event.id, {
+      removedUserId: userId,
+      giverUserId: repair.giverUserId,
+      newTargetUserId: repair.newTargetUserId,
+    });
+    if (!applied) {
+      throw new TgaError('match-missing');
+    }
+
+    const target = await this.#store.getParticipant(
+      event.id,
+      repair.newTargetUserId,
+    );
+    if (!target) {
+      throw new TgaError('match-missing');
+    }
+    const ideas = await this.#snapshotIdeas(target.steamId64, event.budgetCents);
+    await this.#store.setGiftIdeas(
+      event.id,
+      target.userId,
+      JSON.stringify(ideas),
+    );
+    const sent = await this.#dms.send(
+      repair.giverUserId,
+      formatDrawDm({
+        eventName: event.name,
+        targetUserId: target.userId,
+        wishlistUrl: target.wishlistUrl,
+        budgetCents: event.budgetCents,
+        ideas,
+        repaired: true,
+      }),
+    );
+    if (sent) {
+      await this.#store.markDmDelivered(event.id, repair.giverUserId);
+    }
+    return { eventName: event.name, repaired: true, dmDelivered: sent };
+  }
+
+  async #snapshotIdeas(
+    steamId64: string,
+    budgetCents: number | null,
+  ): Promise<GiftIdeaList> {
+    try {
+      const wishlist = await this.#steam.readWishlist(steamId64);
+      if (!wishlist.ok) {
+        return EMPTY_IDEAS;
+      }
+      const ranked = wishlistRank(wishlist.items).slice(
+        0,
+        priceLookupLimit(budgetCents),
+      );
+      const prices = await this.#steam.lookupPrices(
+        ranked.map((item) => item.appId),
+      );
+      if (!prices.ok) {
+        return EMPTY_IDEAS;
+      }
+      return selectGiftIdeas(ranked, prices.prices, budgetCents);
+    } catch {
+      return EMPTY_IDEAS;
+    }
   }
 
   async #requireOpen(guildId: string): Promise<TgaEventRecord> {

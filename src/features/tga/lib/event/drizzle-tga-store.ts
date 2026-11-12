@@ -7,6 +7,7 @@ import {
   type TgaEventRecord,
   type TgaEventStatus,
   type TgaParticipantRecord,
+  type TgaRepair,
   type TgaSignupWrite,
   type TgaStore,
 } from './tga-store.js';
@@ -28,6 +29,7 @@ export class DrizzleTgaStore implements TgaStore {
         status: event.status,
         channelId: event.channelId,
         messageId: event.messageId,
+        budgetCents: event.budgetCents,
         createdAt: event.createdAt,
       });
     } catch (error) {
@@ -93,6 +95,8 @@ export class DrizzleTgaStore implements TgaStore {
         steamId64: signup.steamId64,
         wishlistUrl: signup.wishlistUrl,
         dmDelivered: false,
+        giftBought: false,
+        giftIdeas: null,
         joinedAt: existing?.joinedAt ?? new Date(),
       })
       .onConflictDoUpdate({
@@ -180,7 +184,7 @@ export class DrizzleTgaStore implements TgaStore {
         }
         await tx
           .update(tgaParticipants)
-          .set({ targetUserId, dmDelivered: false })
+          .set({ targetUserId, dmDelivered: false, giftBought: false, giftIdeas: null })
           .where(
             and(
               eq(tgaParticipants.eventId, eventId),
@@ -195,6 +199,99 @@ export class DrizzleTgaStore implements TgaStore {
         .where(eq(tgaEvents.id, eventId));
       return true;
     });
+  }
+
+  async applyRepair(eventId: string, repair: TgaRepair): Promise<boolean> {
+    return this.#db.transaction(async (tx) => {
+      const locked = await tx
+        .select({ id: tgaEvents.id })
+        .from(tgaEvents)
+        .where(and(eq(tgaEvents.id, eventId), eq(tgaEvents.status, 'drawn')))
+        .for('update');
+      if (locked.length === 0) {
+        return false;
+      }
+
+      const signups = await tx
+        .select({
+          userId: tgaParticipants.userId,
+          targetUserId: tgaParticipants.targetUserId,
+        })
+        .from(tgaParticipants)
+        .where(eq(tgaParticipants.eventId, eventId));
+      const removed = signups.find(
+        (signup) => signup.userId === repair.removedUserId,
+      );
+      const giver = signups.find(
+        (signup) => signup.userId === repair.giverUserId,
+      );
+      if (!removed || !giver || signups.length - 1 < 2) {
+        return false;
+      }
+      if (
+        removed.targetUserId !== repair.newTargetUserId ||
+        giver.targetUserId !== repair.removedUserId
+      ) {
+        return false;
+      }
+
+      await tx
+        .update(tgaParticipants)
+        .set({
+          targetUserId: repair.newTargetUserId,
+          giftBought: false,
+          dmDelivered: false,
+        })
+        .where(
+          and(
+            eq(tgaParticipants.eventId, eventId),
+            eq(tgaParticipants.userId, repair.giverUserId),
+          ),
+        );
+      await tx
+        .delete(tgaParticipants)
+        .where(
+          and(
+            eq(tgaParticipants.eventId, eventId),
+            eq(tgaParticipants.userId, repair.removedUserId),
+          ),
+        );
+      return true;
+    });
+  }
+
+  async setGiftIdeas(
+    eventId: string,
+    userId: string,
+    giftIdeas: string | null,
+  ): Promise<void> {
+    await this.#db
+      .update(tgaParticipants)
+      .set({ giftIdeas })
+      .where(
+        and(
+          eq(tgaParticipants.eventId, eventId),
+          eq(tgaParticipants.userId, userId),
+        ),
+      );
+  }
+
+  async setGiftBought(
+    eventId: string,
+    userId: string,
+    bought: boolean,
+  ): Promise<boolean> {
+    const rows = await this.#db
+      .update(tgaParticipants)
+      .set({ giftBought: bought })
+      .where(
+        and(
+          eq(tgaParticipants.eventId, eventId),
+          eq(tgaParticipants.userId, userId),
+        ),
+      )
+      .returning({ userId: tgaParticipants.userId });
+    return rows.length > 0;
   }
 
   async markDmDelivered(eventId: string, userId: string): Promise<void> {
@@ -219,6 +316,7 @@ function toEvent(row: typeof tgaEvents.$inferSelect): TgaEventRecord {
     status: asStatus(row.status),
     channelId: row.channelId,
     messageId: row.messageId,
+    budgetCents: row.budgetCents,
     createdAt: row.createdAt,
   };
 }
@@ -233,6 +331,8 @@ function toParticipant(
     wishlistUrl: row.wishlistUrl,
     targetUserId: row.targetUserId,
     dmDelivered: row.dmDelivered,
+    giftBought: row.giftBought,
+    giftIdeas: row.giftIdeas,
     joinedAt: row.joinedAt,
   };
 }

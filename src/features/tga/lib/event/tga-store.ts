@@ -8,6 +8,7 @@ export type TgaEventRecord = {
   status: TgaEventStatus;
   channelId: string;
   messageId: string | null;
+  budgetCents: number | null;
   createdAt: Date;
 };
 
@@ -18,6 +19,8 @@ export type TgaParticipantRecord = {
   wishlistUrl: string;
   targetUserId: string | null;
   dmDelivered: boolean;
+  giftBought: boolean;
+  giftIdeas: string | null;
   joinedAt: Date;
 };
 
@@ -31,6 +34,12 @@ export type TgaSignupWrite = {
 export type TgaDrawPair = {
   userId: string;
   targetUserId: string;
+};
+
+export type TgaRepair = {
+  removedUserId: string;
+  giverUserId: string;
+  newTargetUserId: string;
 };
 
 /** A second open TGA event in the same guild. */
@@ -59,5 +68,12 @@ export type TgaStore = {
     userId: string,
   ): Promise<TgaParticipantRecord | null>;
   commitDraw(eventId: string, pairs: readonly TgaDrawPair[]): Promise<boolean>;
+  applyRepair(eventId: string, repair: TgaRepair): Promise<boolean>;
+  setGiftIdeas(
+    eventId: string,
+    userId: string,
+    giftIdeas: string | null,
+  ): Promise<void>;
+  setGiftBought(eventId: string, userId: string, bought: boolean): Promise<boolean>;
   markDmDelivered(eventId: string, userId: string): Promise<void>;
 };
